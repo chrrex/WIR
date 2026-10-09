@@ -1,0 +1,1365 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Wirkstatt · Liebenberg</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>/* Layout: Seitenleiste + Arbeitsfläche (Desktop) · Kopfzeile + Inhalt + untere Leiste (Smartphone / Handy-Rahmen) */
+:root{
+  --brand:#6B7A3E;
+  --brand-dark:color-mix(in srgb,var(--brand) 78%,#000);
+  --brand-ink:color-mix(in srgb,var(--brand) 62%,#1E2318);
+  --brand-tint:color-mix(in srgb,var(--brand) 15%,#fff);
+  --nav-bg:var(--brand);
+  --bg:#F3F4EF; --surface:#FFFFFF; --surface-2:#F7F8F4; --line:#DCDFD3; --line-2:#ECEEE6;
+  --fg:#1E2318; --muted:#5B6152; --faint:#7A8070;
+  --warn:#A04050; --warn-ink:#8A3443; --warn-tint:#F6E6E9; --warn-line:#E4C3CA;
+  --info:#1E3560; --info-ink:#1E3560; --info-tint:#E3E8F2;
+  --ok:#3F7A3A; --ok-ink:#2F5F2B; --ok-tint:#E4F0E2;
+  --gold-ink:#5C4415; --gold-tint:#FBF5E8; --gold-line:#E8D7AF;
+  --lila-ink:#5E4673; --lila-tint:#EFE9F3;
+  --sea-1:#9CC3DA; --sea-2:#4E86A8; --sand:#E9D9B4;
+  --stage:#23271E; --scrim:rgba(20,24,15,.48);
+  --shadow:0 1px 2px rgba(30,35,24,.06),0 6px 20px rgba(30,35,24,.07);
+  --shadow-lg:0 12px 40px rgba(20,24,15,.22);
+  --font:'Source Sans 3','Segoe UI',system-ui,Arial,sans-serif;
+  --fs:16px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --brand-ink:color-mix(in srgb,var(--brand) 45%,#EEF2E4);
+  --brand-tint:color-mix(in srgb,var(--brand) 26%,#1E2219);
+  --nav-bg:color-mix(in srgb,var(--brand) 62%,#0E100A);
+  --bg:#14170F; --surface:#1E2219; --surface-2:#252A1F; --line:#383E2E; --line-2:#2D3226;
+  --fg:#E9ECE2; --muted:#AAB19E; --faint:#8E9583;
+  --warn-ink:#F2AEBB; --warn-tint:#3A2027; --warn-line:#5A2D37;
+  --info-ink:#B6C7EC; --info-tint:#1E2840;
+  --ok-ink:#A8D6A2; --ok-tint:#1E3320;
+  --gold-ink:#EBD29A; --gold-tint:#33291A; --gold-line:#55452A;
+  --lila-ink:#D7C3E6; --lila-tint:#2E2537;
+  --stage:#0B0D08; --scrim:rgba(0,0,0,.6);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.3);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --brand-ink:color-mix(in srgb,var(--brand) 45%,#EEF2E4);
+  --brand-tint:color-mix(in srgb,var(--brand) 26%,#1E2219);
+  --nav-bg:color-mix(in srgb,var(--brand) 62%,#0E100A);
+  --bg:#14170F; --surface:#1E2219; --surface-2:#252A1F; --line:#383E2E; --line-2:#2D3226;
+  --fg:#E9ECE2; --muted:#AAB19E; --faint:#8E9583;
+  --warn-ink:#F2AEBB; --warn-tint:#3A2027; --warn-line:#5A2D37;
+  --info-ink:#B6C7EC; --info-tint:#1E2840;
+  --ok-ink:#A8D6A2; --ok-tint:#1E3320;
+  --gold-ink:#EBD29A; --gold-tint:#33291A; --gold-line:#55452A;
+  --lila-ink:#D7C3E6; --lila-tint:#2E2537;
+  --stage:#0B0D08; --scrim:rgba(0,0,0,.6);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.3);
+  color-scheme:dark;
+}
+html{font-size:var(--fs)}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:1rem;line-height:1.45;margin:0;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{text-wrap:balance;margin:0;line-height:1.2}
+a{color:var(--brand-ink)}
+:focus-visible{outline:3px solid var(--info);outline-offset:2px;border-radius:6px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.i{flex:none;display:inline-block;vertical-align:middle}
+.tab{font-variant-numeric:tabular-nums}
+
+/* ---------- Stage / App ---------- */
+.stage{min-height:100vh}
+.stage.on{display:flex;justify-content:center;align-items:flex-start;padding:28px 16px 90px;background:var(--stage)}
+.app{position:relative;display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100vh;background:var(--bg)}
+.app.m{display:flex;flex-direction:column}
+.app.phone{width:390px;max-width:100%;height:844px;min-height:0;border-radius:40px;border:11px solid #0E0F0C;overflow:hidden;box-shadow:var(--shadow-lg)}
+.mainwrap{min-width:0;display:flex;flex-direction:column}
+.app.m .mainwrap{flex:1}
+.app.phone .mainwrap{overflow:auto;min-height:0}
+.view{padding:1.6rem 2rem 3rem;width:100%;max-width:1240px;display:flex;flex-direction:column;gap:1.4rem}
+.app.m .view{padding:1rem 1rem 2rem;gap:1rem}
+
+/* ---------- Seitenleiste ---------- */
+.side{position:sticky;top:0;height:100vh;overflow:auto;background:var(--nav-bg);color:#fff;display:flex;flex-direction:column;padding-bottom:1.2rem}
+.side .brandbox{padding:30px 30px 22px}
+.logo-svg{display:block;width:118px;height:auto;color:#fff}
+.logo-ph{width:118px;height:84px;border:2px dashed rgba(255,255,255,.8);border-radius:8px;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:700;font-size:.8rem;line-height:1.2;color:#fff}
+.nav{display:flex;flex-direction:column;gap:2px;padding:0 12px}
+.nav button{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 14px;border:0;border-radius:9px;background:transparent;color:#fff;cursor:pointer;text-align:left;width:100%}
+.nav button:hover{background:rgba(255,255,255,.1)}
+.nav button[aria-current="page"]{background:rgba(255,255,255,.2);font-weight:700}
+.nav .lbl{flex:1}
+.nbadge{min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#fff;color:var(--brand-dark);font-size:.8rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.side .foot{margin-top:auto;padding:1.2rem 26px 0;font-size:.8rem;opacity:.92}
+
+/* ---------- Kopfzeilen ---------- */
+.dhead{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 2rem;background:var(--surface);border-bottom:1px solid var(--line)}
+.search{flex:1 1 360px;display:flex;align-items:center;gap:10px;min-height:46px;padding:0 6px 0 14px;border:1px solid var(--line);border-radius:11px;background:var(--surface-2)}
+.search input{flex:1;border:0;background:transparent;min-width:0;outline:none}
+.search:focus-within{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-tint)}
+.mhead{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:6px;background:var(--nav-bg);color:#fff;padding:8px 8px 8px 14px}
+.mhead .logo-svg{width:48px}
+.mhead .logo-ph{width:56px;height:40px;font-size:.6rem}
+.mhead .ttl{flex:1;font-weight:700;font-size:1.05rem;padding-left:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ibtn{width:44px;height:44px;border-radius:11px;border:1px solid var(--line);background:var(--surface);color:var(--fg);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;position:relative;flex:none}
+.ibtn:hover{background:var(--surface-2)}
+.mhead .ibtn{border:0;background:transparent;color:#fff}
+.mhead .ibtn:hover{background:rgba(255,255,255,.12)}
+.dot{position:absolute;top:8px;right:8px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:var(--warn);color:#fff;font-size:.7rem;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid var(--surface)}
+.mhead .dot{border-color:var(--nav-bg)}
+.av{width:44px;height:44px;border-radius:50%;background:var(--brand-tint);color:var(--brand-ink);font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:none;border:0;cursor:pointer;font-size:.95rem}
+.av.s{width:36px;height:36px;font-size:.8rem;cursor:default}
+.av.xs{width:30px;height:30px;font-size:.72rem;cursor:default}
+.av.c1{background:var(--info-tint);color:var(--info-ink)} .av.c2{background:var(--lila-tint);color:var(--lila-ink)} .av.c3{background:var(--warn-tint);color:var(--warn-ink)} .av.c4{background:var(--gold-tint);color:var(--gold-ink)}
+
+/* ---------- Untere Leiste (Smartphone) ---------- */
+.bnav{position:sticky;bottom:0;z-index:20;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:var(--surface);border-top:1px solid var(--line);padding:6px 4px calc(10px + env(safe-area-inset-bottom,0px))}
+.bnav button{display:flex;flex-direction:column;align-items:center;gap:2px;min-height:52px;justify-content:center;border:0;background:transparent;color:var(--muted);font-size:.72rem;cursor:pointer;position:relative}
+.bnav .pill{display:inline-flex;padding:3px 14px;border-radius:999px}
+.bnav button[aria-current="page"]{color:var(--brand-ink);font-weight:700}
+.bnav button[aria-current="page"] .pill{background:var(--brand-tint)}
+.bnav .nbadge{position:absolute;top:2px;left:calc(50% + 6px);background:var(--warn);color:#fff;min-width:18px;height:18px;font-size:.68rem}
+
+/* ---------- Bausteine ---------- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:1.2rem 1.35rem}
+.card.flat{box-shadow:none}
+.card h2{font-size:1.15rem}
+.chead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:.4rem}
+.lnk{border:0;background:none;color:var(--brand-ink);font-weight:600;cursor:pointer;padding:6px 0;text-decoration:underline;text-underline-offset:3px}
+.btn{min-height:44px;padding:0 16px;border-radius:11px;border:1px solid var(--line);background:var(--surface);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--surface-2)}
+.btn.pri{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.pri:hover{background:var(--brand-dark)}
+.btn.warn{background:var(--warn);border-color:var(--warn);color:#fff}
+.btn.sm{min-height:36px;padding:0 12px;font-size:.92rem;border-radius:9px}
+.btn[disabled]{opacity:.55;cursor:not-allowed}
+.btn.on{background:var(--brand-tint);border-color:var(--brand);color:var(--brand-ink)}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:999px;font-size:.8rem;font-weight:600;background:var(--line-2);color:var(--muted);white-space:nowrap}
+.chip.b{background:var(--brand-tint);color:var(--brand-ink)}
+.chip.w{background:var(--warn-tint);color:var(--warn-ink)}
+.chip.i{background:var(--info-tint);color:var(--info-ink)}
+.chip.l{background:var(--lila-tint);color:var(--lila-ink)}
+.chip.g{background:var(--gold-tint);color:var(--gold-ink)}
+.chip.o{background:var(--ok-tint);color:var(--ok-ink)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.fchip{min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);cursor:pointer}
+.fchip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+.eyebrow{font-size:.78rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)} .small{font-size:.86rem} .xs{font-size:.78rem}
+.row{display:flex;align-items:center;gap:12px}
+.wrap{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.stack{display:flex;flex-direction:column;gap:12px}
+.cols{display:flex;flex-wrap:wrap;gap:1.4rem;align-items:flex-start}
+.col-main{flex:2 1 540px;min-width:0;display:flex;flex-direction:column;gap:1.4rem}
+.col-side{flex:1 1 300px;min-width:0;display:flex;flex-direction:column;gap:1.4rem}
+.app.m .cols,.app.m .col-main,.app.m .col-side{gap:1rem}
+.li{display:flex;gap:12px;padding:.8rem 0;border-top:1px solid var(--line-2);align-items:flex-start}
+.li:first-of-type{border-top:0}
+.libtn{width:100%;text-align:left;background:none;border:0;cursor:pointer;color:inherit;padding:.8rem 0;border-top:1px solid var(--line-2);display:flex;gap:12px;align-items:flex-start}
+.libtn:hover .t{text-decoration:underline}
+.udot{width:10px;height:10px;border-radius:50%;background:var(--brand);margin-top:7px;flex:none}
+.udot.r{background:transparent;border:2px solid var(--line)}
+.t{font-weight:700}
+.bar{height:8px;border-radius:4px;background:var(--line-2);overflow:hidden}
+.bar>span{display:block;height:100%;background:var(--brand);border-radius:4px;transition:width .4s}
+.input,.select,textarea.input{width:100%;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+textarea.input{padding:10px 12px;resize:vertical;min-height:90px}
+.input:focus,.select:focus{border-color:var(--brand);outline:none;box-shadow:0 0 0 3px var(--brand-tint)}
+.field{display:flex;flex-direction:column;gap:6px}
+.field>label,.flabel{font-weight:600;font-size:.95rem}
+.check{display:flex;align-items:flex-start;gap:10px;cursor:pointer;min-height:40px;padding:6px 0}
+.check input{width:22px;height:22px;accent-color:var(--brand);margin:1px 0 0;flex:none}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:11px;overflow:hidden;flex-wrap:wrap}
+.seg button{min-height:40px;padding:0 14px;border:0;background:var(--surface);cursor:pointer;border-left:1px solid var(--line)}
+.seg button:first-child{border-left:0}
+.seg button[aria-pressed="true"]{background:var(--brand);color:#fff;font-weight:600}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tabs button{min-height:44px;padding:0 14px;border:0;border-bottom:3px solid transparent;background:transparent;cursor:pointer;color:var(--muted)}
+.tabs button[aria-selected="true"]{border-bottom-color:var(--brand);color:var(--fg);font-weight:700}
+.note{display:flex;gap:10px;padding:12px 14px;border-radius:11px;background:var(--info-tint);color:var(--info-ink);font-size:.9rem}
+.note.g{background:var(--gold-tint);color:var(--gold-ink)}
+.note.b{background:var(--brand-tint);color:var(--brand-ink)}
+.empty{padding:2rem 1rem;text-align:center;color:var(--muted)}
+.photo{border-radius:12px;overflow:hidden;background:var(--line-2);display:block;width:100%}
+.photo svg,.photo img{display:block;width:100%;height:100%;object-fit:cover}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem}
+.app.m .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:1rem 1.2rem}
+.kpi .v{font-size:2.1rem;font-weight:700;line-height:1.15}
+.app.m .kpi .v{font-size:1.6rem}
+.kpi .s{font-size:.78rem;color:var(--muted)}
+.src{font-size:.78rem;color:var(--muted);padding-top:.4rem;display:flex;gap:6px;align-items:center}
+.banner{display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:16px 18px;border-radius:14px;background:var(--warn-tint);border:1px solid var(--warn-line)}
+.banner .ico{width:42px;height:42px;border-radius:11px;background:var(--warn);color:#fff;display:flex;align-items:center;justify-content:center;flex:none}
+.hello h1{font-size:2rem;font-weight:700}
+.app.m .hello h1{font-size:1.6rem}
+.ptitle{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.ptitle h1{font-size:1.9rem}
+.app.m .ptitle h1{font-size:1.5rem}
+.prose{font-size:1.05rem;line-height:1.6;max-width:68ch}
+.prose p{margin:0 0 .8rem}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1rem;max-width:72ch}
+.steps li{display:flex;gap:14px}
+.num{width:32px;height:32px;border-radius:50%;background:var(--brand);color:#fff;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.mention{background:var(--brand-tint);color:var(--brand-ink);font-weight:700;padding:0 4px;border-radius:4px}
+.cmt{flex:1;background:var(--surface-2);border-radius:11px;padding:.6rem .85rem;min-width:0}
+.donut{width:112px;height:112px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none}
+.donut>div{width:80px;height:80px;border-radius:50%;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.tbl{width:100%;border-collapse:collapse;font-size:.95rem}
+.tbl th,.tbl td{padding:.75rem .8rem;text-align:left;border-top:1px solid var(--line-2);vertical-align:top}
+.tbl thead th{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-top:0}
+.scrollx{overflow-x:auto}
+.kb{display:grid;grid-template-columns:repeat(3,minmax(240px,1fr));gap:1rem}
+.app.m .kb{grid-template-columns:1fr}
+.kcol{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:1rem;display:flex;flex-direction:column;gap:.75rem}
+.icard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:.9rem 1rem;display:flex;flex-direction:column;gap:.5rem}
+.vote{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:9px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:600}
+.vote.on{background:var(--brand-tint);border-color:var(--brand);color:var(--brand-ink)}
+
+/* Chat */
+.chatwrap{display:grid;grid-template-columns:300px minmax(0,1fr);border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface);min-height:560px}
+.app.m .chatwrap{grid-template-columns:minmax(0,1fr);border-radius:14px;min-height:0}
+.clist{border-right:1px solid var(--line);display:flex;flex-direction:column}
+.clist button{min-width:0;width:100%;display:flex;gap:10px;align-items:center;text-align:left;padding:.85rem 1rem;border:0;border-bottom:1px solid var(--line-2);background:transparent;cursor:pointer;color:inherit}
+.clist button[aria-current="true"]{background:var(--brand-tint)}
+.thread{display:flex;flex-direction:column;min-height:520px;background:var(--surface-2)}
+.app.m .thread{min-height:60vh}
+.app.phone .thread{min-height:560px}
+.thead{display:flex;align-items:center;gap:10px;padding:.8rem 1rem;border-bottom:1px solid var(--line);background:var(--surface)}
+.msgs{flex:1;padding:1rem;display:flex;flex-direction:column;gap:.7rem;overflow:auto}
+.msg{max-width:78%;padding:.55rem .85rem;border-radius:4px 14px 14px 14px;background:var(--surface);border:1px solid var(--line)}
+.msg.me{align-self:flex-end;background:var(--brand);border-color:var(--brand);color:#fff;border-radius:14px 4px 14px 14px}
+.msg .who{font-size:.8rem;font-weight:700;color:var(--info-ink)}
+.msg .meta{font-size:.72rem;opacity:.85;display:flex;gap:8px;justify-content:space-between;margin-top:2px}
+.msg.me .meta{justify-content:flex-end}
+.ticks{font-weight:700;letter-spacing:-.15em}
+.typing{align-self:flex-start;font-size:.85rem;color:var(--muted);font-style:italic}
+.composer{display:flex;gap:8px;padding:.7rem;border-top:1px solid var(--line);background:var(--surface);align-items:center}
+.composer input{flex:1;min-height:44px;border:1px solid var(--line);border-radius:22px;padding:0 14px;background:var(--surface);min-width:0}
+.rbtn{width:44px;height:44px;border-radius:50%;border:0;background:var(--brand);color:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+
+/* Wissen */
+.tree button{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:40px;padding:0 10px;border:0;border-radius:8px;background:transparent;cursor:pointer;text-align:left;color:inherit}
+.tree button:hover{background:var(--surface-2)}
+.tree button[aria-current="page"]{background:var(--brand-tint);color:var(--brand-ink);font-weight:700}
+.tree .sub{margin-left:12px;padding-left:10px;border-left:2px solid var(--line-2)}
+.diff del{background:var(--warn-tint);color:var(--warn-ink)}
+.diff ins{background:var(--ok-tint);color:var(--ok-ink);text-decoration:none}
+.media{position:relative;aspect-ratio:16/9;max-width:100%;border-radius:12px;overflow:hidden;background:var(--line-2)}
+.media .play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.media .play span{width:64px;height:64px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;display:flex;align-items:center;justify-content:center}
+.media .cc{position:absolute;right:10px;bottom:10px;background:rgba(0,0,0,.65);color:#fff;font-size:.72rem;font-weight:700;padding:2px 6px;border-radius:4px}
+
+/* KI */
+.ai{border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:1.3rem 1.4rem}
+.ai .badge{width:38px;height:38px;border-radius:11px;background:var(--info);color:#fff;display:flex;align-items:center;justify-content:center}
+.thinking span{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--muted);margin-right:4px;animation:blink 1.2s infinite}
+.thinking span:nth-child(2){animation-delay:.2s}.thinking span:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+.fade{animation:fade .45s ease both}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.srcbtn{display:flex;gap:10px;align-items:center;padding:.6rem .8rem;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;text-align:left;color:inherit;width:100%}
+.srcbtn:hover{border-color:var(--brand)}
+mark{background:var(--gold-tint);color:inherit;padding:0 2px;border-radius:3px}
+
+/* Checkliste */
+.citem{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:.85rem 1rem}
+.citem.bad{border:2px solid var(--warn)}
+.citem.cur{border:2px solid var(--brand)}
+.cstate{width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex:none;font-weight:700;font-size:.85rem;border:2px solid var(--line);color:var(--muted)}
+.cstate.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.cstate.bad{background:var(--warn);border-color:var(--warn);color:#fff}
+.tinput{display:flex;gap:8px;margin-top:.6rem}
+.tinput input{flex:1;min-width:0;min-height:50px;font-size:1.3rem;font-weight:700;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+
+/* Overlay, Toasts */
+.overlay{position:fixed;inset:0;z-index:60;background:var(--scrim);display:flex;align-items:center;justify-content:center;padding:16px}
+.app.phone .overlay{position:absolute}
+.sheet{background:var(--surface);color:var(--fg);border-radius:18px;box-shadow:var(--shadow-lg);width:min(560px,100%);max-height:calc(100% - 24px);overflow:auto;padding:1.4rem 1.5rem;display:flex;flex-direction:column;gap:1rem}
+.app.m .sheet{align-self:flex-end;border-radius:18px 18px 0 0;width:100%;max-height:88%}
+.app.m .overlay{padding:0;align-items:flex-end}
+.sheet .shead{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.sheet h2{font-size:1.3rem}
+.endart{display:flex;justify-content:center;color:var(--brand);padding:.4rem 0}
+.endart .logo-svg{width:110px;color:var(--brand)}
+.toasts{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:max-content;max-width:calc(100% - 32px)}
+.app.phone .toasts{position:absolute;bottom:90px}
+.app.m:not(.phone) .toasts{bottom:156px}
+.toast{background:#1E2318;color:#fff;padding:.7rem 1.1rem;border-radius:12px;box-shadow:var(--shadow-lg);font-weight:600;display:flex;gap:10px;align-items:center;animation:fade .3s both}
+.pop{position:absolute;z-index:40;top:calc(100% + 8px);right:0;width:360px;max-width:calc(100vw - 32px);background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-lg);padding:.6rem;color:var(--fg)}
+.popwrap{position:relative}
+.pop .pi{display:flex;gap:10px;width:100%;text-align:left;padding:.7rem;border:0;background:transparent;border-radius:10px;cursor:pointer;color:inherit}
+.pop .pi:hover{background:var(--surface-2)}
+.app.m .pop{position:fixed;top:64px;right:8px}
+.app.phone .pop{position:absolute;top:60px}
+
+/* Demo-Leiste */
+.demofab{position:fixed;right:18px;bottom:18px;z-index:90;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+.app-m-body .demofab{bottom:96px}
+.demobtn{min-height:46px;padding:0 18px;border-radius:999px;border:0;background:#1E2318;color:#fff;font-weight:700;display:inline-flex;align-items:center;gap:8px;cursor:pointer;box-shadow:var(--shadow-lg)}
+.demopanel{width:340px;max-width:calc(100vw - 36px);max-height:70vh;overflow:auto;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow-lg);padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.8rem}
+.demopanel ol{margin:0;padding-left:1.2rem;display:flex;flex-direction:column;gap:.35rem}
+.demopanel ol button{border:0;background:none;color:var(--brand-ink);text-align:left;padding:2px 0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+
+/* Login */
+.login{min-height:100vh;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);background:var(--bg)}
+.login .hero{background:var(--nav-bg);color:#fff;padding:3rem;display:flex;flex-direction:column;justify-content:space-between;gap:2rem;position:relative;overflow:hidden}
+.login .hero .logo-svg{width:150px}
+.login .hero h1{font-size:2.6rem;font-weight:700;max-width:14ch;line-height:1.1}
+.login .hero p{font-size:1.15rem;max-width:40ch;opacity:.95;margin:.6rem 0 0}
+.login .pane{padding:3rem 2.5rem;display:flex;flex-direction:column;justify-content:center;gap:1.2rem;max-width:620px;width:100%}
+.pgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem}
+.pcard{display:flex;gap:12px;align-items:flex-start;text-align:left;padding:1rem;border:1px solid var(--line);border-radius:14px;background:var(--surface);cursor:pointer;color:inherit}
+.pcard:hover{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-tint)}
+.pcard[aria-pressed="true"]{border:2px solid var(--brand)}
+.lines{position:absolute;right:-60px;bottom:-40px;width:420px;opacity:.12;color:#fff}
+@media (max-width:820px){
+  .login{grid-template-columns:1fr}
+  .login .hero{padding:2rem 1.25rem}
+  .login .hero h1{font-size:2rem}
+  .login .pane{padding:1.5rem 1rem 6rem}
+  .pgrid{grid-template-columns:1fr}
+}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:95;overflow:hidden}
+.confetti i{position:absolute;top:-12px;width:9px;height:14px;border-radius:2px;animation:fall 1.8s ease-in forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg);opacity:.9}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.confetti{display:none}}
+
+.side .wm{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.28);text-align:center}
+.side .wm span{font-weight:700;font-size:1.15rem;letter-spacing:.32em;text-transform:uppercase;padding-left:.32em}
+.mhead .wm-m{font-weight:700;letter-spacing:.22em;text-transform:uppercase;font-size:.95rem}
+.login .hero .wm-hero{font-weight:700;font-size:1rem;letter-spacing:.4em;text-transform:uppercase;opacity:.9;margin-bottom:.9rem}
+</style>
+<template id="logo-tpl"><svg class="logo-svg" role="img" aria-label="Schloss &amp; Gut Liebenberg" id="Ebene_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 104.07 90.14"><defs><clipPath id="clippath"><rect fill="none" x="2.62" y="0" width="90.73" height="57"/></clipPath></defs><g clip-path="url(#clippath)"><path fill="currentColor" d="M51.02,41.68h2.02v3.4h-2.02v-3.4h0ZM50.64,45.85h2.79c.21,0,.38-.17.38-.38h0v-4.17c0-.21-.17-.38-.38-.38h-2.79c-.21,0-.38.17-.38.38h0v4.17c0,.21.17.38.38.38h0Z"/><path fill="currentColor" d="M69.75,38.11l-.94-.82v-.1h5.23c.21,0,.38-.17.38-.38h0v-5.49h5.97v5.49c0,.21.17.38.38.38h.03s2.5,0,2.5,0c-.24.34-.51.65-.81.92h-12.75ZM81.15,40.13c-.05.42-.1.66-.37.87-.55.43-.5,1.21-.46,1.98.08.5.04,1.02-.13,1.5-.39.74-.48,1.6-.25,2.4.09.48.14.96.15,1.45-.06.69-.42,1.32-.99,1.72-.35.29-.64.64-.87,1.04-.24.57-.38,1.17-.41,1.79-.09.93-.17,1.2-.49,1.21-1.28.06-2.02,1.74-2.18,2.15h-5.18v-17.35h11.63c-.28.36-.44.8-.46,1.25h0ZM69.22,56.23h-4.68v-17.38l1.12-1.12c.07-.07.11-.17.11-.27v-.65c0-.21-.17-.38-.38-.38h-.9v-4.17h4.32v4.16h-.38c-.21,0-.38.17-.38.38h0v.66c0,.11.05.22.13.29l1.05.92v17.56h0ZM40.49,38.29l-.99-.99v-.1h9.16c.21,0,.38-.17.38-.38h0v-5.4h5.97v5.4c0,.21.17.38.38.38h9.61v.1l-.99.99h-23.52ZM63.77,47.53h-23.04v-8.47h23.04v8.47h0ZM63.77,56.23h-1.87v-3.59c0-1.63-1.32-2.95-2.95-2.95-1.63,0-2.94,1.32-2.95,2.95v3.6h-1.04v-3.6c0-1.63-1.32-2.95-2.95-2.95-1.63,0-2.94,1.32-2.95,2.95v3.6h-1.04v-3.6c0-1.63-1.32-2.95-2.95-2.95-1.63,0-2.94,1.32-2.95,2.95v3.6h-1.42v-7.93h23.04v7.92h0ZM61.13,56.23h-4.36v-3.59c0-1.2.98-2.18,2.18-2.18,1.2,0,2.18.98,2.18,2.18v3.59h0ZM54.2,56.23h-4.36v-3.59c0-1.2.98-2.18,2.18-2.18,1.2,0,2.18.98,2.18,2.18v3.59h0ZM47.27,56.23h-4.36v-3.59c0-1.2.98-2.18,2.18-2.18,1.2,0,2.18.98,2.18,2.18v3.59h0ZM39.96,56.23h-4.32v-16.83l.82-1.43c.03-.06.05-.12.05-.19v-.76c.01-.13-.05-.25-.15-.32l-.77-.55v-3.9s4.31,0,4.31,0v4.17h-.8c-.21,0-.38.17-.38.38h0v.65c0,.1.04.2.11.27l1.12,1.12v17.38h0ZM27.89,37.34v-1.5l.27-.81,6.89,1.68.7.5v.45s-.69,1.19-.69,1.19l-7.17-1.52h0ZM34.87,56.23h-3.12c-.16-.11-.08-.94-.02-1.5.05-.47.1-.99.11-1.54.17-1.24-.51-2.44-1.67-2.92-1.24-.48-1.79-1.04-1.73-1.77.11-.68-.1-1.37-.56-1.88v-8.49l6.98,1.48v16.63h0ZM21.04,29.94v-1.16c0-.21-.17-.38-.38-.38h-2.26v-.64h12.04l2.52,3.07v4.59l-4.93-1.2-7-4.27h0ZM21.04,34.18v-3.35l5.48,3.35h-5.48ZM27.14,35.66s-.02.08-.02.12v1.49H9.6c-.09-.67-.51-1.26-1.12-1.56-.4-.17-.76-.43-1.05-.75h4.18c.21,0,.38-.17.38-.38h0v-5.41h8.29v5.35c0,.06.02.13.05.18.05.16.19.27.36.27h6.7l-.24.7h0ZM27.12,46.13c-.17-.07-.35-.12-.53-.15-.69-.13-.87-1.42-1-2.36l-.05-.32-.08-.66c-.03-.78-.28-1.53-.73-2.17-.77-.91-1.98-1.32-3.15-1.08-1.08.08-2,.78-2.37,1.8-.16.49-.24,1.01-.25,1.53.01.34-.07.68-.24.97-.13.14-.29.26-.46.34-.63.31-1.12.85-1.35,1.51-.08.29-.14.59-.16.89-.05.45-.06.58-.73.93-.21.11-.38.2-.51.29.04-.27.1-.53.19-.79.18-.52.27-1.07.28-1.62,0-1.23-1.56-2.15-2.7-2.83l-.07-.04c-.26-.15-.38-.64-.5-1.1-.17-.67-.36-1.43-1.05-1.73-.26-.11-.53-.21-.81-.29-.52-.16-.76-.23-.96-.73-.06-.16-.11-.32-.14-.48h17.37v8.09h0ZM6.97,33.79c-.05-.34-.15-.68-.28-1l4.52-2.02v3.41h-4.16l-.08-.39h0ZM14.61,25.78h3.03v2.61h-3.03v-2.61h0ZM16.15,23.9l.5,1.11h-1.02l.52-1.11h0ZM35.6,29.17l-.23,1.06-.89,1.44c-.07.12-.08.27-.01.39.07.12.2.2.34.2h.02v3.61s-1.09-.27-1.09-.27v-4.92c0-.09-.03-.18-.09-.24l-1.04-1.26h2.99ZM36.06,30.58s.04-.08.05-.12l1.33-6.08h.61l1.33,6.08s.03.08.05.12l.56.9h-4.5l.56-.9h0ZM49.5,29.24l-1.01,1.46c-.13.06-.21.2-.21.34v5.4h-7.59v-4.17h.01c.14,0,.27-.08.34-.2.07-.12.06-.27-.01-.39l-.89-1.44-.22-1h9.59ZM51.98,27.03l2.6,3.62h-5.12l2.52-3.62h0ZM64.49,29.24l-.22,1-.89,1.44c-.07.12-.08.27-.01.39.07.12.2.2.34.2h.02v4.17h-7.95v-5.4c0-.15-.09-.29-.23-.35l-1.04-1.44h9.98ZM62,26.51l1.91-1.91s.08-.11.1-.18l3.9-15.85,3.9,15.85c.02.07.05.13.1.18l1.91,1.91-.9.9c-.07.07-.11.17-.11.27v.79h-4.18l-.79-3.59h1.13c.21,0,.38-.17.38-.38h0v-4.09c0-.05-.01-.11-.04-.16h0s-1.16-2.41-1.16-2.41c-.06-.13-.19-.22-.34-.22-.14,0-.28.08-.35.21l-1.25,2.4v.02s-.02.03-.02.03c-.02.04-.03.09-.03.13v3.2h-.16c-.18,0-.34.12-.38.3l-1,4.56h-1.64v-.79c0-.1-.04-.2-.11-.27l-.89-.9h0ZM63.07,18.83h1.54l-1.23,4.99h-.31v-4.99h0ZM67.34,5.67c0-.33.27-.6.6-.6s.6.27.6.6-.27.6-.6.6c-.33,0-.6-.27-.6-.6h0s0,0,0,0h0ZM72.82,18.83v4.99h-.36l-1.23-4.99h1.58ZM67.96,28.99h0s.32,1.47.32,1.47c0,.04.03.08.05.12l.56.9h-4.5l.56-.9s.04-.08.05-.12l1.33-6.08h.61l1.01,4.61h0ZM67.21,20.02l.6-1.16.56,1.16h-1.16ZM68.59,20.79v3.32h-.91l-.04-.2c-.04-.18-.2-.3-.38-.3h-.3v-2.82h1.63ZM74.77,29.24l-1.03,1.48-.02.04s-.02.05-.03.07c0,.02-.01.05-.02.08v.04s0,5.48,0,5.48h-4.08v-4.16h.01c.14,0,.27-.08.34-.2.07-.12.06-.27,0-.39l-.89-1.44-.22-1h5.96ZM75.76,29.16c.07-.05.11-.12.14-.2l1.36-1.95,2.75,3.54h-5.21l.97-1.39h0ZM84.67,29.24c-.39.62-.43,1.4-.1,2.05.67,1.66.48,2.04.21,2.63l-.21.47-.19.53c-.16.51-.36,1.01-.6,1.49h-2.6v-5.48s0-.03,0-.05c0-.03,0-.05-.01-.08,0-.03-.02-.05-.04-.07,0-.01-.01-.03-.02-.04l-1.14-1.47h4.71ZM68.33,1.03c.33.18.79.44,1.28.73.32.19.68.31,1.05.35-.37.04-.74.03-1.11-.04-.41-.06-.82-.06-1.23,0v-1.04h0ZM85.1,35.18l.18-.51.19-.42c.38-.79.55-1.41-.19-3.25-.37-.91-.22-1.52,1.6-2.7,2.05-1.33,2.84-.68,3.76.07.61.65,1.49.99,2.38.9.21-.03.35-.23.32-.44,0,0,0,0,0,0-.03-.21-.23-.35-.44-.32,0,0,0,0,0,0-.72.12-1.18-.26-1.77-.74-.96-.78-2.15-1.75-4.67-.12-.39.25-.77.53-1.13.83-.03,0-.06-.01-.09-.02h-5.77s-.07,0-.11.02l-1.83-2.36c-.08-.09-.19-.15-.31-.15-.12,0-.24.06-.31.16l-1.62,2.32h-1.71v-.63l1.06-1.06c.15-.15.15-.39,0-.54l-1.66-1.66h.21c.21,0,.38-.17.38-.38h0v-5.75c0-.21-.17-.38-.38-.38h-2.16l-2.72-11.08c.59-.16,1-.7,1-1.31,0-.61-.4-1.14-.99-1.31v-1.51c.36-.08.73-.09,1.1-.03,2.5.44,3.16-1.1,3.19-1.16.06-.14.02-.31-.09-.42-.11-.11-.28-.14-.42-.08-.68.27-1.44.25-2.1-.07-1.02-.59-1.86-1.04-1.87-1.05-.19-.1-.42-.03-.52.16,0,.01,0,.02,0,.03,0,.02-.02.04-.02.07,0,.02,0,.04-.01.06,0,.01,0,.02,0,.04v3.96c-.58.17-.98.7-.99,1.31,0,.59.38,1.12.94,1.3l-2.73,11.09h-2.11c-.21,0-.38.17-.38.38h0v5.75c0,.21.17.38.38.38h.17l-1.66,1.66c-.15.15-.15.39,0,.54l1.06,1.06v.63h-8.29l-1.67-2.33c-.07-.11-.19-.17-.31-.16-.12,0-.24.06-.31.16l-1.62,2.32h-10.3l-1-4.56c-.04-.18-.2-.3-.38-.3h-1.23c-.18,0-.34.12-.38.3l-.99,4.49h-3.79l-1.05-1.28c-.07-.09-.18-.14-.3-.14h-12.23v-1.59c0-.21-.17-.38-.38-.38h-.53l-.98-2.18c-.06-.14-.2-.23-.35-.23-.15,0-.28.09-.35.22l-1.04,2.19h-.55c-.21,0-.38.17-.38.38h0v3h-2.24c-.21,0-.38.17-.38.38h0v1.16l-4.95,2.21c-.23-.21-.5-.37-.8-.47-.58-.23-1.07-.42-1.2-1.73-.23-2.38-.92-2.95-1.05-3.04-.18-.12-.42-.08-.54.1-.12.17-.08.4.09.52,0,0,0,0,0,0,0,0,.54.47.73,2.49-.06,1.09.64,2.07,1.68,2.38.23.06.44.18.6.35.24.36.38.77.44,1.2.12,1.12.86,2.07,1.92,2.46.55.27.65.69.79,1.41.05.34.14.68.26,1,.24.62.79,1.07,1.45,1.17.24.07.48.15.72.25.34.15.47.67.61,1.22.06.62.37,1.18.85,1.58l.07.04c.87.51,2.32,1.37,2.32,2.16,0,.48-.09.95-.25,1.4-.25.65-.29,1.36-.13,2.04l-.1.23c-.56.36-1.2.59-1.86.68-.21.04-.34.24-.3.45.04.21.24.34.45.3,0,0,0,0,0,0,.63-.13,2.11-.48,2.4-1.1.1-.21.18-.42.23-.64.05-.18.06-.21.73-.56.98-.52,1.07-.92,1.13-1.53.02-.25.06-.5.14-.74.19-.48.55-.86,1.02-1.07.3-.14.55-.37.73-.64.23-.4.34-.85.33-1.31,0-.45.08-.9.22-1.33.29-.72.97-1.2,1.74-1.26.87-.19,1.78.09,2.4.74.38.54.59,1.17.61,1.83.02.21.04.43.08.69l.05.32c.16,1.17.39,2.77,1.62,3.01.75.05,1.32.7,1.28,1.45,0,.08-.02.17-.04.25-.14,1.64,1.63,2.33,2.22,2.55.83.39,1.3,1.29,1.15,2.2,0,.51-.06,1.02-.11,1.47-.11,1.09-.21,2.02.52,2.3.01,0,.03.01.04.02h.02s.07.03.11.03h43.87c.21,0,.38-.17.38-.38h0s0-.08-.02-.12c.2-.48.79-1.61,1.49-1.64,1.03-.05,1.13-1.08,1.21-1.9.02-.52.13-1.04.33-1.52.19-.31.43-.59.71-.82.73-.54,1.18-1.37,1.23-2.28,0-.53-.06-1.06-.16-1.58-.2-.63-.14-1.31.16-1.89.25-.61.33-1.27.23-1.92-.03-.57-.07-1.15.16-1.33.41-.34.65-.84.66-1.38,0-.41.18-.8.5-1.05,1.31-1.01,2.26-2.42,2.69-4.02h0Z"/></g><path fill="currentColor" d="M53.42,35.22h-2.8v-2.1h2.8v2.1h0ZM53.81,32.35h-3.57c-.21,0-.38.17-.38.38h0v2.87c0,.21.17.38.38.38h3.57c.21,0,.38-.17.38-.38h0v-2.87c0-.21-.17-.38-.38-.38h0Z"/><path fill="currentColor" d="M44.08,41.68h2.02v3.4h-2.02v-3.4h0ZM43.7,45.85h2.79c.21,0,.38-.17.38-.38h0v-4.17c0-.21-.17-.38-.38-.38h-2.79c-.21,0-.38.17-.38.38h0v4.17c0,.21.17.38.38.38h0Z"/><path fill="currentColor" d="M57.94,41.68h2.02v3.4h-2.02v-3.4h0ZM57.56,45.85h2.79c.21,0,.38-.17.38-.38h0v-4.17c0-.21-.17-.38-.38-.38h-2.79c-.21,0-.38.17-.38.38h0v4.17c0,.21.17.38.38.38h0Z"/><path fill="currentColor" d="M8.33,72.42l.56-.65c.56.59,1.37.95,2.21.95,1.03,0,1.64-.52,1.64-1.28s-.56-1.06-1.31-1.39l-1.13-.49c-.76-.32-1.59-.89-1.59-2.03,0-1.2,1.03-2.09,2.47-2.09.96,0,1.77.4,2.33.95l-.54.65c-.49-.43-1.09-.72-1.79-.72-.88,0-1.46.44-1.46,1.15,0,.75.68,1.04,1.31,1.31l1.12.48c.94.4,1.62.94,1.62,2.1,0,1.25-1.01,2.24-2.67,2.24-1.13,0-2.07-.44-2.76-1.17Z"/><path fill="currentColor" d="M15.45,69.52c0-2.53,1.49-4.08,3.49-4.08.94,0,1.7.43,2.16.97l-.54.61c-.42-.44-.96-.71-1.61-.71-1.48,0-2.47,1.22-2.47,3.18s.96,3.23,2.48,3.23c.73,0,1.3-.29,1.8-.83l.52.58c-.64.72-1.37,1.13-2.39,1.13-1.97,0-3.44-1.51-3.44-4.08Z"/><path fill="currentColor" d="M23.36,65.59h1v3.3h3.66v-3.3h1.01v7.87h-1.01v-3.71h-3.66v3.71h-1v-7.87Z"/><path fill="currentColor" d="M31.79,65.59h1v7.02h3.44v.85h-4.44v-7.87Z"/><path fill="currentColor" d="M37.45,69.49c0-2.52,1.38-4.04,3.36-4.04s3.37,1.54,3.37,4.04-1.39,4.11-3.37,4.11-3.36-1.58-3.36-4.11ZM43.14,69.49c0-1.96-.92-3.17-2.33-3.17s-2.33,1.21-2.33,3.17.92,3.24,2.33,3.24,2.33-1.27,2.33-3.24Z"/><path fill="currentColor" d="M45.9,72.42l.56-.65c.56.59,1.37.95,2.21.95,1.03,0,1.64-.52,1.64-1.28s-.56-1.06-1.31-1.39l-1.13-.49c-.76-.32-1.59-.89-1.59-2.03,0-1.2,1.03-2.09,2.47-2.09.96,0,1.78.4,2.33.95l-.54.65c-.49-.43-1.09-.72-1.79-.72-.88,0-1.46.44-1.46,1.15,0,.75.68,1.04,1.31,1.31l1.12.48c.94.4,1.62.94,1.62,2.1,0,1.25-1.01,2.24-2.67,2.24-1.13,0-2.07-.44-2.76-1.17Z"/><path fill="currentColor" d="M52.74,72.42l.56-.65c.56.59,1.37.95,2.21.95,1.03,0,1.64-.52,1.64-1.28s-.56-1.06-1.31-1.39l-1.13-.49c-.76-.32-1.59-.89-1.59-2.03,0-1.2,1.03-2.09,2.47-2.09.96,0,1.77.4,2.33.95l-.54.65c-.49-.43-1.09-.72-1.79-.72-.88,0-1.46.44-1.46,1.15,0,.75.68,1.04,1.31,1.31l1.12.48c.94.4,1.62.94,1.62,2.1,0,1.25-1.01,2.24-2.67,2.24-1.13,0-2.07-.44-2.76-1.17Z"/><path fill="currentColor" d="M62.63,71.42c0-1.06.74-1.71,1.55-2.27-.32-.65-.52-1.27-.52-1.85,0-1.04.73-1.86,1.82-1.86.97,0,1.55.64,1.55,1.56,0,1.03-.9,1.69-1.77,2.33.52.8,1.25,1.58,1.99,2.2.49-.64.86-1.42,1.1-2.32h.92c-.29,1.02-.74,1.99-1.38,2.82.54.38,1.08.62,1.48.75l-.26.82c-.55-.16-1.18-.46-1.8-.9-.59.54-1.3.9-2.23.9-1.42,0-2.45-.85-2.45-2.18ZM65.13,72.81c.54,0,1.04-.24,1.5-.64-.77-.67-1.51-1.49-2.06-2.34-.55.44-.98.91-.98,1.52,0,.91.71,1.45,1.55,1.45ZM64.88,68.67c.72-.48,1.34-.96,1.34-1.66,0-.46-.22-.86-.74-.86-.59,0-.97.49-.97,1.14,0,.43.14.91.37,1.38Z"/><path fill="currentColor" d="M73.78,69.52c0-2.53,1.52-4.08,3.61-4.08,1.09,0,1.81.48,2.27.97l-.55.62c-.4-.42-.9-.72-1.69-.72-1.58,0-2.6,1.22-2.6,3.18s.94,3.23,2.61,3.23c.56,0,1.1-.18,1.42-.47v-2.05h-1.67v-.83h2.58v3.31c-.5.53-1.37.91-2.42.91-2.08,0-3.55-1.51-3.55-4.08Z"/><path fill="currentColor" d="M82.2,70.25v-4.67h1v4.69c0,1.86.8,2.45,1.83,2.45s1.86-.59,1.86-2.45v-4.69h.96v4.67c0,2.49-1.21,3.35-2.82,3.35s-2.83-.85-2.83-3.35Z"/><path fill="currentColor" d="M92.21,66.43h-2.38v-.84h5.76v.84h-2.38v7.03h-1.01v-7.03Z"/><path fill="currentColor" d="M0,79.51h2.35v8.45h4.13v1.98H0v-10.44Z"/><path fill="currentColor" d="M9.89,79.51h2.35v10.44h-2.35v-10.44Z"/><path fill="currentColor" d="M16.3,79.51h6.53v1.99h-4.18v2.1h3.55v1.97h-3.55v2.4h4.34v1.98h-6.69v-10.44Z"/><path fill="currentColor" d="M26.67,79.51h3.57c2.16,0,3.84.59,3.84,2.59,0,1.04-.5,1.94-1.36,2.26v.06c1.17.27,1.87,1.01,1.87,2.34,0,2.21-1.79,3.19-4.05,3.19h-3.87v-10.44ZM30.13,83.69c1.15,0,1.65-.48,1.65-1.23,0-.82-.53-1.12-1.63-1.12h-1.12v2.35h1.1ZM30.35,88.12c1.28,0,1.94-.45,1.94-1.41s-.64-1.28-1.94-1.28h-1.33v2.69h1.33Z"/><path fill="currentColor" d="M37.95,79.51h6.53v1.99h-4.18v2.1h3.55v1.97h-3.55v2.4h4.34v1.98h-6.69v-10.44Z"/><path fill="currentColor" d="M48.8,79.51h2.46l2.67,5.14c.37.7.71,1.54,1.02,2.35h.06c-.11-1.12-.3-2.56-.3-3.79v-3.7h2.26v10.44h-2.46l-2.67-5.14c-.37-.71-.72-1.54-1.04-2.35h-.06c.13,1.15.32,2.56.32,3.79v3.7h-2.26v-10.44Z"/><path fill="currentColor" d="M61.52,79.51h3.57c2.16,0,3.84.59,3.84,2.59,0,1.04-.5,1.94-1.36,2.26v.06c1.17.27,1.87,1.01,1.87,2.34,0,2.21-1.79,3.19-4.05,3.19h-3.87v-10.44ZM64.98,83.69c1.15,0,1.65-.48,1.65-1.23,0-.82-.53-1.12-1.63-1.12h-1.12v2.35h1.1ZM65.2,88.12c1.28,0,1.94-.45,1.94-1.41s-.64-1.28-1.94-1.28h-1.33v2.69h1.33Z"/><path fill="currentColor" d="M73.28,79.51h6.53v1.99h-4.18v2.1h3.55v1.97h-3.55v2.4h4.34v1.98h-6.69v-10.44Z"/><path fill="currentColor" d="M84.13,79.51h3.76c2.21,0,4.02.77,4.02,3.25,0,1.54-.74,2.51-1.86,3.01l2.37,4.18h-2.64l-2-3.76h-1.3v3.76h-2.35v-10.44ZM87.7,84.31c1.23,0,1.91-.53,1.91-1.55s-.67-1.38-1.91-1.38h-1.22v2.93h1.22Z"/><path fill="currentColor" d="M95.52,84.79c0-3.46,2.3-5.47,5.09-5.47,1.5,0,2.59.62,3.28,1.36l-1.23,1.42c-.53-.46-1.07-.75-1.97-.75-1.62,0-2.75,1.26-2.75,3.36s.98,3.39,2.93,3.39c.43,0,.87-.11,1.12-.32v-1.79h-1.73v-1.92h3.81v4.8c-.72.7-1.99,1.26-3.44,1.26-2.87,0-5.11-1.84-5.11-5.35Z"/></svg></template>
+</head><body><div id="root"></div>
+<script>/* ===================== Demo-Daten (alle Personen und Zahlen erfunden) ===================== */
+const PERSONAS = {
+  jana:  { id:'jana',  name:'Jana M.',  initials:'JM', role:'Mitarbeiterin Rezeption', team:'Rezeption', level:'employee', user:'jana.m', desc:'Sieht, was Mitarbeitende sehen: News, Übergaben, Chat, Checklisten.' },
+  maren: { id:'maren', name:'Maren H.', initials:'MH', role:'Abteilungsleitung Service', team:'Service', level:'lead', user:'maren.h', desc:'Zusätzlich: Lesestatus, Erinnerungen, wichtige Mitteilungen, Ideen verwalten.' },
+  lena:  { id:'lena',  name:'Lena K.',  initials:'LK', role:'Personal & Verwaltung', team:'Verwaltung', level:'admin', user:'lena.k', desc:'Zusätzlich: Verwaltung, Freischaltung aus Gastromatic, Design je Gesellschaft.' },
+  tom:   { id:'tom',   name:'Tom B.',   initials:'TB', role:'Externer Dienstleister · Haustechnik', team:'Extern', level:'external', user:'tom.b.extern', desc:'Externer Zugang, befristet bis 31.03.2027 – ohne KI und Mitarbeiterverzeichnis.' }
+};
+
+function seedData(){
+  return {
+    people: {
+      jana:{name:'Jana M.',ini:'JM',team:'Rezeption',job:'Rezeption',c:''},
+      selin:{name:'Selin A.',ini:'SA',team:'Rezeption',job:'Rezeption · Nachtdienst',c:'c1'},
+      jonas:{name:'Jonas W.',ini:'JW',team:'Rezeption',job:'Rezeption',c:'c2'},
+      piotr:{name:'Piotr N.',ini:'PN',team:'Rezeption',job:'Rezeption',c:'c3',lang:'Polnisch'},
+      maren:{name:'Maren H.',ini:'MH',team:'Service',job:'Abteilungsleitung Service',c:''},
+      tobias:{name:'Tobias K.',ini:'TK',team:'Service',job:'Service',c:'c1'},
+      lukas:{name:'Lukas B.',ini:'LB',team:'Service',job:'Service',c:'c4'},
+      ana:{name:'Ana F.',ini:'AF',team:'Service',job:'Service',c:'c2'},
+      marta:{name:'Marta W.',ini:'MW',team:'Housekeeping',job:'Housekeeping',c:'c2',absent:'abwesend bis 9.10.'},
+      sven:{name:'Sven R.',ini:'SR',team:'Küche',job:'Küchenleitung',c:'c4'},
+      paula:{name:'Paula S.',ini:'PS',team:'Verkauf & Veranstaltungen',job:'Veranstaltungsbetreuung',c:'c1'},
+      lena:{name:'Lena K.',ini:'LK',team:'Verwaltung',job:'Personal & Verwaltung',c:'c3'},
+      tom:{name:'Tom B.',ini:'TB',team:'Extern',job:'Haustechnik (extern)',c:'c4',external:true}
+    },
+    news: [
+      { id:'n4', author:'sven', team:'Küche', time:'heute, 06:30', title:'HACCP: Neue Regel zur Kühlkette bei Anlieferungen', important:true, aud:['Alle Mitarbeitenden'],
+        body:['Ab sofort messen wir bei jeder Tiefkühl-Lieferung die Kerntemperatur – nicht mehr nur stichprobenartig.','Die SOP „Kühlkette bei der Warenannahme“ ist auf Version 3 aktualisiert. Bitte lies sie bis Freitag und bestätige mit „Kenntnis genommen“.'],
+        link:{label:'SOP Kühlkette öffnen', route:'wissen', param:'kuehlkette'}, likes:7, liked:false, comments:[], recipients:['jana','selin','jonas','piotr','tobias','lukas','ana','marta','maren','paula'], readBy:{tobias:'06:41',lukas:'06:55',maren:'07:02'}, track:true },
+      { id:'n1', author:'maren', team:'Service', time:'heute, 07:12', title:'Neue Dienstkleidung für Service, Rezeption und Housekeeping ab November', important:false, aud:['Service','Rezeption','Housekeeping'],
+        body:['Ab dem 2. November tragen wir die neue Dienstkleidung. Die Anprobe ist am 14. und 15. Oktober, jeweils 14 bis 16 Uhr im Personalraum.','Bitte trag dich bis Freitag in die Größentabelle ein. Fragen gern an mich oder @Tobias K.'],
+        en:{title:'New uniforms for Service, Front Office and Housekeeping from November', body:['From 2 November we will wear the new uniforms. Fittings are on 14 and 15 October, 2–4 pm in the staff room.','Please add your sizes to the size chart by Friday. Questions to me or @Tobias K.']},
+        pl:{title:'Nowa odzież służbowa dla serwisu, recepcji i housekeepingu od listopada', body:['Od 2 listopada nosimy nową odzież służbową. Przymiarka odbędzie się 14 i 15 października w godz. 14–16 w pokoju socjalnym.','Prosimy o wpisanie rozmiaru do tabeli do piątku. Pytania do mnie lub do @Tobias K.']},
+        photo:'uniform', attach:{name:'Groessentabelle_Dienstkleidung.pdf', size:'240 KB'},
+        likes:12, liked:false,
+        comments:[{by:'piotr', text:'Gibt es die Hose auch in kurzer Länge? Ich bin 1,62 m.', orig:'Czy spodnie są też w krótszej długości? Mam 1,62 m.', time:'07:40'},{by:'maren', text:'@Piotr N. ja, in drei Längen – steht in der Tabelle.', time:'07:52'}],
+        recipients:['jana','selin','jonas','piotr','tobias','lukas','ana','marta'], readBy:{selin:'07:20',jonas:'07:31',tobias:'07:33',lukas:'08:02',ana:'08:10'}, track:true },
+      { id:'n2', author:'paula', team:'Verkauf & Veranstaltungen', time:'gestern, 16:20', title:'Weihnachtsmarkt: Wer hilft beim Aufbau am 28. November?', important:false, aud:['Alle Mitarbeitenden'],
+        body:['Für den Weihnachtsmarkt suchen wir helfende Hände beim Aufbau der Hütten und der Beleuchtung. Treffpunkt 9 Uhr am Gutshof, für Verpflegung ist gesorgt.','Wer Zeit hat, meldet sich einfach hier in den Kommentaren.'],
+        likes:9, liked:false, comments:[{by:'lukas', text:'Bin dabei, aber erst ab 11 Uhr.', time:'gestern'}], recipients:[], readBy:{}, track:false },
+      { id:'n3', author:'lena', team:'Personal', time:'Fr., 2.10.', title:'Willkommen im Team: drei neue Azubis in Küche und Service', important:false, aud:['Alle Mitarbeitenden'],
+        body:['Wir freuen uns über drei neue Auszubildende: zwei in der Küche, eine im Service. Sie haben in dieser Woche ihre erste Station begonnen.','Sprecht sie gern an und zeigt ihnen, wo es den besten Kaffee gibt.'],
+        en:{title:'Welcome to the team: three new apprentices in Kitchen and Service', body:['We are happy to welcome three new apprentices: two in the kitchen and one in service. They started their first station this week.','Feel free to say hello and show them where to find the best coffee.']},
+        likes:21, liked:false, comments:[], recipients:[], readBy:{}, track:false }
+    ],
+    social: [
+      { id:'s1', by:'marta', cat:'Grüße & Momente', time:'gestern, 18:40', text:'Liebe Grüße von der Ostsee! Sonne, Wind und ganz viel Ruhe – bis bald im Schloss.', photo:'sea', likes:23, liked:false, comments:[{by:'selin', text:'Genieß es, wir halten die Stellung!'}] },
+      { id:'s2', by:'tobias', cat:'Biete & Suche', time:'heute, 09:15', market:{intent:'Biete', title:'Trekkingrad, 28 Zoll, mit Korb', price:'80 €', status:'Verfügbar', days:27}, text:'Gut gepflegt, neue Bremsen. Abholung in Liebenberg.', photo:'bike', likes:4, liked:false, comments:[] },
+      { id:'s3', by:'piotr', cat:'Freizeit & Sport', time:'Mo., 5.10.', text:'Laufgruppe nach Feierabend? Dienstags 17 Uhr, Start am Gutshof, ca. 5 km um den See.', orig:'Grupa biegowa po pracy? We wtorki o 17:00, start przy Gutshof, ok. 5 km wokół jeziora.', join:6, joined:false, likes:8, liked:false, comments:[] },
+      { id:'s4', by:'ana', cat:'Grüße & Momente', time:'So., 4.10.', text:'Danke an das ganze Service-Team für die Hochzeit am Samstag. 85 Gäste, ein Sonnenuntergang wie bestellt – und ihr wart großartig.', likes:15, liked:false, comments:[] }
+    ],
+    handovers: [
+      { id:'h1', team:'Rezeption', shift:'Nacht → Früh', by:'selin', time:'heute, 06:02', subject:'Ruhige Nacht, zwei offene Punkte', points:['Zi. 214 reist 05:30 ab – Rechnung bezahlt, Schlüssel im Fach.','Zi. 108: Heizkörper tropft. Haustechnik ist informiert.','Namensschilder für die Strategietagung liegen im Backoffice.'], flex:true, photos:2, readBy:{jonas:'06:41'}, comments:[{by:'jonas', text:'Übernehme Zi. 108 und melde mich bei der Haustechnik.', time:'06:41'}] },
+      { id:'h2', team:'Rezeption', shift:'Spät → Nacht', by:'jonas', time:'gestern, 22:15', subject:'Spätanreise und Fundsache', points:['Spätanreise Zi. 305 um 23:40 – Schlüssel liegt bereit.','Fundsache: schwarzer Schal aus dem Kaminzimmer, liegt in der Fundkiste.'], photos:0, readBy:{selin:'22:20',jana:'06:05'}, comments:[] },
+      { id:'h3', team:'Service', shift:'Spät → Früh', by:'lukas', time:'gestern, 23:05', subject:'Hochzeit Gutshof abgebaut', points:['Gutshof ist abgebaut, Gläser zählen noch offen (2 Kisten im Lager).','Allergiker-Info für die Tagung morgen liegt beim Pass.'], photos:1, readBy:{maren:'07:00'}, comments:[] }
+    ],
+    chats: [
+      { id:'c1', type:'group', name:'Team Rezeption', ini:'RZ', members:'8 Mitglieder', unread:2,
+        msgs:[{by:'selin', text:'Kann jemand heute ab 14 Uhr eine Stunde länger bleiben? Großer Check-in für die Tagung.', t:'06:15'},
+              {by:'piotr', text:'Ich kann bis 16 Uhr bleiben.', orig:'Mogę zostać do 16:00.', t:'06:31'},
+              {by:'jonas', text:'Neuer Sitzplan für den Schlosssaal liegt im Backoffice.', t:'07:02'}],
+        replies:[{by:'selin', text:'Super, danke dir!'},{by:'jonas', text:'Passt, ich sag der Küche Bescheid.'},{by:'piotr', text:'Alles klar, bis gleich.', orig:'Jasne, do zobaczenia.'}] },
+      { id:'c2', type:'direct', with:'piotr', unread:1,
+        msgs:[{by:'piotr', text:'Hast du die Namensschilder für die Tagung gesehen?', orig:'Widziałaś identyfikatory na konferencję?', t:'07:15'}],
+        replies:[{by:'piotr', text:'Danke, habe sie gefunden!', orig:'Dzięki, znalazłem je!'},{by:'piotr', text:'Perfekt, dann bereite ich die Mappen vor.', orig:'Super, w takim razie przygotuję teczki.'}] },
+      { id:'c3', type:'direct', with:'maren', unread:0,
+        msgs:[{by:'maren', text:'Kannst du mir bis Freitag die Größen der Rezeption schicken?', t:'gestern'},{by:'me', text:'Mache ich, sammle gerade noch.', t:'gestern', status:'read'}],
+        replies:[{by:'maren', text:'Danke dir!'}] },
+      { id:'c4', type:'direct', with:'paula', unread:0,
+        msgs:[{by:'paula', text:'Für die Hochzeit am Samstag: 3 vegane Gäste mehr. Gibst du das an die Küche?', t:'Mo.'}],
+        replies:[{by:'paula', text:'Super, danke!'}] }
+    ],
+    tasks: [
+      {id:'t1', owner:'jana', title:'Gästeliste Hochzeit an die Küche weitergeben', prio:'hoch', due:'heute 12:00', done:false},
+      {id:'t2', owner:'jana', title:'Fundsachen Zimmer 112 dokumentieren', prio:'normal', due:'morgen', done:false},
+      {id:'t3', owner:'jana', title:'Kassensystem mit Lara üben', prio:'normal', due:'Fr.', done:false, tag:'Onboarding Lara S.'},
+      {id:'t4', owner:'maren', title:'Größen für Dienstkleidung bis Freitag sammeln', prio:'hoch', due:'Fr.', done:false},
+      {id:'t5', owner:'maren', title:'Sitzplan Hochzeit Gutshof freigeben', prio:'normal', due:'heute 15:00', done:false},
+      {id:'t6', owner:'maren', title:'Weinkarte Herbst mit der Küche abstimmen', prio:'niedrig', due:'nächste Woche', done:false},
+      {id:'t7', owner:'lena', title:'Arbeitsverträge der Azubis ablegen', prio:'normal', due:'morgen', done:false},
+      {id:'t8', owner:'lena', title:'Neue Kolleg:innen aus Gastromatic freischalten', prio:'hoch', due:'heute', done:false, go:'verwaltung'},
+      {id:'t9', owner:'tom', title:'Heizkörper Zimmer 108 prüfen', prio:'hoch', due:'heute 10:00', done:false},
+      {id:'t10', owner:'tom', title:'Aufzugwartung Schloss begleiten', prio:'normal', due:'Fr.', done:false}
+    ],
+    checklists: [
+      { id:'kuehl', title:'Kühlräume Temperatur', kind:'HACCP', team:'Küche', due:'fällig 10:00', note:'Beispiel-Grenzwerte – verbindlich ist das Eigenkontrollkonzept.',
+        items:[
+          {id:'k1', title:'Kühlraum 1 · Fleisch', type:'temp', max:7, value:'3,5', by:'Sven R.', at:'06:48'},
+          {id:'k2', title:'Kühlraum 2 · Molkerei', type:'temp', max:7},
+          {id:'k3', title:'Kühlraum 3 · Obst & Gemüse', type:'temp', max:7},
+          {id:'k4', title:'Kühlraum 4 · Getränke', type:'temp', max:10},
+          {id:'k5', title:'Tiefkühlzelle', type:'temp', max:-18},
+          {id:'k6', title:'Kühlschrank Seehaus', type:'temp', max:7},
+          {id:'k7', title:'Kühlschrank Lindenhaus', type:'temp', max:7},
+          {id:'k8', title:'Kühlschrank Kantine', type:'temp', max:7}
+        ]},
+      { id:'frueh', title:'Frühdienst Rezeption', kind:'Schicht', team:'Rezeption', due:'bis 08:00',
+        items:[
+          {id:'f1', title:'Übergabe vom Nachtdienst gelesen', type:'check', value:true, by:'Jana M.', at:'06:05'},
+          {id:'f2', title:'Kasse gezählt und Anfangsbestand eingetragen', type:'check', value:true, by:'Jana M.', at:'06:12'},
+          {id:'f3', title:'Anreiseliste und Meldescheine vorbereitet', type:'check'},
+          {id:'f4', title:'Schlüsselkarten für Gruppenanreise codiert', type:'check'},
+          {id:'f5', title:'Lobby und Eingang kontrolliert', type:'check'},
+          {id:'f6', title:'Tagesinfo im Aufzug aktualisiert', type:'check'},
+          {id:'f7', title:'E-Mail-Postfach Reservierung gesichtet', type:'check'},
+          {id:'f8', title:'Taxi- und Shuttlefahrten bestätigt', type:'check'}
+        ]},
+      { id:'ware', title:'Warenannahme Kühlware', kind:'HACCP', team:'Küche', due:'bei jeder Lieferung',
+        items:[
+          {id:'w1', title:'Verpackung unbeschädigt, keine Auftauspuren', type:'check'},
+          {id:'w2', title:'Lieferschein mit Bestellung abgeglichen', type:'check'},
+          {id:'w3', title:'Kerntemperatur Kühlware', type:'temp', max:7},
+          {id:'w4', title:'Kerntemperatur Tiefkühlware', type:'temp', max:-18},
+          {id:'w5', title:'Ware ohne Zwischenlagerung eingeräumt', type:'check'}
+        ]}
+    ],
+    survey: { title:'Wie zufrieden bist du mit der Mitarbeiterverpflegung?', anon:true, until:'noch 4 Tage', answered:false,
+      q1:{label:'Wie zufrieden bist du insgesamt?', counts:[0,1,3,5,2]},
+      q2:{label:'Was wünschst du dir öfter?', opts:['Vegetarische Gerichte','Salatbar','Regionale Produkte','Warmes Frühstück'], counts:[6,4,7,3]},
+      q3:{label:'Was möchtest du uns noch sagen? (freiwillig)', texts:['Mehr Obst am Nachmittag wäre toll.','Die Suppen sind super!','Bitte öfter Fisch.']}
+    },
+    ideas: [
+      {id:'i1', title:'Kräutergarten für die Küche', text:'Hochbeete hinter dem Gutshof, Kräuter für Küche und Bar.', cat:'Nachhaltigkeit', status:'Umgesetzt', votes:14, voted:false, by:'Sven R.'},
+      {id:'i2', title:'Mitfahrbörse ab Oranienburg', text:'Gemeinsam zur Frühschicht – spart Geld und CO₂.', cat:'Team', status:'In Prüfung', votes:9, voted:false, by:'Selin A.'},
+      {id:'i3', title:'Gäste-Fahrräder mit Tourenvorschlägen', text:'Fünf Räder und drei Touren rund um Liebenberg.', cat:'Gäste', status:'In Prüfung', votes:11, voted:false, by:'Paula S.'},
+      {id:'i4', title:'Zweisprachige Schilder im Personalbereich', text:'Deutsch/Englisch, später Polnisch.', cat:'Team', status:'Eingereicht', votes:6, voted:false, by:'Piotr N.'},
+      {id:'i5', title:'Digitale Gästemappe per QR-Code', text:'Weniger Papier im Zimmer, immer aktuell.', cat:'Gäste', status:'Eingereicht', votes:4, voted:false, by:'Jonas W.'}
+    ],
+    contacts: [
+      {id:'k1', name:'Kälte Nord GmbH', cat:'Wartung & Reparatur', what:'Kältetechnik, Kühlräume', phone:'+49 3301 555 010', emergency:'24/7-Notdienst', person:'Herr Brandt'},
+      {id:'k2', name:'Aufzugservice Brandenburg', cat:'Wartung & Reparatur', what:'Aufzüge Schloss und Seehaus', phone:'+49 3301 555 020', emergency:'Notruf 24/7', person:'Leitstelle'},
+      {id:'k3', name:'Heizung & Sanitär Löwenberg', cat:'Wartung & Reparatur', what:'Heizung, Wasser', phone:'+49 33094 555 30', emergency:'Notdienst Wochenende', person:'Frau Seidel'},
+      {id:'k4', name:'Schlüsseldienst Oberhavel', cat:'Dienstleister', what:'Schließanlage', phone:'+49 3301 555 040', emergency:'24/7', person:'—'},
+      {id:'k5', name:'Getränke Havelland', cat:'Lieferanten', what:'Getränke, Leergut · Kundennr. 4711', phone:'+49 3301 555 050', person:'Herr Kaya'},
+      {id:'k6', name:'Gemüsehof Löwenberger Land', cat:'Lieferanten', what:'Regionales Gemüse, Kräuter', phone:'+49 33094 555 60', person:'Familie Wendt'},
+      {id:'k7', name:'Wäscherei Nordbrandenburg', cat:'Dienstleister', what:'Bettwäsche, Tischwäsche', phone:'+49 3301 555 070', person:'Disposition'},
+      {id:'k8', name:'Druckerei am Gutshof', cat:'Partner', what:'Speisekarten, Tischkarten', phone:'+49 33094 555 80', person:'Frau Lenz'}
+    ],
+    docs: [
+      {id:'d1', name:'Temperaturprotokoll Kühlräume.pdf', cat:'Küche › Formulare', ver:'2', date:'01.10.2026', size:'180 KB'},
+      {id:'d2', name:'Groessentabelle_Dienstkleidung.pdf', cat:'aus News · Service', ver:'1', date:'heute', size:'240 KB', from:'News'},
+      {id:'d3', name:'Hausordnung für Mitarbeitende.pdf', cat:'Richtlinien', ver:'4', date:'15.08.2026', size:'420 KB'},
+      {id:'d4', name:'Notfallplan Brandschutz.pdf', cat:'Sicherheit', ver:'3', date:'02.06.2026', size:'1,2 MB'},
+      {id:'d5', name:'Allergenkennzeichnung Vorlage.docx', cat:'Küche › Vorlagen', ver:'1', date:'12.09.2026', size:'60 KB'},
+      {id:'d6', name:'Gehaltsstruktur 2027.xlsx', cat:'Personal (vertraulich)', ver:'1', date:'30.09.2026', size:'90 KB', secret:true}
+    ],
+    pending: [
+      {id:'p1', name:'Lara S.', nr:'10482', comp:'[Gesellschaft A]', area:'Service · Azubi', start:'01.10.2026', groups:['Service','Azubis','Seehaus']},
+      {id:'p2', name:'Dewi P.', nr:'10483', comp:'[Gesellschaft A]', area:'Küche · Azubi', start:'01.10.2026', groups:['Küche','Azubis']},
+      {id:'p3', name:'Kemal Y.', nr:'10479', comp:'[Gesellschaft A] + [Gesellschaft C]', area:'Set-Up', start:'15.10.2026', groups:['Set-Up']},
+      {id:'p4', name:'Nina R.', nr:'10485', comp:'[Gesellschaft B]', area:'Housekeeping', start:'01.11.2026', groups:['Housekeeping']}
+    ],
+    audit: [
+      {t:'heute 06:00', who:'System', what:'Gastromatic-Abgleich: 4 neu, 2 geändert, 1 Austritt'},
+      {t:'gestern 17:12', who:'Lena K.', what:'Rolle „Teamleitung“ an Jonas W. vergeben (Gruppe Rezeption)'},
+      {t:'gestern 09:40', who:'Maren H.', what:'Erinnerung zu „Dienstkleidung“ an 3 Personen gesendet'}
+    ],
+    integrations: [
+      {id:'gm', name:'Gastromatic', what:'Personalstammdaten und Dienstplan', state:'verbunden', note:'Demo-Daten · letzter Abgleich heute 06:00'},
+      {id:'fk', name:'Flexkeeping', what:'Housekeeping und Störungsmeldungen', state:'verbunden', note:'Demo-Daten · Belegung 06:00'},
+      {id:'ev', name:'Eventtool', what:'Veranstaltungen und Räume', state:'verbunden', note:'Demo-Daten · 07:45'},
+      {id:'rv', name:'Bewertungstool', what:'Gästebewertungen', state:'geplant', note:'Phase 5'},
+      {id:'ms', name:'Microsoft 365', what:'Outlook-Kalender, Teams, Anmeldung', state:'Prüfung', note:'technische Prüfung offen'},
+      {id:'bh', name:'Digitales Berichtsheft', what:'Ausbildungsnachweise der Azubis', state:'Idee', note:'über offene API anbindbar'}
+    ],
+    shifts: {
+      jana:[['Heute','07:00–15:30 · Rezeption'],['Fr., 9.10.','07:00–15:30'],['Sa., 10.10.','frei'],['So., 11.10.','14:00–22:30']],
+      maren:[['Heute','10:00–18:30 · Service'],['Fr., 9.10.','10:00–18:30'],['Sa., 10.10.','14:00–23:00 · Hochzeit'],['So., 11.10.','frei']],
+      lena:[['Heute','08:00–16:30 · Büro'],['Fr., 9.10.','08:00–14:00'],['Sa., 10.10.','frei'],['So., 11.10.','frei']],
+      tom:[['Heute','08:00–12:00 · Einsatz Zi. 108'],['Fr., 9.10.','09:00 · Aufzugwartung']]
+    },
+    notifs: {
+      jana:[{id:'a1', text:'Maren H. hat dich in „Dienstkleidung“ erwähnt', time:'07:52', route:'news', param:'n1', read:false},{id:'a2', text:'Neue Übergabe: Nacht → Früh (Rezeption)', time:'06:02', route:'uebergaben', param:'h1', read:false},{id:'a3', text:'Wichtig: SOP Kühlkette bis Freitag bestätigen', time:'06:30', route:'wissen', param:'kuehlkette', read:false}],
+      maren:[{id:'b1', text:'5 von 8 haben „Dienstkleidung“ gelesen', time:'08:10', route:'news', param:'n1', read:false},{id:'b2', text:'Neue Idee: Mitfahrbörse ab Oranienburg', time:'gestern', route:'ideen', read:false}],
+      lena:[{id:'c1', text:'4 neue Kolleg:innen aus Gastromatic warten auf Freischaltung', time:'06:00', route:'verwaltung', read:false},{id:'c2', text:'Social-Beitrag gemeldet: bitte prüfen', time:'gestern', route:'social', read:false}],
+      tom:[{id:'d1', text:'Neuer Auftrag: Heizkörper Zimmer 108', time:'06:40', route:'aufgaben', read:false}]
+    },
+    ack:{},
+    widgets:{events:true, shift:true, news:true, tasks:true, handovers:true, checklists:true, survey:true, social:true},
+    navMobile:['start','news','uebergaben','chat'],
+    notifPrefs:[
+      {type:'Wichtige Mitteilungen', push:true, mail:true, win:'immer'},
+      {type:'News', push:true, mail:false, win:'Mo–Fr 7–21 Uhr'},
+      {type:'Übergaben meines Teams', push:true, mail:false, win:'nur in meiner Schicht'},
+      {type:'Chat', push:true, mail:false, win:'7–22 Uhr'},
+      {type:'Social', push:false, mail:false, win:'nie'},
+      {type:'Erinnerungen', push:true, mail:true, win:'Mo–Fr 7–21 Uhr'}
+    ]
+  };
+}
+
+const KNOW = {
+  tree:[
+    {name:'Richtlinien', items:['hausordnung']},
+    {name:'Brand Standards', items:['telefon']},
+    {name:'Rezeption', items:['checkin']},
+    {name:'Küche', sub:[{name:'HACCP', items:['kuehlkette','allergene']},{name:'Geräte', items:['spuelmaschine']}]},
+    {name:'Housekeeping', items:[]},
+    {name:'Vorlagen & Formulare', items:[]}
+  ],
+  articles:{
+    kuehlkette:{ title:'Kühlkette bei der Warenannahme', type:'SOP', path:['Küche','HACCP'], ver:3, valid:'01.10.2026', owner:'Küchendirektion', review:'März 2027', mandatory:true, media:'photo',
+      change:'Kerntemperatur wird jetzt bei jeder Tiefkühl-Lieferung gemessen.',
+      steps:[['Lieferung sofort prüfen','Verpackung auf Schäden und Auftauspuren kontrollieren, Lieferschein mit Bestellung abgleichen.'],
+             ['Temperatur messen','Kühlware höchstens 7 °C, Tiefkühlware höchstens −18 °C (Beispielwerte, verbindlich ist das Eigenkontrollkonzept). Bei Tiefkühlware immer die Kerntemperatur messen.'],
+             ['Bei Abweichung','Ware nicht annehmen, Wert in der Checkliste „Warenannahme Kühlware“ dokumentieren und die Küchenleitung informieren.'],
+             ['Zügig einlagern','Kühl- und Tiefkühlware ohne Zwischenlagerung in die Kühlräume bringen.']],
+      plain:[['Schau dir die Lieferung an','Ist die Verpackung kaputt oder nass? Dann sag sofort Bescheid.'],
+             ['Miss die Temperatur','Kühlware: höchstens 7 Grad. Tiefkühlware: höchstens minus 18 Grad.'],
+             ['Zu warm?','Dann nimm die Ware nicht an. Schreib den Wert in die Checkliste. Sag der Küchenleitung Bescheid.'],
+             ['Schnell einräumen','Bring die Ware sofort in den Kühlraum.']],
+      en:{title:'Cold chain at goods receipt', steps:[['Check the delivery immediately','Check packaging for damage and signs of thawing, compare the delivery note with the order.'],['Measure the temperature','Chilled goods max. 7 °C, frozen goods max. −18 °C (example values). For frozen goods always measure the core temperature.'],['If values deviate','Do not accept the goods, record the value in the “Goods receipt” checklist and inform the kitchen management.'],['Store promptly','Bring chilled and frozen goods to the cold rooms without interim storage.']]},
+      diff:[['ins','Kerntemperatur wird bei jeder Tiefkühl-Lieferung gemessen.'],['del','Kerntemperatur stichprobenartig bei jeder dritten Lieferung messen.'],['ins','Neuer Schritt 4: zügig einlagern, ohne Zwischenlagerung.'],['same','Schritte 1 und 3 unverändert.']],
+      related:[['Checkliste: Warenannahme Kühlware','checklisten','ware'],['Dokument: Temperaturprotokoll Kühlräume','dokumente',null],['Kontakt: Kälte Nord GmbH (Notdienst)','kontakte','k1']] },
+    allergene:{ title:'Allergene richtig kennzeichnen', type:'Richtlinie', path:['Küche','HACCP'], ver:2, valid:'01.03.2026', owner:'Küchendirektion', review:'März 2027', mandatory:false,
+      steps:[['14 Hauptallergene kennen','Die Allergenliste hängt am Pass und steht in jeder Rezeptur.'],['Kennzeichnung prüfen','Jede Speisekarte und jedes Buffetschild nennt die enthaltenen Allergene.'],['Bei Gästefragen','Nie raten – im Zweifel die Küchenleitung oder den Pass fragen.']],
+      related:[['Dokument: Allergenkennzeichnung Vorlage','dokumente',null]] },
+    spuelmaschine:{ title:'Bandspülmaschine reinigen', type:'Geräteanleitung', path:['Küche','Geräte'], ver:1, valid:'12.05.2026', owner:'Küchenleitung', review:'Mai 2027', mandatory:false, media:'video',
+      steps:[['Maschine ausschalten','Hauptschalter aus, Wasser ablassen.'],['Siebe und Vorhänge reinigen','Siebe herausnehmen, unter fließendem Wasser reinigen.'],['Reinigungsmittel prüfen','Füllstand kontrollieren, nur freigegebenes Mittel verwenden.']],
+      related:[] },
+    checkin:{ title:'Check-in-Prozess', type:'Prozess', path:['Rezeption'], ver:5, valid:'01.09.2026', owner:'Leitung Rezeption', review:'Sept. 2027', mandatory:false,
+      steps:[['Begrüßen','Gäste mit Namen begrüßen, Willkommensgetränk anbieten.'],['Meldeschein','Meldeschein digital oder auf Papier ausfüllen lassen.'],['Zimmer und Leistungen','Zimmer, Frühstückszeiten, WLAN und Spa erklären.'],['Besonderheiten','Allergien, Anlässe und Wünsche im System vermerken.'],['Weg zeigen','Den Weg zum Zimmer erklären oder begleiten.']],
+      related:[['Checkliste: Frühdienst Rezeption','checklisten','frueh']] },
+    telefon:{ title:'So melden wir uns am Telefon', type:'Brand Standard', path:['Brand Standards'], ver:2, valid:'01.01.2026', owner:'Direktion', review:'Jan. 2027', mandatory:false,
+      steps:[['Begrüßung','„Schloss & Gut Liebenberg, mein Name ist …, was kann ich für Sie tun?“'],['Innerhalb von drei Klingeltönen','Wenn das nicht geht, ruft die Weiterleitung die Kolleg:innen.'],['Gäste werden gesiezt','Freundlich, direkt und ohne Hotelfloskeln.']],
+      related:[] },
+    hausordnung:{ title:'Hausordnung für Mitarbeitende', type:'Richtlinie', path:['Richtlinien'], ver:4, valid:'15.08.2026', owner:'Personal', review:'Aug. 2027', mandatory:false,
+      steps:[['Dienstkleidung','Saubere Dienstkleidung und Namensschild im Gästebereich.'],['Pausen','Pausen im Personalraum oder auf der Mitarbeiterterrasse.'],['Parken','Mitarbeitende parken auf dem Parkplatz am Gutshof.']],
+      related:[['Dokument: Hausordnung (PDF)','dokumente',null]] }
+  }
+};
+
+const END = {
+  mic:['Spracheingabe','Diktieren statt tippen ist eingeplant – zum Beispiel für Übergaben in der Küche. In der Demo bleibt das Mikrofon aus.'],
+  flexkeeping:['Flexkeeping','Hier öffnet sich später die Störungsmeldung direkt in Flexkeeping. Flexkeeping bleibt das führende System – wir zeigen nur an.'],
+  docview:['Dokumentvorschau','In der fertigen Wirkstatt öffnet sich hier die Vorschau – mit Version, Rechten und Download.'],
+  qr:['QR-Code am Gerät','Ein QR-Code am Kühlraum öffnet nach dem Anmelden direkt diese Anleitung. Das ist für eine spätere Ausbaustufe vorgesehen.'],
+  newsurvey:['Umfrage erstellen','Umfragen mit Auswahl-, Skalen- und Freitextfragen – auch anonym und direkt in News eingebettet. Der Editor folgt nach der Demo.'],
+  video:['Video','Kurze Anleitungsvideos mit Untertiteln sind fest eingeplant. In der Demo läuft hier noch kein Film.'],
+  edit:['Bearbeiten','Der Editor für Wissensartikel mit Versionen, Freigabe und KI-Vorschlag für Einfache Sprache kommt in Phase 3.'],
+  outlook:['Outlook-Kalender','Die Synchronisation mit Outlook steht auf der Prüfliste. Ob und wie, klären wir mit der IT.'],
+  housekeeping:['Housekeeping-Wissen','Diese Kategorie füllt das Housekeeping-Team selbst – mit Anleitungen, Reinigungsplänen und Fotos.'],
+  forms:['Vorlagen & Formulare','Vorlagen liegen in der Dokumentenablage. Schau dort nach dem Temperaturprotokoll.'],
+  wochenplan:['Wochenplan','Die Wochenübersicht aller Veranstaltungen kommt direkt aus dem Eventtool – geplant für Phase 5.'],
+  dienstplan:['Dienstplan','Den vollständigen Dienstplan siehst du weiterhin in Gastromatic. Hier zeigen wir nur deine nächsten Schichten.'],
+  onboarding:['Onboarding-Vorlagen','Vorlagen für On- und Offboarding mit automatisch erzeugten Aufgaben sind eingeplant (Phase 4).'],
+  roles:['Rechte bearbeiten','Rechte werden in der fertigen Wirkstatt hier vergeben – mit Vier-Augen-Prinzip für sensible Rechte.'],
+  audiolang:['Vorlesen','Dein Browser hat keine Sprachausgabe freigegeben. Auf den meisten Geräten liest die Wirkstatt Texte vor.'],
+  report:['Melden','Gemeldete Beiträge landen beim Moderationsteam. In der Demo wird nichts weitergeleitet.'],
+  team2:['Profil','Profile mit Tätigkeit, Gruppen und dienstlichen Kontaktdaten folgen. Private Daten bleiben in Gastromatic.'],
+  more:['Diese Funktion','Hier endet die Demo. Diese Funktion ist geplant und im Datenmodell schon vorbereitet.']
+};
+
+/* ===================== Mitarbeiterplattform Liebenberg – Demo ===================== */
+const root = document.getElementById('root');
+const LOGO = document.getElementById('logo-tpl').innerHTML;
+
+const IC = {
+  home:'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z', news:'M3 10v4h4l6 4V6l-6 4H3zM17 9a4 4 0 0 1 0 6',
+  social:'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z', hand:'M7 7h12l-3-3M17 17H5l3 3',
+  chat:'M4 5h16v11H9l-5 4z', book:'M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11', doc:'M6 3h8l4 4v14H6zM14 3v4h4',
+  task:'M4 4h16v16H4zM8 12l3 3 5-6', list:'M10 6h10M10 12h10M10 18h10M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2', poll:'M5 20V10M12 20V4M19 20v-7',
+  idea:'M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z',
+  contact:'M5 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5zM12 11a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM8 16a4 4 0 0 1 8 0',
+  team:'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 20a6 6 0 0 1 12 0M16 5a3 3 0 0 1 0 6M21 20a6 6 0 0 0-4-5.6',
+  admin:'M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1M15 4v4M9 10v4M17 16v4', search:'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4',
+  mic:'M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zM5 11a7 7 0 0 0 14 0M12 18v3', bell:'M6 16v-5a6 6 0 1 1 12 0v5l2 2H4zM10 21a2 2 0 0 0 4 0',
+  plus:'M12 5v14M5 12h14', x:'M6 6l12 12M18 6L6 18', check:'M5 12l5 5 9-10', back:'M15 6l-6 6 6 6', send:'M4 12l16-8-6 16-3-7z',
+  camera:'M4 8h3l2-3h6l2 3h3v11H4zM12 17a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z', speaker:'M4 9v6h4l5 4V5L8 9zM16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12',
+  globe:'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z',
+  lock:'M6 11h12v10H6zM8 11V7a4 4 0 0 1 8 0v4', shield:'M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z', upload:'M12 16V4M7 9l5-5 5 5M4 20h16',
+  copy:'M9 9h11v11H9zM5 15V4h11', thumb:'M7 10v10H4V10zM7 10l4-7a2 2 0 0 1 3 2l-1 5h6a2 2 0 0 1 2 2l-2 7a2 2 0 0 1-2 1H7', arrow:'M5 12h14M13 6l6 6-6 6',
+  user:'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0', logout:'M15 4h4v16h-4M10 8l-4 4 4 4M6 12h11',
+  sparkle:'M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z',
+  device:'M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM11 18h2', refresh:'M20 11a8 8 0 0 0-14.9-3M4 4v4h4M4 13a8 8 0 0 0 14.9 3M20 20v-4h-4',
+  cal:'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4', alert:'M12 8v5M12 16.5v.5M10.3 3.9 2.6 17.5A2 2 0 0 0 4.3 20.5h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z',
+  clock:'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2', grid:'M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z', menu:'M4 6h16M4 12h16M4 18h16',
+  qr:'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z', play:'M8 5v14l11-7z', ext:'M14 4h6v6M20 4l-9 9M18 14v6H4V6h6',
+  building:'M4 21V5l8-2v18M12 21V9l8 2v10M8 8v.01M8 12v.01M8 16v.01M16 14v.01M16 18v.01', image:'M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15 9.5v.01',
+  flag:'M5 21V4h11l-2 4 2 4H5', eye:'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', edit:'M4 20h4L19 9l-4-4L4 16zM14 6l4 4',
+  thermo:'M10 14V5a2 2 0 0 1 4 0v9a4 4 0 1 1-4 0z', run:'M13 4a2 2 0 1 0 0 .01M9 21l3-7 3 3v5M7 12l3-3 4 1 3 3'
+};
+const ic = (n,s=20,w=1.8) => `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${IC[n]||''}"/></svg>`;
+const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nowT = () => { const d=new Date(); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
+const uid = () => Math.random().toString(36).slice(2,9);
+const mentionfy = t => esc(t).replace(/@([A-ZÄÖÜ][\wäöüß]+ [A-ZÄÖÜ]\.)/g,'<span class="mention">@$1</span>');
+
+/* ---------- Zustand ---------- */
+let S;
+function freshState(){
+  return Object.assign({ user:null, pick:null, route:'start', param:null, query:'', modal:null, toasts:[], phone:false, brand:'sgl',
+    fs:16, customize:false, pop:null, demoOpen:false, newsLang:{}, kLang:'de', kPlain:false, docsFilter:'Alle', contactFilter:'Alle', contactQ:'', emergencyOnly:false,
+    socialFilter:'Alle', newsTab:'unread', readTab:'unread', chatId:null, typing:null, ai:null, taskTab:'offen', adminTab:'neu', syncing:null, approved:{},
+    checklistId:null, handTeam:'Rezeption', loginStep:1 }, seedData());
+}
+S = freshState();
+
+const P = id => S.people[id] || {name:id, ini:'?'};
+const me = () => S.user;
+const LEVEL = { external:0, employee:1, lead:2, admin:3 };
+function can(p){
+  const l = S.user ? S.user.level : 'employee';
+  switch(p){
+    case 'ai': case 'social': case 'team': case 'tasks': case 'surveys': case 'ideas': case 'handovers': case 'docs': return l!=='external';
+    case 'readlist': case 'remind': case 'important': case 'newsAll': case 'ideasManage': case 'surveyCreate': return LEVEL[l]>=2;
+    case 'admin': return l==='admin';
+    default: return true;
+  }
+}
+const isM = () => S.phone || window.innerWidth < 900;
+
+const NAV = [
+  ['start','Start','home'],['news','News','news'],['social','Social','social','social'],['uebergaben','Übergaben','hand','handovers'],['chat','Chat','chat'],
+  ['wissen','Wissen & SOPs','book'],['dokumente','Dokumente','doc','docs'],['aufgaben','Aufgaben','task','tasks'],['checklisten','Checklisten','list'],
+  ['umfragen','Umfragen','poll','surveys'],['ideen','Ideen','idea','ideas'],['kontakte','Kontakte','contact'],['team','Team','team','team']
+];
+const navItems = () => NAV.filter(n => !n[3] || can(n[3]));
+function badge(r){
+  const u = me(); if(!u) return 0;
+  if(r==='news') return S.news.filter(n => !(n.readBy[u.id]) && n.author!==u.id).length;
+  if(r==='chat') return S.chats.reduce((a,c)=>a+(c.unread||0),0);
+  if(r==='uebergaben') return S.handovers.filter(h => h.team===(u.team==='Service'?'Service':'Rezeption') && !h.readBy[u.id] && h.by!==u.id).length;
+  if(r==='aufgaben') return S.tasks.filter(t=>t.owner===u.id && !t.done).length;
+  if(r==='checklisten') return S.checklists.filter(c=>c.items.some(i=>!itemDone(i))).length;
+  if(r==='umfragen') return S.survey.answered?0:1;
+  return 0;
+}
+const title = r => (NAV.find(n=>n[0]===r)||[0,{verwaltung:'Verwaltung',einstellungen:'Einstellungen',suche:'Suche & Assistent'}[r]||''])[1];
+
+/* ---------- Rendern ---------- */
+function snapshot(){
+  const a = document.activeElement; const vals={};
+  root.querySelectorAll('input[id],textarea[id],select[id]').forEach(el=>{ if(el.type!=='file') vals[el.id] = el.type==='checkbox'?el.checked:el.value; });
+  return { id:a&&a.id, s:a&&a.selectionStart, vals };
+}
+function restore(sn){
+  Object.entries(sn.vals).forEach(([id,v])=>{ const el=document.getElementById(id); if(el && el.dataset.keep!=='no'){ if(el.type==='checkbox') el.checked=v; else if(el.value!==v && !el.dataset.fresh) el.value=v; }});
+  if(sn.id){ const el=document.getElementById(sn.id); if(el){ el.focus({preventScroll:true}); try{ if(sn.s!=null) el.setSelectionRange(sn.s,sn.s);}catch(e){} } }
+}
+function scroller(){ return S.phone ? root.querySelector('.mainwrap') : document.scrollingElement; }
+function render(resetScroll){
+  const sn = snapshot(); const sc = scroller(); const top = sc ? sc.scrollTop : 0;
+  root.innerHTML = S.user ? shell() : login();
+  restore(sn);
+  const sc2 = scroller(); if(sc2) sc2.scrollTop = resetScroll ? 0 : top;
+  document.body.classList.toggle('app-m-body', !!S.user && isM() && !S.phone);
+  const th = root.querySelector('.msgs'); if(th) th.scrollTop = th.scrollHeight;
+}
+function go(route, param=null){ S.route=route; S.param=param; S.pop=null; S.modal=null; S.customize=false; if(route!=='suche') S.ai=S.ai; render(true); }
+function toast(text){ const id=uid(); S.toasts.push({id,text}); render(); setTimeout(()=>{ S.toasts=S.toasts.filter(t=>t.id!==id); render(); }, 3200); }
+function audit(what){ S.audit.unshift({t:'heute '+nowT(), who:me()?me().name:'System', what}); }
+function notify(uidv, text, route, param){ (S.notifs[uidv] ||= []).unshift({id:uid(), text, time:nowT(), route, param, read:false}); }
+function endDemo(key){ S.modal={type:'end', key}; render(); }
+
+function brandBlock(cls=''){
+  if(S.brand==='sgl') return LOGO;
+  const n = S.brand==='teal' ? 'B' : 'C';
+  return `<div class="logo-ph ${cls}">LOGO<br>Gesellschaft ${n}</div>`;
+}
+
+function shell(){
+  const m = isM();
+  return `<div class="stage ${S.phone?'on':''}"><div class="app ${m?'m':''} ${S.phone?'phone':''}">
+    ${m ? mHead() : side()}
+    <div class="mainwrap">${m?'':dHead()}<main class="view" id="view">${VIEWS[S.route] ? VIEWS[S.route]() : VIEWS.start()}</main></div>
+    ${m ? bNav() : ''}
+    ${S.modal ? modal() : ''}
+    <div class="toasts" role="status" aria-live="polite">${S.toasts.map(t=>`<div class="toast">${ic('check',18,2.4)}${esc(t.text)}</div>`).join('')}</div>
+  </div></div>${demoFab()}`;
+}
+function side(){
+  return `<nav class="side" aria-label="Hauptnavigation"><div class="brandbox">${brandBlock()}<div class="wm"><span>Wirkstatt</span></div></div>
+    <div class="nav">${navItems().map(([r,l,i])=>{ const b=badge(r); return `<button data-a="go" data-r="${r}" ${S.route===r?'aria-current="page"':''}>${ic(i)}<span class="lbl">${l}</span>${b&&S.route!==r?`<span class="nbadge">${b}</span>`:''}</button>`;}).join('')}
+    ${can('admin')?`<button data-a="go" data-r="verwaltung" ${S.route==='verwaltung'?'aria-current="page"':''} style="margin-top:10px">${ic('admin')}<span class="lbl">Verwaltung</span>${S.pending.length&&S.route!=='verwaltung'?`<span class="nbadge">${S.pending.length}</span>`:''}</button>`:''}</div>
+    <div class="foot">Ein Wirkungsort der DKB STIFTUNG</div></nav>`;
+}
+function bellBtn(){
+  const n = (S.notifs[me().id]||[]).filter(x=>!x.read).length;
+  return `<div class="popwrap"><button class="ibtn" data-a="pop" data-p="bell" aria-label="Benachrichtigungen${n?', '+n+' neu':''}" aria-expanded="${S.pop==='bell'}">${ic('bell')}${n?`<span class="dot">${n}</span>`:''}</button>${S.pop==='bell'?bellPop():''}</div>`;
+}
+function bellPop(){
+  const list = S.notifs[me().id]||[];
+  return `<div class="pop" role="dialog" aria-label="Benachrichtigungen"><div class="row" style="justify-content:space-between;padding:.3rem .6rem"><strong>Benachrichtigungen</strong><button class="lnk small" data-a="readall">Alle gelesen</button></div>
+    ${list.length? list.map(n=>`<button class="pi" data-a="notif" data-id="${n.id}"><span class="udot ${n.read?'r':''}"></span><span class="grow"><span style="display:block;${n.read?'':'font-weight:700'}">${esc(n.text)}</span><span class="xs muted">${esc(n.time)}</span></span></button>`).join('') : '<div class="empty">Alles gelesen.</div>'}
+    <div class="xs muted" style="padding:.4rem .7rem">Wann du welche Hinweise bekommst, stellst du selbst ein: <button class="lnk xs" data-a="go" data-r="einstellungen">Einstellungen</button></div></div>`;
+}
+function avatarBtn(){
+  const u=me();
+  return `<div class="popwrap"><button class="av" data-a="pop" data-p="me" aria-label="Mein Profil und Einstellungen" aria-expanded="${S.pop==='me'}">${u.initials}</button>${S.pop==='me'?`<div class="pop"><div style="padding:.6rem .7rem"><div class="t">${u.name}</div><div class="small muted">${u.role}</div></div>
+    <button class="pi" data-a="go" data-r="einstellungen">${ic('admin')}<span>Einstellungen & Barrierefreiheit</span></button>
+    <button class="pi" data-a="switch">${ic('user')}<span>Andere Person ausprobieren</span></button>
+    <button class="pi" data-a="logout">${ic('logout')}<span>Abmelden</span></button></div>`:''}</div>`;
+}
+function dHead(){
+  return `<header class="dhead"><form class="search" data-f="search" role="search">${ic('search',20)}<label for="q" class="sr">Suchen oder Frage stellen</label><input id="q" name="q" placeholder="${can('ai')?'Suchen oder Frage an den Assistenten …':'Suchen …'}" autocomplete="off"><button type="button" class="ibtn" style="border:0;background:transparent;width:38px;height:38px" data-a="end" data-k="mic" aria-label="Spracheingabe">${ic('mic')}</button></form>
+    <button class="btn" data-a="modal" data-t="lang" aria-label="Sprache wählen">${ic('globe',18)} DE</button>${bellBtn()}${avatarBtn()}</header>`;
+}
+function mHead(){
+  return `<header class="mhead">${S.route==='start'?brandBlock():`<button class="ibtn" data-a="go" data-r="start" aria-label="Zur Startseite">${ic('home')}</button>`}<span class="ttl">${S.route==='start'?'<span class="wm-m">Wirkstatt</span>':esc(title(S.route))}</span>
+    <button class="ibtn" data-a="go" data-r="suche" aria-label="Suchen">${ic('search')}</button>${bellBtn()}${avatarBtn().replace('class="av"','class="av" style="width:38px;height:38px;font-size:.8rem;margin-left:2px"')}</header>`;
+}
+function bNav(){
+  const items = S.navMobile.map(r=>NAV.find(n=>n[0]===r)).filter(n=>n && (!n[3]||can(n[3]))).slice(0,4);
+  return `<nav class="bnav" aria-label="Hauptnavigation">${items.map(([r,l,i])=>{ const b=badge(r); return `<button data-a="go" data-r="${r}" ${S.route===r?'aria-current="page"':''}><span class="pill">${ic(i,22)}</span>${l.split(' ')[0]}${b&&S.route!==r?`<span class="nbadge">${b}</span>`:''}</button>`;}).join('')}
+    <button data-a="modal" data-t="more" ${!items.find(n=>n[0]===S.route)?'aria-current="page"':''}><span class="pill">${ic('menu',22)}</span>Mehr</button></nav>`;
+}
+
+/* ---------- Kleine Bausteine ---------- */
+const av = (id, cls='s') => { const p=P(id); return `<span class="av ${cls} ${p.c||''}" aria-hidden="true">${p.ini||'?'}</span>`; };
+function photo(kind, h=260){
+  const gid = 'g'+uid();
+  if(kind && kind.startsWith('data:')) return `<div class="photo" style="height:${h}px"><img src="${kind}" alt="Hochgeladenes Foto"></div>`;
+  if(kind==='sea') return `<div class="photo" style="height:${h}px" role="img" aria-label="Urlaubsfoto: Strand an der Ostsee"><svg viewBox="0 0 600 260" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6D8A8"/><stop offset=".55" stop-color="#9CC3DA"/></linearGradient></defs><rect width="600" height="160" fill="url(#${gid})"/><circle cx="430" cy="92" r="30" fill="#FFF3D6"/><rect y="150" width="600" height="60" fill="#4E86A8"/><path d="M0 160 Q150 150 300 162 T600 158 V170 H0z" fill="#6FA3C3"/><path d="M0 205 Q200 190 600 212 V260 H0z" fill="#E9D9B4"/><path d="M60 214 l3 -26 M63 188 q-14 -4 -22 4 M63 188 q12 -8 22 -2 M63 188 q-4 -12 -14 -14" stroke="#556B3A" stroke-width="3" fill="none"/></svg></div>`;
+  if(kind==='bike') return `<div class="photo" style="height:${h}px" role="img" aria-label="Foto: Trekkingrad"><svg viewBox="0 0 300 200" preserveAspectRatio="xMidYMid slice"><rect width="300" height="200" fill="#E6E9DE"/><rect y="150" width="300" height="50" fill="#D3D8C6"/><g fill="none" stroke="#2F3719" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><circle cx="85" cy="135" r="38"/><circle cx="215" cy="135" r="38"/><path d="M85 135 L125 80 L180 80 L215 135 M125 80 L150 135 L85 135 M150 135 L180 80 M118 66 h22 M180 80 L176 60 h18"/></g><rect x="183" y="44" width="30" height="16" rx="3" fill="#8D6E3F"/></svg></div>`;
+  if(kind==='uniform') return `<div class="photo" style="height:${h}px" role="img" aria-label="Foto: neue Dienstkleidung"><svg viewBox="0 0 600 260" preserveAspectRatio="xMidYMid slice"><rect width="600" height="260" fill="#E6E9DE"/><g transform="translate(170 40)"><path d="M40 0 L80 18 L120 0 L160 30 L140 70 L125 62 L125 200 L35 200 L35 62 L20 70 L0 30z" fill="#3D4722"/><path d="M80 18 L70 60 L80 200 L90 60z" fill="#F3F4EF"/></g><g transform="translate(350 40)"><path d="M40 0 L80 18 L120 0 L160 30 L140 70 L125 62 L125 200 L35 200 L35 62 L20 70 L0 30z" fill="#6B7A3E"/><circle cx="80" cy="90" r="4" fill="#E6E9DE"/><circle cx="80" cy="120" r="4" fill="#E6E9DE"/><circle cx="80" cy="150" r="4" fill="#E6E9DE"/></g></svg></div>`;
+  if(kind==='sop') return `<div class="photo" style="height:${h}px" role="img" aria-label="Foto: Einstechthermometer an Tiefkühlware"><svg viewBox="0 0 600 220" preserveAspectRatio="xMidYMid slice"><rect width="600" height="220" fill="#DDE6EA"/><rect x="120" y="70" width="260" height="120" rx="10" fill="#F5F7F8" stroke="#B9C6CC" stroke-width="3"/><path d="M150 100h200M150 130h160" stroke="#B9C6CC" stroke-width="6" stroke-linecap="round"/><g transform="rotate(-28 420 90)"><rect x="300" y="84" width="220" height="10" rx="5" fill="#9AA4A8"/><rect x="430" y="70" width="110" height="38" rx="10" fill="#2F3719"/><text x="452" y="96" font-size="20" font-family="monospace" fill="#C9F0B0">-19.4</text></g></svg></div>`;
+  return '';
+}
+function donut(n, total, label){
+  const pct = total? Math.round(n/total*100):0;
+  return `<div class="donut" role="img" aria-label="${n} von ${total} ${label}" style="background:conic-gradient(var(--brand) 0 ${pct}%, var(--line) ${pct}% 100%)"><div><span style="font-size:1.6rem;font-weight:700;line-height:1">${n}</span><span class="xs muted">von ${total}</span></div></div>`;
+}
+const card = (title, body, extra='') => `<section class="card"><div class="chead"><h2>${title}</h2>${extra}</div>${body}</section>`;
+
+/* ===================== Ansichten ===================== */
+const VIEWS = {};
+
+/* ---------- Login ---------- */
+function login(){
+  const p = S.pick ? PERSONAS[S.pick] : null;
+  return `<div class="login"><section class="hero"><div style="padding:16px">${LOGO}</div>
+      <div><div class="wm-hero">Wirkstatt</div><h1>Alles fürs Team. An einem Ort.</h1><p>News, Übergaben, Wissen und Chat – auf dem Handy in der Schicht und am Laptop im Büro.</p></div>
+      <div class="small" style="opacity:.92">Demo-Umgebung · alle Personen und Zahlen sind erfunden · Ein Wirkungsort der DKB STIFTUNG</div>
+      <svg class="lines" viewBox="0 0 400 300" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="3"><path d="M20 280 L20 140 L60 110 L60 60 L80 40 L100 60 L100 110 L140 140 L140 280"/><path d="M140 280 L140 120 L200 80 L260 120 L260 280"/><path d="M260 280 L260 150 L300 120 L340 150 L340 280"/><path d="M0 280 H400"/></g></svg></section>
+    <section class="pane">${S.loginStep===1 || !p ? `
+      <div><div class="eyebrow">Wirkstatt · Demo starten</div><h2 style="font-size:1.7rem;margin-top:4px">Mit wem möchtest du dich anmelden?</h2>
+      <p class="muted" style="margin:.4rem 0 0">Jede Person sieht nur, was sie sehen darf. Du kannst später jederzeit wechseln.</p></div>
+      <div class="pgrid">${Object.values(PERSONAS).map(x=>`<button class="pcard" data-a="pick" data-id="${x.id}" aria-pressed="${S.pick===x.id}"><span class="av ${x.id==='tom'?'c4':x.id==='lena'?'c3':x.id==='maren'?'c1':''}">${x.initials}</span><span><span class="t" style="display:block">${x.name}</span><span class="small muted" style="display:block">${x.role}</span><span class="xs muted" style="display:block;margin-top:4px">${x.desc}</span></span></button>`).join('')}</div>
+      ` : `
+      <button class="lnk" data-a="loginback" style="align-self:flex-start">${ic('back',16)} Andere Person</button>
+      <div><div class="eyebrow">Anmelden</div><h2 style="font-size:1.7rem;margin-top:4px">Hallo ${p.name.split(' ')[0]}</h2>
+      <p class="muted" style="margin:.4rem 0 0">Anmeldung mit Benutzername und Einmal-Code – ganz ohne dienstliche E-Mail.</p></div>
+      <form class="stack" data-f="login">
+        <div class="field"><label for="lu">Benutzername</label><input class="input" id="lu" name="u" value="${p.user}" autocomplete="off"></div>
+        <div class="field"><label for="lc">Einmal-Code</label><input class="input tab" id="lc" name="c" inputmode="numeric" placeholder="6-stelliger Code" autocomplete="off" style="font-size:1.3rem;letter-spacing:.2em"></div>
+        <div class="note b">${ic('lock',18)}<span>Den Code bekommst du von deiner Leitung oder per E-Mail. Für die Demo: <strong class="tab">482 913</strong> <button type="button" class="lnk small" data-a="fillcode">einfügen</button></span></div>
+        <button class="btn pri" type="submit" style="min-height:50px">Anmelden ${ic('arrow',18)}</button>
+      </form>`}
+    </section></div>${demoFab()}`;
+}
+
+/* ---------- Start ---------- */
+VIEWS.start = () => {
+  const u = me(); const W = S.widgets;
+  const hour = new Date().getHours(); const hi = hour<11?'Guten Morgen':hour<17?'Hallo':'Guten Abend';
+  const acked = S.ack[u.id+':kuehlkette'];
+  const myTasks = S.tasks.filter(t=>t.owner===u.id);
+  const unreadNews = S.news.filter(n=>!n.readBy[u.id] && n.author!==u.id);
+  const ho = S.handovers.filter(h=>h.team==='Rezeption'||h.team===u.team).slice(0,2);
+  const widgets = [];
+  if(W.events) widgets.push(['main', card('Veranstaltungen & Räume heute', `
+    ${[['09:00–17:00','Strategietagung · 42 Personen','Schlosssaal · Kaffeepause 10:30 im Foyer','Tagen','i'],['10:00–16:00','Workshop · 18 Personen','Seehaus, Kaminzimmer · vegetarisches Mittagessen','Tagen','i'],['ab 15:00','Hochzeit · 85 Personen','Gutshof · Trauung 15:30 Libertas-Kapelle','Feiern','l']].map(e=>`<div class="li wrap"><div class="t tab" style="width:110px">${e[0]}</div><div class="grow" style="flex:1 1 200px"><div style="font-weight:600">${e[1]}</div><div class="small muted">${e[2]}</div></div><span class="chip ${e[4]}">${e[3]}</span></div>`).join('')}
+    <div class="src">${ic('refresh',14)} aus dem Eventtool · 07:45</div>`, `<button class="lnk" data-a="end" data-k="wochenplan">Wochenplan</button>`)]);
+  if(W.news) widgets.push(['main', card(`News <span class="muted" style="font-weight:400">· ${unreadNews.length} ungelesen</span>`,
+    S.news.slice(0,3).map(n=>`<button class="libtn" data-a="go" data-r="news" data-p="${n.id}"><span class="udot ${n.readBy[u.id]||n.author===u.id?'r':''}"></span><span class="grow"><span class="t" style="display:block">${n.important?'<span class="chip w" style="margin-right:6px">Wichtig</span>':''}${esc(n.title)}</span><span class="small muted">${P(n.author).name} · ${n.time}</span></span></button>`).join(''),
+    `<button class="lnk" data-a="go" data-r="news">Alle News</button>`)]);
+  if(W.handovers && can('handovers')) widgets.push(['half', card('Übergaben', ho.map(h=>`<button class="libtn" data-a="go" data-r="uebergaben" data-p="${h.id}"><span class="udot ${h.readBy[u.id]||h.by===u.id?'r':''}"></span><span class="grow"><span class="t" style="display:block">${h.shift}</span><span class="small muted">${h.team} · ${h.time}</span></span></button>`).join(''), `<button class="lnk" data-a="go" data-r="uebergaben">Alle</button>`)]);
+  if(W.checklists) widgets.push(['half', card('Checklisten heute', S.checklists.slice(0,2).map(c=>{ const d=c.items.filter(itemDone).length; return `<button class="libtn" data-a="go" data-r="checklisten" data-p="${c.id}" style="flex-direction:column;gap:6px"><span class="row" style="width:100%;justify-content:space-between"><span class="t">${c.title}</span><span class="small ${d<c.items.length&&c.id==='kuehl'?'':'muted'}" style="${d<c.items.length&&c.id==='kuehl'?'color:var(--warn-ink);font-weight:700':''}">${d===c.items.length?'erledigt':c.due}</span></span><span class="bar" style="width:100%"><span style="width:${d/c.items.length*100}%"></span></span><span class="xs muted">${d} von ${c.items.length}</span></button>`;}).join(''), `<button class="lnk" data-a="go" data-r="checklisten">Alle</button>`)]);
+  if(W.shift) widgets.push(['side', card('Mein Dienstplan', (S.shifts[u.id]||[]).map((s,i)=>`<div class="row" style="justify-content:space-between;padding:.6rem .75rem;border-radius:9px;${i===0?'background:var(--brand-tint);font-weight:700':'border-bottom:1px solid var(--line-2)'}"><span>${s[0]}</span><span class="tab">${s[1]}</span></div>`).join('')+`<div class="src">${ic('refresh',14)} aus Gastromatic · Änderungen bitte dort</div>`, `<button class="lnk" data-a="end" data-k="dienstplan">Ganzer Plan</button>`)]);
+  if(W.tasks && can('tasks')) widgets.push(['side', card('Meine Aufgaben', myTasks.filter(t=>!t.done).slice(0,3).map(taskRow).join('') || '<div class="empty">Alles erledigt. Stark!</div>', `<button class="lnk" data-a="go" data-r="aufgaben">Alle</button>`)]);
+  if(W.survey && can('surveys') && !S.survey.answered) widgets.push(['side', card('Offene Umfrage', `<div style="font-weight:600">${S.survey.title}</div><div class="small muted" style="margin:.2rem 0 .9rem">anonym · ${S.survey.until} · dauert 1 Minute</div><button class="btn pri" data-a="go" data-r="umfragen">Jetzt teilnehmen</button>`)]);
+  if(W.social && can('social')) widgets.push(['side', card('Neu bei Social', `<button class="libtn" data-a="go" data-r="social" style="border:0;padding-top:.2rem">${av('marta','xs')}<span class="grow"><span class="t" style="display:block">Grüße von der Ostsee</span><span class="small muted">Marta W. · 23 Herzen</span></span></button>`)]);
+  const col = k => widgets.filter(w=>w[0]===k).map(w=>w[1]).join('');
+  return `
+  <div class="ptitle hello"><div><div class="eyebrow">Donnerstag, 8. Oktober</div><h1>${hi}, ${u.name.split(' ')[0]}</h1></div>
+    <button class="btn ${S.customize?'on':''}" data-a="customize">${ic('grid',18)} ${S.customize?'Fertig':'Dashboard anpassen'}</button></div>
+  ${S.customize? customizePanel():''}
+  ${!acked ? `<section class="banner" aria-label="Wichtig"><span class="ico">${ic('alert',22,2)}</span><div class="grow" style="flex:1 1 280px"><div class="eyebrow" style="color:var(--warn-ink)">Wichtig · bitte bis Fr., 9.10. bestätigen</div><div style="font-size:1.1rem;font-weight:600">HACCP: Neue Regel zur Kühlkette bei Anlieferungen (SOP Version 3)</div></div><button class="btn warn" data-a="go" data-r="wissen" data-p="kuehlkette">Lesen & bestätigen</button></section>`
+           : `<section class="note b" style="align-items:center">${ic('check',18,2.4)}<span>Danke! Du hast die SOP Kühlkette (Version 3) bestätigt. Keine offenen Pflichtthemen.</span></section>`}
+  <section class="kpis" aria-label="Heute im Haus">
+    <div class="kpi"><div class="small muted">Hausbelegung heute</div><div class="v tab">78 %</div><div class="s">aus Flexkeeping · 06:00</div></div>
+    <div class="kpi"><div class="small muted">Anreisen</div><div class="v tab">24</div><div class="s">aus Flexkeeping</div></div>
+    <div class="kpi"><div class="small muted">Abreisen</div><div class="v tab">19</div><div class="s">aus Flexkeeping</div></div>
+    <div class="kpi"><div class="small muted">Veranstaltungen</div><div class="v tab">3</div><div class="s">aus dem Eventtool</div></div>
+  </section>
+  <div class="cols"><div class="col-main">${col('main')}${col('half')?`<div class="cols" style="gap:inherit">${widgets.filter(w=>w[0]==='half').map(w=>`<div style="flex:1 1 260px;min-width:0">${w[1]}</div>`).join('')}</div>`:''}</div><div class="col-side">${col('side')}</div></div>`;
+};
+function customizePanel(){
+  const labels={events:'Veranstaltungen & Räume',news:'News',handovers:'Übergaben',checklists:'Checklisten',shift:'Mein Dienstplan',tasks:'Meine Aufgaben',survey:'Offene Umfrage',social:'Neu bei Social'};
+  return `<section class="card" style="border:2px solid var(--brand)"><div class="chead"><h2>Was möchtest du auf deiner Startseite sehen?</h2></div>
+   <div class="chips" style="gap:4px 18px">${Object.entries(labels).map(([k,l])=>`<label class="check"><input type="checkbox" data-c="widget" data-k="${k}" ${S.widgets[k]?'checked':''}> ${l}</label>`).join('')}
+   <label class="check" style="opacity:.7"><input type="checkbox" checked disabled> Wichtige Mitteilungen <span class="xs muted">(Pflicht)</span></label></div>
+   <div class="xs muted">Die Auswahl gilt nur für dich. Welche Bausteine es je Rolle gibt, legt die Verwaltung fest.</div></section>`;
+}
+function taskRow(t){
+  return `<div class="li"><label class="check" style="padding:0;flex:1"><input type="checkbox" data-c="task" data-id="${t.id}" ${t.done?'checked':''}><span><span style="display:block;font-weight:600;${t.done?'text-decoration:line-through;opacity:.6':''}">${esc(t.title)}</span><span class="small" style="${t.prio==='hoch'&&!t.done?'color:var(--warn-ink);font-weight:700':'color:var(--muted)'}">${t.prio} · ${esc(t.due)}${t.tag?' · '+t.tag:''}</span></span></label>${t.go?`<button class="btn sm" data-a="go" data-r="${t.go}">Öffnen</button>`:''}</div>`;
+}
+
+/* ---------- News ---------- */
+VIEWS.news = () => S.param ? newsDetail(S.news.find(n=>n.id===S.param)) : newsList();
+function newsList(){
+  const u=me();
+  const list = S.newsTab==='unread' ? S.news.filter(n=>!n.readBy[u.id] && n.author!==u.id) : S.news;
+  return `<div class="ptitle"><h1>News</h1><button class="btn pri" data-a="modal" data-t="newpost">${ic('plus',18)} Neue Mitteilung</button></div>
+   <div class="tabs" role="tablist"><button role="tab" aria-selected="${S.newsTab==='unread'}" data-a="set" data-k="newsTab" data-v="unread">Ungelesen (${S.news.filter(n=>!n.readBy[u.id] && n.author!==u.id).length})</button><button role="tab" aria-selected="${S.newsTab==='all'}" data-a="set" data-k="newsTab" data-v="all">Alle</button></div>
+   <div class="stack">${list.length? list.map(n=>`<button class="card" data-a="go" data-r="news" data-p="${n.id}" style="text-align:left;cursor:pointer;display:flex;gap:14px;align-items:flex-start;color:inherit">
+      ${av(n.author)}<span class="grow"><span class="chips" style="margin-bottom:6px">${n.important?'<span class="chip w">Wichtig</span>':''}${n.aud.map(a=>`<span class="chip">an: ${a}</span>`).join('')}</span><span class="t" style="display:block;font-size:1.1rem">${esc(n.title)}</span><span class="small muted">${P(n.author).name} · ${n.time} · ${n.likes} ${ic('heart',14)} · ${n.comments.length} Kommentare</span></span>${!n.readBy[u.id]&&n.author!==u.id?'<span class="udot"></span>':''}</button>`).join('') : `<div class="card empty">${ic('check',28)}<p>Du bist auf dem neuesten Stand.</p><button class="btn" data-a="set" data-k="newsTab" data-v="all">Alle News anzeigen</button></div>`}</div>`;
+}
+function newsDetail(n){
+  if(!n) return newsList();
+  const u=me();
+  if(!n.readBy[u.id] && n.author!==u.id){ n.readBy[u.id]=nowT(); }
+  const lang = S.newsLang[n.id]||'de';
+  const T = lang==='de' ? {title:n.title, body:n.body} : (n[lang] || {title:n.title, body:n.body, missing:true});
+  const showRead = n.track && (n.author===u.id || can('readlist'));
+  return `<button class="lnk" data-a="go" data-r="news" style="align-self:flex-start">${ic('back',16)} Alle News</button>
+  <div class="cols"><article class="card col-main" style="padding:1.6rem 1.8rem;gap:.9rem">
+    <div class="chips">${n.important?'<span class="chip w">Wichtig</span>':''}${n.aud.map(a=>`<span class="chip">an: ${a}</span>`).join('')}</div>
+    <h1 style="font-size:1.8rem">${esc(T.title)}</h1>
+    <div class="row">${av(n.author)}<span class="small muted"><strong style="color:var(--fg)">${P(n.author).name}</strong> · ${P(n.author).job||''} · ${n.time}</span></div>
+    <div class="row wrap"><div class="seg" role="group" aria-label="Sprache">${[['de','Original (Deutsch)'],['en','English'],['pl','Polski']].map(([k,l])=>`<button aria-pressed="${lang===k}" data-a="newslang" data-id="${n.id}" data-l="${k}">${l}</button>`).join('')}</div>
+      <button class="btn" data-a="speak" data-id="${n.id}">${ic('speaker',18)} Vorlesen</button></div>
+    ${T.missing?`<div class="note g">${ic('globe',18)}<span>Maschinelle Übersetzung ist in der Demo nur für einige Beispielbeiträge hinterlegt. In der Wirkstatt übersetzt ein EU-Dienst auf Knopfdruck – das Original bleibt immer erreichbar.</span></div>`: lang!=='de'?`<div class="xs muted">Maschinell übersetzt · <button class="lnk xs" data-a="newslang" data-id="${n.id}" data-l="de">Original anzeigen</button></div>`:''}
+    ${n.photo? photo(n.photo, 260):''}
+    <div class="prose" id="newsbody">${T.body.map(p=>`<p>${mentionfy(p)}</p>`).join('')}</div>
+    ${n.link?`<button class="btn" data-a="go" data-r="${n.link.route}" data-p="${n.link.param}" style="align-self:flex-start">${ic('book',18)} ${n.link.label}</button>`:''}
+    ${n.attach?`<button class="srcbtn" data-a="end" data-k="docview" style="max-width:440px">${ic('doc',22)}<span class="grow"><span class="t" style="display:block">${n.attach.name}</span><span class="xs muted">PDF · ${n.attach.size} · auch unter Dokumente auffindbar</span></span></button>`:''}
+    ${n.uploaded?photo(n.uploaded,240):''}
+    <div class="row wrap" style="border-top:1px solid var(--line-2);padding-top:1rem"><button class="btn ${n.liked?'on':''}" data-a="like" data-col="news" data-id="${n.id}" aria-pressed="${n.liked}">${ic('thumb',18)} Gefällt mir · ${n.likes}</button><span class="muted">${n.comments.length} Kommentare</span></div>
+    <section class="stack" aria-label="Kommentare">${n.comments.map(c=>`<div class="row" style="align-items:flex-start">${av(c.by)}<div class="cmt"><div class="small muted"><strong style="color:var(--fg)">${P(c.by).name}</strong> · ${c.time||''}</div><div>${mentionfy(c.text)}</div>${c.orig?`<div class="xs muted" style="margin-top:4px">Aus dem Polnischen übersetzt · <button class="lnk xs" data-a="orig" data-id="${n.id}" data-i="${n.comments.indexOf(c)}">${c.showOrig?'Übersetzung':'Original'} anzeigen</button></div>${c.showOrig?`<div class="small" style="margin-top:4px;font-style:italic">${esc(c.orig)}</div>`:''}`:''}</div></div>`).join('')}
+      <form class="row" style="align-items:flex-start" data-f="comment" data-id="${n.id}">${`<span class="av s">${u.initials}</span>`}<label for="cm-${n.id}" class="sr">Kommentar</label><textarea class="input grow" id="cm-${n.id}" name="t" rows="2" placeholder="Kommentar schreiben … mit @ erwähnst du Kolleg:innen, z. B. @Tobias K."></textarea><button class="rbtn" type="submit" aria-label="Kommentar senden">${ic('send',18,2)}</button></form></section>
+  </article>
+  <aside class="col-side">${showRead ? readPanel(n) : `<section class="card"><h2 style="margin-bottom:.5rem">Gelesen</h2><div class="row">${ic('check',20,2.4)}<span>Du hast diesen Beitrag gelesen.</span></div><div class="xs muted" style="margin-top:.6rem">Wer was gelesen hat, sehen nur Autor:in und die verantwortlichen Leitungen – so ist es in der Betriebsvereinbarung vorgesehen.</div></section>`}</aside></div>`;
+}
+function readPanel(n){
+  const rec = n.recipients; const read = rec.filter(r=>n.readBy[r]); const unread = rec.filter(r=>!n.readBy[r]);
+  const absent = unread.filter(r=>P(r).absent); const remindable = unread.length-absent.length;
+  const list = S.readTab==='unread'? unread : read;
+  return `<section class="card"><h2 style="margin-bottom:1rem">Lesestatus</h2>
+    <div class="row" style="gap:20px">${donut(read.length, rec.length,'gelesen')}<div class="stack small" style="gap:6px"><span class="row" style="gap:8px"><span style="width:12px;height:12px;border-radius:3px;background:var(--brand)"></span>${read.length} gelesen</span><span class="row" style="gap:8px"><span style="width:12px;height:12px;border-radius:3px;background:var(--line)"></span>${unread.length} noch nicht</span><span class="xs muted">Empfänger: ${n.aud.join(', ')}</span></div></div>
+    <button class="btn pri" style="width:100%;margin-top:1rem" data-a="remind" data-id="${n.id}" ${remindable?'':'disabled'}>${ic('bell',18)} ${remindable?`An ${remindable} erinnern`:'Alle erinnert'}</button>
+    ${absent.length?`<div class="xs muted" style="margin-top:6px">${absent.length} Person ist abwesend und wird nicht erinnert. Automatische Erinnerung nach 48 Stunden ist aktiv (höchstens zweimal).</div>`:''}
+  </section>
+  <section class="card" style="padding-top:.4rem"><div class="tabs" role="tablist"><button role="tab" aria-selected="${S.readTab==='unread'}" data-a="set" data-k="readTab" data-v="unread">Noch nicht (${unread.length})</button><button role="tab" aria-selected="${S.readTab==='read'}" data-a="set" data-k="readTab" data-v="read">Gelesen (${read.length})</button></div>
+    ${list.map(r=>`<div class="li" style="align-items:center">${av(r,'xs')}<span class="grow">${P(r).name}</span><span class="small muted">${n.readBy[r]? 'um '+n.readBy[r] : (P(r).absent||P(r).team)}</span></div>`).join('') || '<div class="empty small">Niemand.</div>'}</section>
+  <div class="note">${ic('shield',18)}<span>Diese Übersicht sehen nur Autor:in und die Leitungen der Empfängergruppen. Lesezeiten werden nach 30 Tagen gelöscht.</span></div>`;
+}
+
+/* ---------- Social ---------- */
+VIEWS.social = () => {
+  if(!can('social')) return noAccess('Social');
+  const u=me(); const cats=['Alle','Grüße & Momente','Biete & Suche','Glückwünsche','Freizeit & Sport'];
+  const list = S.social.filter(p=>S.socialFilter==='Alle'||p.cat===S.socialFilter);
+  return `<div class="ptitle"><div><h1>Social</h1><div class="muted">Privates unter Kolleg:innen – freiwillig, ohne Lesebestätigung</div></div></div>
+  <div class="cols"><div class="col-main">
+    <form class="card stack" data-f="social"><div class="row" style="align-items:flex-start"><span class="av s">${u.initials}</span><label for="sp" class="sr">Neuer Beitrag</label><textarea class="input grow" id="sp" name="t" rows="2" placeholder="Was gibt’s Neues, ${u.name.split(' ')[0]}? Urlaubsgruß, Frage, Angebot …"></textarea></div>
+      ${S.socialPhoto?`<div style="max-width:320px">${photo(S.socialPhoto,180)}</div>`:''}
+      <div class="row wrap"><label class="btn sm" for="sp-photo" style="cursor:pointer">${ic('image',18)} Foto</label><input type="file" id="sp-photo" accept="image/*" data-c="socialphoto" class="sr">
+        <label for="sp-cat" class="sr">Kategorie</label><select class="select" id="sp-cat" name="cat" style="width:auto;min-height:38px">${cats.slice(1).map(c=>`<option>${c}</option>`).join('')}</select>
+        <label for="sp-vis" class="sr">Sichtbar für</label><select class="select" id="sp-vis" name="vis" style="width:auto;min-height:38px"><option>alle Kolleg:innen</option><option>meine Gesellschaft</option><option>mein Team</option><option>ganze Stiftungsgruppe</option></select>
+        <span class="grow"></span><button class="btn pri" type="submit">Teilen</button></div></form>
+    <div class="chips" role="group" aria-label="Nach Kategorie filtern">${cats.map(c=>`<button class="fchip" aria-pressed="${S.socialFilter===c}" data-a="set" data-k="socialFilter" data-v="${c}">${c}</button>`).join('')}</div>
+    ${list.map(socialPost).join('') || '<div class="card empty">Noch nichts in dieser Kategorie. Mach den Anfang!</div>'}
+  </div><aside class="col-side">
+    ${card('Diese Woche feiern', `${[['ana','Geburtstag am Samstag'],['lukas','5 Jahre bei uns']].map(([id,t])=>`<div class="li" style="align-items:center">${av(id,'xs')}<span class="grow"><strong>${P(id).name}</strong><br><span class="small muted">${t}</span></span><button class="btn sm" data-a="congrats" data-id="${id}">${S['cg'+id]?'Gratuliert':'Gratulieren'}</button></div>`).join('')}<div class="xs muted" style="margin-top:6px">Nur wer das selbst freigibt, erscheint hier – ohne Jahrgang.</div>`)}
+    ${card('Biete & Suche', S.social.filter(p=>p.market).map(p=>`<button class="libtn" data-a="set" data-k="socialFilter" data-v="Biete & Suche"><span class="grow"><span class="xs muted" style="font-weight:700;letter-spacing:.06em">${p.market.intent.toUpperCase()}</span><br><span style="font-weight:600">${esc(p.market.title)}</span></span><span class="t">${esc(p.market.price||'')}</span></button>`).join('')+`<div class="li"><span class="grow small"><span class="xs muted" style="font-weight:700;letter-spacing:.06em">SUCHE</span><br>Mitfahrt ab Oranienburg, Frühdienst</span></div>`)}
+    <div class="note">${ic('shield',18)}<span>Social ist freiwillig: keine Lesebestätigung, keine Pflicht-Benachrichtigung, keine Auswertung. Eigene Beiträge kannst du jederzeit löschen.</span></div>
+  </aside></div>`;
+};
+function socialPost(p){
+  const u=me(); const mine = p.by===u.id;
+  return `<article class="card" style="padding:0;overflow:hidden"><div class="row" style="padding:1rem 1.2rem .6rem">${mine?`<span class="av s">${u.initials}</span>`:av(p.by)}<div class="grow"><div class="t">${mine?u.name:P(p.by).name} <span class="muted" style="font-weight:400">· ${mine?u.team:P(p.by).team}</span></div><div class="small muted">${p.time} · ${p.cat}${p.vis?' · für '+p.vis:''}</div></div>
+    ${mine?`<button class="btn sm" data-a="delsocial" data-id="${p.id}">Löschen</button>`:`<button class="ibtn" style="border:0" data-a="end" data-k="report" aria-label="Beitrag melden">${ic('flag',18)}</button>`}</div>
+    ${p.market?`<div class="row wrap" style="padding:0 1.2rem 1rem;align-items:flex-start;gap:16px"><div style="flex:0 0 190px;max-width:100%">${photo(p.photo,140)}</div><div class="grow" style="flex:1 1 200px"><span class="chip ${p.market.status==='Verfügbar'?'b':''}">${p.market.status}</span><div class="eyebrow" style="margin-top:8px">${p.market.intent}</div><h2 style="font-size:1.25rem">${esc(p.market.title)}</h2><div style="font-size:1.4rem;font-weight:700;color:var(--brand-ink)">${esc(p.market.price||'')}</div><div class="muted">${esc(p.text)}</div>
+       <div class="row wrap" style="margin-top:.7rem">${mine?`<button class="btn sm" data-a="sold" data-id="${p.id}">${p.market.status==='Verfügbar'?'Als erledigt markieren':'Wieder verfügbar'}</button>`:`<button class="btn pri sm" data-a="marketchat" data-id="${p.id}">${ic('chat',16)} Nachricht an ${P(p.by).name.split(' ')[0]}</button>`}</div><div class="xs muted" style="margin-top:6px">Anzeige endet automatisch in ${p.market.days} Tagen</div></div></div>`
+    :`<div style="padding:0 1.2rem .8rem;font-size:1.05rem">${esc(p.text)}${p.orig?`<div class="xs muted" style="margin-top:4px">Aus dem Polnischen übersetzt · <button class="lnk xs" data-a="sorig" data-id="${p.id}">${p.showOrig?'Übersetzung':'Original'} anzeigen</button></div>${p.showOrig?`<div class="small" style="font-style:italic">${esc(p.orig)}</div>`:''}`:''}</div>${p.photo?photo(p.photo,280):''}`}
+    <div class="row wrap" style="padding:.8rem 1.2rem;border-top:1px solid var(--line-2)"><button class="btn sm ${p.liked?'on':''}" data-a="like" data-col="social" data-id="${p.id}" aria-pressed="${p.liked}">${ic('heart',16)} ${p.likes}</button>
+      ${p.join!=null?`<button class="btn sm ${p.joined?'on':''}" data-a="join" data-id="${p.id}">${ic('run',16)} ${p.joined?'Du bist dabei':'Ich bin dabei'} · ${p.join}</button>`:''}
+      <span class="small muted">${p.comments.length} Kommentare</span></div>
+    ${p.comments.length?`<div style="padding:0 1.2rem 1rem" class="stack">${p.comments.map(c=>`<div class="row" style="align-items:flex-start">${c.by==='me'?`<span class="av xs">${u.initials}</span>`:av(c.by,'xs')}<div class="cmt small"><strong>${c.by==='me'?u.name:P(c.by).name}</strong> ${esc(c.text)}</div></div>`).join('')}</div>`:''}
+    <form class="row" style="padding:0 1.2rem 1rem" data-f="scomment" data-id="${p.id}"><label class="sr" for="sc-${p.id}">Kommentar</label><input class="input" id="sc-${p.id}" name="t" placeholder="Kommentieren …" style="min-height:40px"><button class="rbtn" style="width:40px;height:40px" aria-label="Senden">${ic('send',16,2)}</button></form></article>`;
+}
+
+/* ---------- Übergaben ---------- */
+VIEWS.uebergaben = () => {
+  if(!can('handovers')) return noAccess('Übergaben');
+  const u=me();
+  if(S.param){ const h=S.handovers.find(x=>x.id===S.param); if(h) return handoverDetail(h); }
+  const list = S.handovers.filter(h=>S.handTeam==='Alle'||h.team===S.handTeam);
+  return `<div class="ptitle"><h1>Übergaben</h1><button class="btn pri" data-a="modal" data-t="newhandover">${ic('plus',18)} Neue Übergabe</button></div>
+   <div class="chips">${['Rezeption','Service','Alle'].map(t=>`<button class="fchip" aria-pressed="${S.handTeam===t}" data-a="set" data-k="handTeam" data-v="${t}">${t}</button>`).join('')}</div>
+   <div class="stack">${list.map(h=>`<button class="card" data-a="go" data-r="uebergaben" data-p="${h.id}" style="text-align:left;cursor:pointer;color:inherit;display:flex;gap:14px;align-items:flex-start">${h.by===u.id?`<span class="av s">${u.initials}</span>`:av(h.by)}<span class="grow"><span class="chips" style="margin-bottom:6px"><span class="chip">${h.team}</span><span class="chip b">${h.shift}</span>${h.photos?`<span class="chip">${ic('camera',13)} ${h.photos}</span>`:''}</span><span class="t" style="display:block;font-size:1.08rem">${esc(h.subject)}</span><span class="small muted">${h.by===u.id?u.name:P(h.by).name} · ${h.time} · ${Object.keys(h.readBy).length} gelesen</span></span>${!h.readBy[u.id]&&h.by!==u.id?'<span class="udot"></span>':''}</button>`).join('')}</div>`;
+};
+function handoverDetail(h){
+  const u=me(); if(!h.readBy[u.id] && h.by!==u.id) h.readBy[u.id]=nowT();
+  return `<button class="lnk" data-a="go" data-r="uebergaben" style="align-self:flex-start">${ic('back',16)} Alle Übergaben</button>
+  <article class="card stack" style="max-width:820px;padding:1.5rem 1.6rem">
+    <div class="chips"><span class="chip">${h.team}</span><span class="chip b">${h.shift}</span></div>
+    <h1 style="font-size:1.7rem">${esc(h.subject)}</h1><div class="row">${h.by===u.id?`<span class="av s">${u.initials}</span>`:av(h.by)}<span class="small muted"><strong style="color:var(--fg)">${h.by===u.id?u.name:P(h.by).name}</strong> · ${h.time}</span><span class="grow"></span><button class="btn sm" data-a="speakho" data-id="${h.id}">${ic('speaker',16)} Vorlesen</button></div>
+    <ul style="margin:0;padding:0;list-style:none;border:1px solid var(--line);border-radius:12px">${h.points.map((p,i)=>`<li style="padding:.8rem 1rem;${i?'border-top:1px solid var(--line-2)':''}">${esc(p)}${h.flex&&/108/.test(p)?` <button class="lnk small" data-a="end" data-k="flexkeeping">In Flexkeeping öffnen ${ic('ext',14)}</button>`:''}</li>`).join('')}</ul>
+    ${h.photos||h.img?`<div class="row wrap">${h.img?`<div style="flex:1 1 200px">${photo(h.img,160)}</div>`:''}${Array.from({length:h.photos||0}).map((_,i)=>`<div role="img" aria-label="Foto ${i+1}" style="flex:1 1 160px;height:120px;border-radius:12px;background:var(--line-2);display:flex;align-items:center;justify-content:center;color:var(--muted)">${ic('image',28)}</div>`).join('')}</div>`:''}
+    <div class="note b">${ic('check',18,2.4)}<span>Gelesen von ${Object.keys(h.readBy).map(id=>id===u.id?'dir':P(id).name).join(', ')||'noch niemandem'}.</span></div>
+    <div class="stack">${h.comments.map(c=>`<div class="row" style="align-items:flex-start">${c.by==='me'?`<span class="av s">${u.initials}</span>`:av(c.by)}<div class="cmt"><div class="small muted"><strong style="color:var(--fg)">${c.by==='me'?u.name:P(c.by).name}</strong> · ${c.time}</div>${esc(c.text)}</div></div>`).join('')}
+    <form class="row" data-f="hcomment" data-id="${h.id}"><label for="hc" class="sr">Kommentar</label><input class="input" id="hc" name="t" placeholder="Kommentar oder Rückfrage …"><button class="rbtn" aria-label="Senden">${ic('send',18,2)}</button></form></div>
+  </article>`;
+}
+
+/* ---------- Chat ---------- */
+VIEWS.chat = () => {
+  const m=isM(); const cur = S.chats.find(c=>c.id===S.chatId) || (m?null:S.chats[0]);
+  if(cur && cur.unread){ cur.unread=0; }
+  const cname = c => c.type==='group'? c.name : P(c.with).name;
+  const listHtml = `<div class="clist">${S.chats.map(c=>{ const last=c.msgs[c.msgs.length-1]; return `<button data-a="openchat" data-id="${c.id}" aria-current="${cur&&cur.id===c.id}">${c.type==='group'?`<span class="av s" style="border-radius:11px">${c.ini}</span>`:av(c.with)}<span class="grow"><span class="row" style="justify-content:space-between;gap:6px"><span class="t">${cname(c)}</span><span class="xs muted">${last.t}</span></span><span class="small muted" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${last.by==='me'?'Du: ':''}${esc(last.text)}</span></span>${c.unread?`<span class="nbadge" style="background:var(--warn);color:#fff">${c.unread}</span>`:''}</button>`;}).join('')}
+    <button data-a="modal" data-t="newchat" style="color:var(--brand-ink);font-weight:600">${ic('plus',18)} Neuer Chat</button></div>`;
+  if(m && !cur) return `<div class="ptitle"><h1>Chat</h1></div><div class="chatwrap">${listHtml}</div>`;
+  const thread = `<div class="thread"><div class="thead">${m?`<button class="ibtn" style="border:0" data-a="openchat" data-id="" aria-label="Zurück zur Liste">${ic('back')}</button>`:''}${cur.type==='group'?`<span class="av s" style="border-radius:11px">${cur.ini}</span>`:av(cur.with)}<div class="grow"><div class="t">${cname(cur)}</div><div class="xs muted">${cur.type==='group'?cur.members:P(cur.with).job+(P(cur.with).lang?' · schreibt '+P(cur.with).lang:'')}</div></div></div>
+    <div class="msgs" aria-live="polite">${cur.msgs.map((x,i)=>{ const mine=x.by==='me'; return `<div class="msg ${mine?'me':''} fade">${!mine&&cur.type==='group'?`<div class="who">${P(x.by).name}</div>`:''}<div>${x.showOrig?esc(x.orig):mentionfy(x.text)}</div><div class="meta">${x.orig?`<span>${x.showOrig?'Original':'Aus dem Polnischen'} · <button class="lnk xs" style="padding:0" data-a="morig" data-c="${cur.id}" data-i="${i}">${x.showOrig?'Übersetzung':'Original'}</button></span>`:''}<span>${x.t}${mine? (cur.type==='direct'? ` <span class="ticks" style="${x.status==='read'?'color:#CFE8B8':''}" aria-label="${x.status==='read'?'gelesen':'zugestellt'}">✓✓</span>`:' · gesendet') :''}</span></div></div>`;}).join('')}
+    ${S.typing===cur.id?`<div class="typing">${cur.type==='group'?'Jemand':P(cur.with).name.split(' ')[0]} schreibt …</div>`:''}</div>
+    <form class="composer" data-f="chat" data-id="${cur.id}"><button type="button" class="ibtn" style="border:0" data-a="end" data-k="more" aria-label="Anhang">${ic('image')}</button><label for="msg" class="sr">Nachricht</label><input id="msg" name="t" placeholder="Nachricht …" autocomplete="off"><button type="button" class="ibtn" style="border:0" data-a="end" data-k="mic" aria-label="Spracheingabe">${ic('mic')}</button><button class="rbtn" aria-label="Senden">${ic('send',18,2)}</button></form></div>`;
+  return `${m?'':'<div class="ptitle"><h1>Chat</h1></div>'}<div class="chatwrap">${m?'':listHtml}${thread}</div>
+   ${m?'':`<div class="xs muted">Chats sehen nur die Beteiligten – keine Admin-Einsicht. In Gruppenchats gibt es keine Lesebestätigungen, im 1:1-Chat zeigen ✓✓ „gelesen“. Nachrichten werden nach 12 Monaten gelöscht.</div>`}`;
+};
+
+/* ---------- Wissen ---------- */
+VIEWS.wissen = () => {
+  const id = S.param || 'kuehlkette'; const a = KNOW.articles[id];
+  const treeBtn = k => `<button data-a="go" data-r="wissen" data-p="${k}" ${k===id?'aria-current="page"':''}>${KNOW.articles[k].title}</button>`;
+  const tree = `<nav class="card tree" aria-label="Kategorien" style="flex:1 1 220px;max-width:${isM()?'100%':'270px'};padding:.8rem"><div class="eyebrow" style="padding:.3rem .6rem .5rem">Kategorien</div>
+   ${KNOW.tree.map(c=>`<div><div class="t" style="padding:.5rem .6rem .2rem;font-size:.95rem">${c.name}</div><div class="sub">${(c.items||[]).map(treeBtn).join('')}${(c.sub||[]).map(s=>`<div class="small muted" style="padding:.3rem .6rem 0;font-weight:600">${s.name}</div>${s.items.map(treeBtn).join('')}`).join('')}${(c.items&&!c.items.length&&!c.sub)?`<button data-a="end" data-k="${c.name==='Housekeeping'?'housekeeping':'forms'}" class="muted">Noch leer</button>`:''}</div></div>`).join('')}</nav>`;
+  const ackKey = me().id+':'+id; const acked = S.ack[ackKey];
+  const useEn = S.kLang==='en' && a.en; const steps = S.kPlain && a.plain ? a.plain : useEn ? a.en.steps : a.steps;
+  return `<div class="cols">${isM()?'':tree}
+  <article class="card stack" style="flex:3 1 520px;min-width:0;padding:1.6rem 1.8rem">
+    <div class="small muted">Wissen › ${a.path.join(' › ')}</div>
+    <div class="chips"><span class="chip b">${a.type}</span>${a.mandatory?'<span class="chip w">Pflichtlektüre</span>':''}${acked?'<span class="chip o">'+ic('check',13,2.6)+' bestätigt</span>':''}</div>
+    <h1 style="font-size:1.8rem">${useEn?a.en.title:a.title}</h1>
+    <div class="small muted">Version ${a.ver} · gültig seit ${a.valid} · verantwortlich: ${a.owner} · nächste Prüfung: ${a.review}</div>
+    ${a.change?`<div class="note g" style="align-items:center;flex-wrap:wrap">${ic('clock',18)}<span class="grow"><strong>Neu in Version ${a.ver}:</strong> ${a.change}</span><button class="btn sm" data-a="modal" data-t="diff" data-id="${id}">Änderungen zu Version ${a.ver-1}</button></div>`:''}
+    <div class="row wrap"><label for="klang" class="small muted">Sprache</label><select id="klang" class="select" style="width:auto;min-height:40px" data-c="klang"><option value="de" ${S.kLang==='de'?'selected':''}>Deutsch (Original)</option><option value="en" ${S.kLang==='en'?'selected':''}>English (maschinell)</option><option value="pl" ${S.kLang==='pl'?'selected':''}>Polski (maschinell)</option></select>
+      <label class="btn sm" style="cursor:pointer"><input type="checkbox" data-c="kplain" ${S.kPlain?'checked':''} style="width:18px;height:18px;accent-color:var(--brand)"> Einfache Sprache</label>
+      <button class="btn sm" data-a="speakk" data-id="${id}">${ic('speaker',16)} Vorlesen</button>${can('readlist')?`<button class="btn sm" data-a="end" data-k="edit">${ic('edit',16)} Bearbeiten</button>`:''}</div>
+    ${S.kLang==='pl'?`<div class="note g">${ic('globe',18)}<span>Polnisch wird in der Wirkstatt auf Knopfdruck maschinell übersetzt. In der Demo ist nur Englisch hinterlegt.</span></div>`:''}
+    ${S.kPlain&&!a.plain?`<div class="note g">${ic('sparkle',18)}<span>Für diesen Artikel gibt es noch keine freigegebene Fassung in Einfacher Sprache. Die KI kann einen Vorschlag machen – freigeben muss ihn die verantwortliche Person.</span></div>`:''}
+    ${S.kPlain&&a.plain?`<div class="xs muted">Einfache Sprache · redaktionell freigegeben · verbindlich ist das Original</div>`:''}
+    ${useEn&&!S.kPlain?`<div class="xs muted">Machine translation · the German original is binding</div>`:''}
+    <ol class="steps">${steps.map((s,i)=>`<li><span class="num">${i+1}</span><div class="grow"><div class="t" style="font-size:1.08rem">${s[0]}</div><div>${s[1]}</div>${i===1&&a.media==='photo'?`<div style="margin-top:.7rem">${photo('sop',200)}</div>`:''}</div></li>`).join('')}</ol>
+    ${a.media==='video'?`<button class="media" data-a="end" data-k="video" aria-label="Video abspielen" style="border:0;padding:0;cursor:pointer;width:100%;background:linear-gradient(135deg,#4F5B2C,#2F3719)"><span class="play"><span>${ic('play',28,2)}</span></span><span class="cc">UT</span></button>`:''}
+    ${a.mandatory?(acked?`<div class="note b" style="align-items:center">${ic('check',20,2.4)}<span>Du hast Version ${a.ver} am ${acked} bestätigt. Bei einer neuen Version fragen wir dich erneut.</span></div>`
+      :`<div class="row wrap" style="padding:1.1rem 1.2rem;border-radius:14px;background:var(--brand-tint)"><div class="grow" style="flex:1 1 240px"><div class="t">Bitte bestätige, dass du diese SOP gelesen hast.</div><div class="small" style="color:var(--brand-ink)">Die Bestätigung gilt für Version ${a.ver}.</div></div><button class="btn pri" data-a="ack" data-id="${id}" style="min-height:50px">${ic('check',18,2.4)} Kenntnis genommen</button></div>`):''}
+  </article>
+  <aside class="col-side" style="flex:1 1 240px">
+    ${a.related.length?card('Verknüpft', a.related.map(r=>`<button class="libtn" data-a="go" data-r="${r[1]}" ${r[2]?`data-p="${r[2]}"`:''}><span class="t" style="color:var(--brand-ink);font-weight:600">${r[0]}</span></button>`).join('')):''}
+    ${card('Versionen', Array.from({length:a.ver}).map((_,i)=>{ const v=a.ver-i; return `<div class="row" style="justify-content:space-between;padding:.35rem 0"><span class="${v===a.ver?'t':''}">Version ${v}</span><span class="small muted">${v===a.ver?'aktuell':'archiviert'}</span></div>`;}).join(''))}
+    <section class="card"><h2 style="margin-bottom:.5rem">QR-Code am Gerät</h2><div class="row"><button class="ibtn" style="width:64px;height:64px" data-a="end" data-k="qr" aria-label="QR-Code anzeigen">${ic('qr',40,1.6)}</button><span class="small muted">Öffnet diese Anleitung nach dem Anmelden direkt am Kühlraum.</span></div></section>
+    ${isM()?tree:''}
+  </aside></div>`;
+};
+
+/* ---------- Suche & Assistent ---------- */
+function searchIndex(){
+  const idx=[];
+  S.news.forEach(n=>idx.push({type:'News', title:n.title, text:n.body.join(' '), route:'news', param:n.id}));
+  Object.entries(KNOW.articles).forEach(([k,a])=>idx.push({type:a.type, title:a.title, text:a.steps.map(s=>s.join(' ')).join(' ')+' '+a.path.join(' '), route:'wissen', param:k}));
+  S.contacts.forEach(c=>idx.push({type:'Kontakt', title:c.name, text:c.what+' '+(c.emergency||'')+' '+c.cat, route:'kontakte', param:c.id}));
+  S.docs.filter(d=>!d.secret||can('admin')).forEach(d=>idx.push({type:'Dokument', title:d.name, text:d.cat, route:'dokumente'}));
+  if(can('handovers')) S.handovers.forEach(h=>idx.push({type:'Übergabe', title:h.subject, text:h.points.join(' '), route:'uebergaben', param:h.id}));
+  S.checklists.forEach(c=>idx.push({type:'Checkliste', title:c.title, text:c.items.map(i=>i.title).join(' '), route:'checklisten', param:c.id}));
+  return idx;
+}
+function doSearch(q){
+  const words = q.toLowerCase().replace(/[?!.,]/g,' ').split(/\s+/).filter(w=>w.length>2 && !['was','wie','wer','ich','die','der','das','und','ist','wenn','eine','ein','mit','für','den','dem','mache','muss','kann','zu'].includes(w));
+  if(!words.length) return [];
+  return searchIndex().map(it=>{ const hay=(it.title+' '+it.text).toLowerCase(); const s=words.reduce((a,w)=>{ const st=w.slice(0,Math.max(4,w.length-3)); return a+(hay.includes(st)?1:0)+(it.title.toLowerCase().includes(st)?1:0); },0); return {...it,s};}).filter(x=>x.s>0).sort((a,b)=>b.s-a.s).slice(0,8);
+}
+const AI = [
+  { re:/(warm|kühlkette|kuehlkette|temperatur|tiefkühl|tk-|lieferung|warenannahme)/i, a:'Nimm die Ware nicht an. Laut SOP „Kühlkette bei der Warenannahme“ dokumentierst du den gemessenen Wert in der Checkliste „Warenannahme Kühlware“ und informierst sofort die Küchenleitung [1][2]. Ist ein Kühlraum selbst betroffen, erreichst du den Kältetechnik-Notdienst rund um die Uhr [3].',
+    src:[['SOP · Version 3','Kühlkette bei der Warenannahme','wissen','kuehlkette'],['Checkliste','Warenannahme Kühlware','checklisten','ware'],['Kontakt','Kälte Nord GmbH – 24/7-Notdienst','kontakte','k1']] },
+  { re:/(check-?in|anreise|meldeschein|begrüß)/i, a:'Der Check-in läuft in fünf Schritten: begrüßen, Meldeschein ausfüllen lassen, Zimmer und Leistungen erklären, Besonderheiten wie Allergien im System vermerken und den Weg zeigen [1]. Vor Schichtbeginn hilft die Checkliste „Frühdienst Rezeption“ [2].',
+    src:[['Prozess · Version 5','Check-in-Prozess','wissen','checkin'],['Checkliste','Frühdienst Rezeption','checklisten','frueh']] },
+  { re:/(dienstkleidung|anprobe|größe|uniform)/i, a:'Die neue Dienstkleidung gilt ab 2. November. Die Anprobe ist am 14. und 15. Oktober von 14 bis 16 Uhr im Personalraum; deine Größe trägst du bis Freitag in die Größentabelle ein [1][2].',
+    src:[['News','Neue Dienstkleidung ab November','news','n1'],['Dokument','Größentabelle Dienstkleidung','dokumente',null]] },
+  { re:/(notdienst|heizung|aufzug|defekt|störung|kaputt|tropft)/i, a:'Für technische Notfälle stehen die Notdienste im Telefonbuch: Kältetechnik, Aufzug und Heizung sind rund um die Uhr erreichbar [1][2]. Störungen im Haus meldest du wie gewohnt in Flexkeeping – die Plattform verlinkt dorthin.',
+    src:[['Kontakt','Kälte Nord GmbH','kontakte','k1'],['Kontakt','Aufzugservice Brandenburg','kontakte','k2']] },
+  { re:/(dienst|schicht|arbeite|frei|urlaub|dienstplan)/i, a:()=>`Laut Gastromatic hast du ${((S.shifts[me().id]||[])[0]||['heute','–'])[1]} heute. Deine nächsten Schichten siehst du auf der Startseite [1]. Änderungen und Urlaub laufen weiter über Gastromatic.`,
+    src:[['Dienstplan','Mein Dienstplan (aus Gastromatic)','start',null]] },
+  { re:/(telefon|anruf|melden wir|klingel)/i, a:'Wir melden uns mit „Schloss & Gut Liebenberg, mein Name ist …, was kann ich für Sie tun?“ und nehmen innerhalb von drei Klingeltönen ab. Gäste werden gesiezt [1].',
+    src:[['Brand Standard','So melden wir uns am Telefon','wissen','telefon']] },
+  { re:/(allergen|allergie|gluten|laktose)/i, a:'Nie raten: Jede Speisekarte und jedes Buffetschild nennt die Allergene, die Liste hängt am Pass. Im Zweifel fragst du die Küchenleitung [1].',
+    src:[['Richtlinie','Allergene richtig kennzeichnen','wissen','allergene']] }
+];
+VIEWS.suche = () => {
+  const q = S.query; const res = q? doSearch(q):[];
+  return `<div class="ptitle"><h1>Suche & Assistent</h1></div>
+  <form class="search" data-f="search" style="max-width:820px;flex:none;min-height:54px;border:2px solid var(--brand);background:var(--surface)" role="search">${ic('search')}<label for="q2" class="sr">Frage oder Suchbegriff</label><input id="q2" name="q" value="${esc(q)}" placeholder="z. B. Was mache ich, wenn eine TK-Lieferung zu warm ist?" data-fresh="1"><button class="btn pri sm" type="submit">Fragen</button></form>
+  ${!q?`<div class="stack" style="max-width:820px"><div class="eyebrow">Probier zum Beispiel</div><div class="chips">${['Was mache ich, wenn eine TK-Lieferung zu warm ist?','Wie läuft der Check-in?','Wann ist die Anprobe der Dienstkleidung?','Wen rufe ich an, wenn der Aufzug steckt?','Wann habe ich Dienst?'].map(x=>`<button class="fchip" data-a="ask" data-q="${esc(x)}">${x}</button>`).join('')}</div></div>`:''}
+  ${q ? (can('ai') ? aiCard() : `<div class="note g" style="max-width:820px">${ic('lock',18)}<span>Der KI-Assistent ist für externe Zugänge nicht freigeschaltet. Die normale Suche funktioniert trotzdem.</span></div>`):''}
+  ${q?`<section style="max-width:820px" class="stack"><div class="row" style="justify-content:space-between"><h2 style="font-size:1.15rem">Suchergebnisse</h2><span class="small muted">${res.length} Treffer in Inhalten, die du sehen darfst</span></div>
+   <div class="card" style="padding:.3rem 1.2rem">${res.map(r=>`<button class="libtn" data-a="go" data-r="${r.route}" ${r.param?`data-p="${r.param}"`:''} style="flex-direction:column;gap:2px"><span class="xs muted">${r.type}</span><span class="t" style="color:var(--brand-ink)">${esc(r.title)}</span></button>`).join('') || '<div class="empty">Keine Treffer. Versuch es mit einem anderen Wort.</div>'}</div></section>`:''}`;
+};
+function aiCard(){
+  const ai = S.ai;
+  if(!ai) return '';
+  return `<section class="ai stack" style="max-width:820px" aria-live="polite"><div class="row"><span class="badge">${ic('sparkle',20)}</span><h2 style="font-size:1.15rem">Antwort des Assistenten</h2></div>
+   ${ai.loading?`<div class="thinking" aria-label="Der Assistent denkt nach"><span></span><span></span><span></span> <span class="small muted" style="animation:none;background:none;width:auto;height:auto">sucht in Inhalten, die du sehen darfst …</span></div>`
+    :`<div class="fade prose">${ai.text.replace(/\[(\d)\]/g,'<sup class="chip b" style="padding:0 6px;font-size:.72rem">$1</sup>')}</div>
+      ${ai.src.length?`<div class="stack fade" style="gap:8px"><div class="eyebrow">Quellen</div>${ai.src.map((s,i)=>`<button class="srcbtn" data-a="go" data-r="${s[2]}" ${s[3]?`data-p="${s[3]}"`:''}><span class="chip b">${i+1}</span><span class="grow"><span class="t" style="display:block">${s[1]}</span><span class="xs muted">${s[0]}</span></span>${ic('arrow',16)}</button>`).join('')}</div>`:''}
+      <div class="row wrap" style="border-top:1px solid var(--line-2);padding-top:.8rem"><span class="small muted grow" style="flex:1 1 260px">Der Assistent nutzt nur Inhalte, die du sehen darfst, und speichert deine Frage nicht. Prüf Wichtiges in der Quelle.</span><button class="btn sm ${ai.fb==='up'?'on':''}" data-a="aifb" data-v="up">Hilfreich</button><button class="btn sm ${ai.fb==='down'?'on':''}" data-a="aifb" data-v="down">Nicht hilfreich</button></div>`}</section>`;
+}
+function ask(q){
+  S.query=q; S.route='suche'; S.param=null;
+  if(!can('ai')){ S.ai=null; render(true); return; }
+  S.ai={loading:true}; render(true);
+  setTimeout(()=>{
+    const hit = AI.find(x=>x.re.test(q));
+    if(hit) S.ai={text: typeof hit.a==='function'?hit.a():hit.a, src:hit.src};
+    else { const r=doSearch(q).slice(0,3); S.ai={ text: r.length? `Eine eindeutige Antwort habe ich in den freigegebenen Inhalten nicht gefunden. Diese Einträge passen am ehesten – schau sie dir an [1]${r.length>1?'[2]':''}.<br><br><span class="small muted">Kleiner Hinweis: In der Demo kenne ich nur eine Handvoll Themen. In der echten Wirkstatt durchsuche ich alle SOPs, News und Dokumente, die du sehen darfst.</span>` : 'Dazu finde ich in den Inhalten, die du sehen darfst, nichts. Ich erfinde lieber nichts.<br><br><span class="small muted">In der Demo kenne ich nur eine Handvoll Themen – frag mich zum Beispiel nach der Kühlkette, dem Check-in oder der Dienstkleidung.</span>', src:r.map(x=>[x.type,x.title,x.route,x.param])}; }
+    if(S.route==='suche') render();
+  }, 1100);
+}
+
+/* ---------- Checklisten ---------- */
+function itemDone(i){ if(i.type==='check') return !!i.value; if(i.value==null||i.value==='') return false; return !outOfRange(i) || !!i.note; }
+function outOfRange(i){ const v=parseFloat(String(i.value).replace(',','.')); return !isNaN(v) && v>i.max; }
+VIEWS.checklisten = () => {
+  if(S.param){ const c=S.checklists.find(x=>x.id===S.param); if(c) return checklistRun(c); }
+  return `<div class="ptitle"><h1>Checklisten</h1></div>
+  <div class="stack">${S.checklists.map(c=>{ const d=c.items.filter(itemDone).length; return `<button class="card" data-a="go" data-r="checklisten" data-p="${c.id}" style="text-align:left;cursor:pointer;color:inherit;display:flex;flex-direction:column;gap:8px"><span class="row wrap" style="justify-content:space-between"><span class="row"><span class="chip ${c.kind==='HACCP'?'w':'b'}">${c.kind}</span><span class="t" style="font-size:1.1rem">${c.title}</span></span><span class="small muted">${c.team} · ${d===c.items.length?'erledigt':c.due}</span></span><span class="bar"><span style="width:${d/c.items.length*100}%"></span></span><span class="xs muted">${d} von ${c.items.length} erledigt</span></button>`;}).join('')}</div>
+  <div class="note">${ic('list',18)}<span>Wiederkehrende Checklisten entstehen automatisch aus Vorlagen – z. B. jeden Morgen um 6 Uhr. HACCP-Nachweise werden zwei Jahre aufbewahrt.</span></div>`;
+};
+function checklistRun(c){
+  const d=c.items.filter(itemDone).length; const all = d===c.items.length; const firstOpen = c.items.find(i=>!itemDone(i));
+  return `<button class="lnk" data-a="go" data-r="checklisten" style="align-self:flex-start">${ic('back',16)} Alle Checklisten</button>
+  <div class="stack" style="max-width:760px">
+   <div><div class="chips"><span class="chip ${c.kind==='HACCP'?'w':'b'}">${c.kind}</span><span class="chip">${c.team}</span></div><h1 style="font-size:1.7rem;margin-top:.4rem">${c.title}</h1></div>
+   <div class="row" style="justify-content:space-between"><span class="t">${d} von ${c.items.length} erledigt</span>${c.id==='kuehl'?`<button class="lnk" data-a="go" data-r="wissen" data-p="kuehlkette">Anleitung (SOP)</button>`:''}</div>
+   <div class="bar" role="progressbar" aria-valuenow="${d}" aria-valuemin="0" aria-valuemax="${c.items.length}" aria-label="Fortschritt"><span style="width:${d/c.items.length*100}%"></span></div>
+   ${c.note?`<div class="xs muted">${c.note}</div>`:''}
+   ${c.items.map(i=>{ const done=itemDone(i); const bad = i.type==='temp' && i.value!=null && i.value!=='' && outOfRange(i); const cur = i===firstOpen && !bad;
+     if(i.type==='check') return `<label class="citem row ${cur?'cur':''}" style="cursor:pointer"><input type="checkbox" class="sr" data-c="citem" data-cl="${c.id}" data-id="${i.id}" ${i.value?'checked':''}><span class="cstate ${done?'ok':''}">${done?ic('check',16,3):''}</span><span class="grow"><span class="t" style="display:block">${i.title}</span>${i.by?`<span class="xs muted">${i.at} · ${i.by}</span>`:''}</span></label>`;
+     return `<div class="citem ${bad?'bad':cur?'cur':''}"><div class="row"><span class="cstate ${bad?'bad':done?'ok':''}">${bad?'!':done?ic('check',16,3):ic('thermo',16)}</span><div class="grow"><div class="t">${i.title}</div><div class="xs ${bad?'':'muted'}" style="${bad?'color:var(--warn-ink);font-weight:700':''}">${bad?'Über dem Sollwert – Maßnahme nötig':`Soll: höchstens ${String(i.max).replace('-','−')} °C`}${i.by?' · '+i.at+' · '+i.by:''}</div></div>${i.value!=null&&i.value!==''?`<span class="t tab" style="font-size:1.15rem;${bad?'color:var(--warn-ink)':''}">${esc(i.value)} °C</span>`:''}</div>
+      ${(i.value==null||i.value==='')?`<form class="tinput" data-f="temp" data-cl="${c.id}" data-id="${i.id}"><label for="t-${i.id}" class="sr">Temperatur ${i.title} in Grad Celsius</label><input id="t-${i.id}" name="v" inputmode="decimal" placeholder="°C" autocomplete="off"><button class="btn pri">Speichern</button></form>`:''}
+      ${bad?`<form class="stack" style="margin-top:.6rem;gap:8px" data-f="tnote" data-cl="${c.id}" data-id="${i.id}"><label for="n-${i.id}" class="flabel small">Was hast du getan?</label><textarea id="n-${i.id}" name="n" class="input" rows="2" placeholder="z. B. Tür war offen – geschlossen, Küchenleitung informiert, Nachmessung 07:30">${esc(i.note||'')}</textarea><div class="row wrap"><button class="btn pri sm">${i.note?'Maßnahme aktualisieren':'Maßnahme speichern'}</button><button type="button" class="btn sm" data-a="end" data-k="more">${ic('camera',16)} Foto</button><button type="button" class="btn sm" data-a="mktask" data-t="${esc(i.title)}">Aufgabe erstellen</button></div></form>`:''}
+     </div>`;}).join('')}
+   <button class="btn ${all?'pri':''}" style="min-height:52px" data-a="finish" data-id="${c.id}" ${all&&!c.finished?'':'disabled'}>${c.finished?`Abgeschlossen um ${c.finished} · Nachweis gespeichert`:all?'Checkliste abschließen':`Abschließen · noch ${c.items.length-d} Punkte`}</button>
+  </div>`;
+}
+
+/* ---------- Aufgaben ---------- */
+VIEWS.aufgaben = () => {
+  if(!can('tasks')) return noAccess('Aufgaben');
+  const u=me(); const mine=S.tasks.filter(t=>t.owner===u.id); const list = S.taskTab==='offen'? mine.filter(t=>!t.done) : mine.filter(t=>t.done);
+  return `<div class="ptitle"><h1>Aufgaben</h1><button class="btn pri" data-a="modal" data-t="newtask">${ic('plus',18)} Neue Aufgabe</button></div>
+  <div class="tabs" role="tablist"><button role="tab" aria-selected="${S.taskTab==='offen'}" data-a="set" data-k="taskTab" data-v="offen">Offen (${mine.filter(t=>!t.done).length})</button><button role="tab" aria-selected="${S.taskTab==='erledigt'}" data-a="set" data-k="taskTab" data-v="erledigt">Erledigt (${mine.filter(t=>t.done).length})</button></div>
+  <section class="card" style="max-width:820px">${list.map(taskRow).join('') || `<div class="empty">${S.taskTab==='offen'?'Nichts mehr offen. Zeit für einen Kaffee.':'Noch nichts erledigt.'}</div>`}</section>`;
+};
+
+/* ---------- Umfragen ---------- */
+VIEWS.umfragen = () => {
+  if(!can('surveys')) return noAccess('Umfragen');
+  const s=S.survey; const total=s.q1.counts.reduce((a,b)=>a+b,0);
+  const labels=['sehr unzufrieden','unzufrieden','geht so','zufrieden','sehr zufrieden'];
+  return `<div class="ptitle"><h1>Umfragen</h1>${can('surveyCreate')?`<button class="btn pri" data-a="end" data-k="newsurvey">${ic('plus',18)} Neue Umfrage</button>`:''}</div>
+  <section class="card stack" style="max-width:820px;padding:1.5rem 1.6rem"><div class="chips"><span class="chip b">anonym</span><span class="chip">${s.until}</span><span class="chip">${total} Antworten</span></div><h2 style="font-size:1.4rem">${s.title}</h2>
+  ${!s.answered?`<form class="stack" data-f="survey" style="gap:1.2rem">
+     <fieldset style="border:0;padding:0;margin:0"><legend class="t" style="margin-bottom:.5rem">${s.q1.label}</legend><div class="seg" role="radiogroup">${labels.map((l,i)=>`<label style="display:contents"><input type="radio" name="q1" value="${i}" class="sr" ${i===3?'checked':''}><span class="btn sm sv" data-a="rate" data-i="${i}" style="border-radius:0;border:0;border-left:${i?'1px solid var(--line)':'0'};${(S.rate??3)===i?'background:var(--brand);color:#fff':''}">${i+1}</span></label>`).join('')}</div><div class="xs muted" style="margin-top:4px">1 = sehr unzufrieden · 5 = sehr zufrieden</div></fieldset>
+     <fieldset style="border:0;padding:0;margin:0"><legend class="t" style="margin-bottom:.3rem">${s.q2.label}</legend>${s.q2.opts.map((o,i)=>`<label class="check"><input type="checkbox" name="q2" value="${i}"> ${o}</label>`).join('')}</fieldset>
+     <div class="field"><label for="q3">${s.q3.label}</label><textarea id="q3" name="q3" class="input" rows="2"></textarea><span class="xs muted">Hinweis: Auch bei anonymen Umfragen kann der Schreibstil Rückschlüsse erlauben.</span></div>
+     <button class="btn pri" style="align-self:flex-start">Antwort abschicken</button></form>`
+   : `<div class="note b">${ic('check',18,2.4)}<span>Danke für deine Antwort! Ergebnisse siehst du, weil schon mehr als 5 Personen teilgenommen haben.</span></div>
+     <div><div class="t" style="margin-bottom:.5rem">${s.q1.label}</div>${s.q1.counts.map((c,i)=>`<div class="row" style="margin:.3rem 0"><span class="small" style="width:120px">${labels[i]}</span><span class="bar grow"><span style="width:${c/total*100}%"></span></span><span class="small tab" style="width:28px;text-align:right">${c}</span></div>`).join('')}</div>
+     <div><div class="t" style="margin-bottom:.5rem">${s.q2.label}</div>${s.q2.opts.map((o,i)=>`<div class="row" style="margin:.3rem 0"><span class="small" style="width:160px">${o}</span><span class="bar grow"><span style="width:${s.q2.counts[i]/total*100}%"></span></span><span class="small tab" style="width:28px;text-align:right">${s.q2.counts[i]}</span></div>`).join('')}</div>
+     <div><div class="t" style="margin-bottom:.4rem">Freitext (zufällige Reihenfolge, ohne Zeitstempel)</div>${s.q3.texts.map(t=>`<div class="cmt small" style="margin:.3rem 0">„${esc(t)}“</div>`).join('')}</div>`}
+  </section>`;
+};
+
+/* ---------- Ideen ---------- */
+VIEWS.ideen = () => {
+  if(!can('ideas')) return noAccess('Ideen');
+  const cols=['Eingereicht','In Prüfung','Umgesetzt'];
+  return `<div class="ptitle"><div><h1>Ideenboard</h1><div class="muted">Gute Ideen aus dem Team – vom Vorschlag bis zur Umsetzung.</div></div><button class="btn pri" data-a="modal" data-t="newidea">${ic('plus',18)} Idee einreichen</button></div>
+  <div class="kb">${cols.map(c=>`<section class="kcol" aria-label="${c}"><div class="row" style="justify-content:space-between"><h2 style="font-size:1.05rem">${c}</h2><span class="chip">${S.ideas.filter(i=>i.status===c).length}</span></div>
+    ${S.ideas.filter(i=>i.status===c).sort((a,b)=>b.votes-a.votes).map(i=>`<article class="icard fade"><span class="chip ${i.cat==='Nachhaltigkeit'?'b':i.cat==='Gäste'?'i':'l'}" style="align-self:flex-start">${i.cat}</span><div class="t">${esc(i.title)}</div><div class="small muted">${esc(i.text)}</div><div class="row wrap" style="justify-content:space-between"><span class="xs muted">von ${esc(i.by)}</span><span class="row" style="gap:6px"><button class="vote ${i.voted?'on':''}" data-a="vote" data-id="${i.id}" aria-pressed="${i.voted}">${ic('thumb',15)} ${i.votes}</button>${can('ideasManage')&&c!=='Umgesetzt'?`<button class="btn sm" data-a="advance" data-id="${i.id}" title="Status weitersetzen">${ic('arrow',15)}</button>`:''}</span></div></article>`).join('') || '<div class="small muted">Noch leer.</div>'}</section>`).join('')}</div>
+  ${can('ideasManage')?'':'<div class="xs muted">Den Status setzen Leitungen. Jede Änderung landet in der Statushistorie der Idee.</div>'}`;
+};
+
+/* ---------- Kontakte ---------- */
+VIEWS.kontakte = () => {
+  const cats=['Alle','Wartung & Reparatur','Lieferanten','Dienstleister','Partner']; const q=S.contactQ.toLowerCase();
+  const list=S.contacts.filter(c=>(S.contactFilter==='Alle'||c.cat===S.contactFilter)&&(!S.emergencyOnly||c.emergency)&&(!q||(c.name+c.what+c.cat).toLowerCase().includes(q)));
+  return `<div class="ptitle"><h1>Kontakte</h1></div>
+  <div class="row wrap"><div class="search" style="flex:1 1 280px;max-width:420px">${ic('search')}<label for="cq" class="sr">Kontakte durchsuchen</label><input id="cq" data-c="cq" value="${esc(S.contactQ)}" placeholder="Firma, Gewerk, Lieferant …"></div><label class="btn ${S.emergencyOnly?'on':''}" style="cursor:pointer"><input type="checkbox" data-c="emerg" ${S.emergencyOnly?'checked':''} style="width:18px;height:18px;accent-color:var(--warn)"> Nur Notdienste</label></div>
+  <div class="chips">${cats.map(c=>`<button class="fchip" aria-pressed="${S.contactFilter===c}" data-a="set" data-k="contactFilter" data-v="${c}">${c}</button>`).join('')}</div>
+  <div class="kpis" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">${list.map(c=>`<article class="card stack" id="ct-${c.id}" style="gap:6px;${S.param===c.id?'border:2px solid var(--brand)':''}"><div class="row" style="justify-content:space-between;align-items:flex-start"><span class="xs muted">${c.cat}</span>${c.emergency?`<span class="chip w">${ic('alert',13,2)} ${c.emergency}</span>`:''}</div><div class="t" style="font-size:1.08rem">${c.name} <span class="xs muted" style="font-weight:400">(Beispiel)</span></div><div class="small muted">${c.what}</div><div class="small">Ansprechpartner: ${c.person}</div><div class="row" style="margin-top:4px"><span class="t tab grow" style="user-select:all">${c.phone}</span><button class="btn sm" data-a="copy" data-v="${c.phone}" aria-label="Nummer kopieren">${ic('copy',16)} Kopieren</button></div></article>`).join('') || '<div class="card empty">Nichts gefunden.</div>'}</div>
+  <div class="xs muted">Alle Firmen und Nummern sind erfunden. Private Notfallkontakte von Mitarbeitenden stehen bewusst nicht hier.</div>`;
+};
+
+/* ---------- Team ---------- */
+VIEWS.team = () => {
+  if(!can('team')) return noAccess('Team');
+  const ids=Object.keys(S.people).filter(id=>!S.people[id].external && id!==me().id);
+  const teams=[...new Set(ids.map(id=>S.people[id].team))];
+  return `<div class="ptitle"><div><h1>Team</h1><div class="muted">Wer ist wer – mit dienstlichen Angaben, ohne private Daten.</div></div></div>
+  ${teams.map(t=>`<section class="stack"><h2 style="font-size:1.05rem">${t}</h2><div class="kpis" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr))">${ids.filter(id=>S.people[id].team===t).map(id=>`<div class="card row" style="padding:1rem">${av(id)}<div class="grow"><div class="t">${P(id).name}${P(id).isNew?' <span class="chip b">neu</span>':''}</div><div class="small muted">${P(id).job}</div>${P(id).absent?`<span class="chip g" style="margin-top:4px">${P(id).absent}</span>`:''}</div><button class="ibtn" data-a="dm" data-id="${id}" aria-label="Nachricht an ${P(id).name}">${ic('chat',18)}</button></div>`).join('')}</div></section>`).join('')}`;
+};
+
+/* ---------- Dokumente ---------- */
+VIEWS.dokumente = () => {
+  if(!can('docs')) return noAccess('Dokumente');
+  const cats=['Alle',...new Set(S.docs.map(d=>d.cat.split(' › ')[0]))];
+  const list=S.docs.filter(d=>S.docsFilter==='Alle'||d.cat.startsWith(S.docsFilter));
+  return `<div class="ptitle"><h1>Dokumente</h1><label class="btn pri" for="up" style="cursor:pointer">${ic('upload',18)} Hochladen</label><input type="file" id="up" class="sr" data-c="upload"></div>
+  <div class="chips">${cats.map(c=>`<button class="fchip" aria-pressed="${S.docsFilter===c}" data-a="set" data-k="docsFilter" data-v="${c}">${c}</button>`).join('')}</div>
+  <div class="card scrollx" style="padding:.2rem 1rem"><table class="tbl"><thead><tr><th>Name</th><th>Ablage</th><th>Version</th><th>Stand</th><th></th></tr></thead><tbody>${list.map(d=>{ const locked=d.secret&&!can('admin'); return `<tr><td>${locked?ic('lock',16):ic('doc',16)} <strong>${esc(d.name)}</strong>${d.from?` <span class="chip i">aus ${d.from}</span>`:''}${d.isNew?' <span class="chip b">neu</span>':''}</td><td class="muted">${esc(d.cat)}</td><td class="tab">${d.ver}</td><td class="tab muted">${d.date}</td><td>${locked?'<span class="small muted">nur Personal</span>':`<button class="btn sm" data-a="end" data-k="docview">Öffnen</button>`}</td></tr>`;}).join('')}</tbody></table></div>
+  <div class="note">${ic('shield',18)}<span>Vertrauliche Unterlagen wie Gehaltsstrukturen sehen nur ausdrücklich Berechtigte. Anhänge aus News und Übergaben findest du hier ebenfalls.</span></div>`;
+};
+
+/* ---------- Verwaltung ---------- */
+VIEWS.verwaltung = () => {
+  if(!can('admin')) return noAccess('Verwaltung');
+  const tabs=[['neu','Neu aus Gastromatic'],['rollen','Rollen & Rechte'],['design','Gesellschaften & Design'],['integr','Anbindungen'],['audit','Audit-Log']];
+  let body='';
+  if(S.adminTab==='neu') body = `<div class="card row wrap" style="padding:.9rem 1.1rem"><span style="width:10px;height:10px;border-radius:50%;background:var(--ok)"></span><span class="grow" style="flex:1 1 300px"><strong>Gastromatic</strong> · letzter Abgleich heute 06:00 · ${S.pending.length} warten auf Freischaltung</span><button class="btn sm" data-a="sync" data-id="gm">${S.syncing==='gm'?'Gleiche ab …':'Jetzt abgleichen'}</button></div>
+   ${S.pending.length?`<div class="card scrollx" style="padding:.2rem 1rem"><table class="tbl"><thead><tr><th>Name</th><th>Pers.-Nr.</th><th>Gesellschaft</th><th>Bereich</th><th>Eintritt</th><th></th></tr></thead><tbody>${S.pending.map(p=>`<tr><td><strong>${p.name}</strong></td><td class="tab">${p.nr}</td><td>${p.comp}</td><td>${p.area}</td><td class="tab">${p.start}</td><td><button class="btn pri sm" data-a="modal" data-t="approve" data-id="${p.id}">Prüfen & freischalten</button></td></tr>`).join('')}</tbody></table></div>`
+   :`<div class="card empty">${ic('check',28)}<p>Alle neuen Kolleg:innen sind freigeschaltet.</p></div>`}
+   <div class="note">${ic('lock',18)}<span>Name, Personalnummer, Bereich und Gesellschaft kommen aus Gastromatic und sind hier nicht änderbar. Adresse, Geburtsdatum und private Telefonnummern übernehmen wir bewusst nicht.</span></div>`;
+  if(S.adminTab==='rollen'){ const rows=[['News lesen',1,1,1,1],['News an eigenes Team',0,1,1,1],['News an alle, „wichtig“, Lesebestätigung',0,0,1,1],['Leserliste sehen',0,0,1,1],['Social',0,1,1,1],['KI-Assistent',0,1,1,1],['Team-Verzeichnis',0,1,1,1],['Checklisten ausführen',1,1,1,1],['Verwaltung',0,0,0,1]];
+    body=`<div class="card scrollx" style="padding:.2rem 1rem"><table class="tbl"><thead><tr><th>Recht</th><th>Externe</th><th>Mitarbeitende</th><th>Leitungen</th><th>Personal/Admin</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r[0]}</td>${r.slice(1).map(v=>`<td>${v?`<span style="color:var(--ok)">${ic('check',18,2.6)}</span>`:'<span class="muted">–</span>'}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+    <div class="row wrap"><button class="btn" data-a="end" data-k="roles">${ic('edit',16)} Rechte bearbeiten</button><span class="small muted">Tipp: Melde dich als Tom (extern) an – dann siehst du, was Externe nicht sehen.</span></div>`; }
+  if(S.adminTab==='design') body=`<section class="card stack"><h2>Auftritt je Gesellschaft</h2><p class="muted" style="margin:0">Ausbaustufe 2: Jede Gesellschaft der Stiftungsgruppe erscheint in ihren eigenen Farben und mit eigenem Logo – auf derselben Plattform. Probier es aus:</p>
+     <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">${[['sgl','Schloss & Gut Liebenberg','#6B7A3E'],['teal','[Gesellschaft B]','#00706E'],['blau','[Gesellschaft C]','#1E3560']].map(([k,n,c])=>`<button class="pcard" data-a="brand" data-v="${k}" aria-pressed="${S.brand===k}" style="flex-direction:column"><span style="width:100%;height:56px;border-radius:10px;background:${c}"></span><span class="t">${n}</span><span class="xs muted">${k==='sgl'?'Original':'Beispielfarbe'}</span></button>`).join('')}</div>
+     <div class="xs muted">Farben werden beim Speichern auf ausreichenden Kontrast geprüft. Gesellschaftsübergreifend bleiben z. B. stiftungsweite News, Social und das Kontaktverzeichnis.</div></section>`;
+  if(S.adminTab==='integr') body=`<div class="stack">${S.integrations.map(i=>`<div class="card row wrap"><span class="grow" style="flex:1 1 260px"><span class="t" style="display:block">${i.name}</span><span class="small muted">${i.what} · ${i.note}</span></span><span class="chip ${i.state==='verbunden'?'o':i.state==='Prüfung'?'g':i.state==='Idee'?'l':''}">${i.state}</span>${i.state==='verbunden'?`<button class="btn sm" data-a="sync" data-id="${i.id}">${S.syncing===i.id?'Gleiche ab …':'Abgleichen'}</button>`:`<button class="btn sm" data-a="end" data-k="${i.id==='ms'?'outlook':'more'}">Details</button>`}</div>`).join('')}</div>
+     <div class="note">${ic('arrow',18)}<span>Offene Schnittstelle (OpenAPI): Weitere Systeme lassen sich anbinden, ohne die Wirkstatt umzubauen. Die führenden Systeme bleiben führend.</span></div>`;
+  if(S.adminTab==='audit') body=`<div class="card scrollx" style="padding:.2rem 1rem"><table class="tbl"><thead><tr><th>Zeit</th><th>Wer</th><th>Was</th></tr></thead><tbody>${S.audit.map(a=>`<tr><td class="tab muted" style="white-space:nowrap">${a.t}</td><td style="white-space:nowrap">${esc(a.who)}</td><td>${esc(a.what)}</td></tr>`).join('')}</tbody></table></div><div class="xs muted">Das Audit-Log protokolliert sicherheitsrelevante Aktionen – keine Inhalte. Probier eine Freischaltung aus und schau dann wieder hier.</div>`;
+  return `<div class="ptitle"><h1>Verwaltung</h1></div><div class="tabs" role="tablist">${tabs.map(([k,l])=>`<button role="tab" aria-selected="${S.adminTab===k}" data-a="set" data-k="adminTab" data-v="${k}">${l}${k==='neu'&&S.pending.length?` (${S.pending.length})`:''}</button>`).join('')}</div>${body}`;
+};
+
+/* ---------- Einstellungen ---------- */
+VIEWS.einstellungen = () => {
+  const theme = document.documentElement.getAttribute('data-theme')||'system';
+  return `<div class="ptitle"><h1>Einstellungen</h1></div>
+  <div class="cols"><div class="col-main">
+   <section class="card stack"><h2>Darstellung & Barrierefreiheit</h2>
+     <div class="field"><label for="fs">Schriftgröße: <span id="fsv">${Math.round(S.fs/16*100)} %</span></label><input type="range" id="fs" min="14" max="22" step="1" value="${S.fs}" data-c="fs" style="accent-color:var(--brand)"></div>
+     <div class="field"><span class="flabel">Farbschema</span><div class="seg" role="group">${[['system','Wie Gerät'],['light','Hell'],['dark','Dunkel']].map(([k,l])=>`<button aria-pressed="${theme===k}" data-a="theme" data-v="${k}">${l}</button>`).join('')}</div></div>
+     <label class="check"><input type="checkbox" checked> Texte vorlesen anbieten</label><label class="check"><input type="checkbox"> Inhalte automatisch in meine Sprache übersetzen</label><label class="check"><input type="checkbox"> Einfache Sprache bevorzugen, wo vorhanden</label></section>
+   <section class="card stack"><h2>Wann möchtest du was bekommen?</h2><p class="small muted" style="margin:0">Außerhalb deiner Zeiten warten Push und E-Mail bis zum nächsten Zeitfenster. In der App ist alles sofort sichtbar.</p>
+     <div class="scrollx"><table class="tbl"><thead><tr><th>Art</th><th>Push</th><th>E-Mail</th><th>Zeitfenster</th></tr></thead><tbody>${S.notifPrefs.map((p,i)=>`<tr><td>${p.type}</td><td><input type="checkbox" aria-label="Push ${p.type}" data-c="np" data-i="${i}" data-k="push" ${p.push?'checked':''} style="width:20px;height:20px;accent-color:var(--brand)"></td><td><input type="checkbox" aria-label="E-Mail ${p.type}" data-c="np" data-i="${i}" data-k="mail" ${p.mail?'checked':''} style="width:20px;height:20px;accent-color:var(--brand)"></td><td><label class="sr" for="nw${i}">Zeitfenster ${p.type}</label><select id="nw${i}" class="select" style="min-height:38px;width:auto" data-c="nw" data-i="${i}">${['immer','Mo–Fr 7–21 Uhr','7–22 Uhr','nur in meiner Schicht','nie'].map(o=>`<option ${p.win===o?'selected':''}>${o}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table></div></section>
+  </div><div class="col-side">
+   <section class="card stack"><h2>Untere Leiste in der App</h2><p class="small muted" style="margin:0">Wähle bis zu vier Bereiche. „Mehr“ ist immer dabei.</p>${navItems().filter(n=>n[0]!=='start').map(([r,l])=>`<label class="check"><input type="checkbox" data-c="navm" data-r="${r}" ${S.navMobile.includes(r)?'checked':''}> ${l}</label>`).join('')}<button class="btn sm" data-a="phone" style="align-self:flex-start">${ic('device',16)} In der Handy-Ansicht ansehen</button></section>
+   <section class="card stack"><h2>Passwort vergessen?</h2><p class="small muted" style="margin:0">Freiwillig: private E-Mail nur für das Zurücksetzen deines Passworts. Sonst hilft dir deine Leitung mit einem Einmal-Code.</p><label for="re" class="sr">Private E-Mail</label><input id="re" class="input" placeholder="name@beispiel.de"></section>
+  </div></div>`;
+};
+
+function noAccess(what){
+  return `<section class="card empty" style="max-width:640px;margin:2rem auto">${ic('lock',34)}<h2 style="margin:.6rem 0">${what} ist für deinen Zugang nicht freigeschaltet</h2><p>Als externer Dienstleister siehst du nur, was du für deinen Einsatz brauchst. Genau so prüft die Wirkstatt Rechte – auf dem Server, nicht nur in der Oberfläche.</p><button class="btn" data-a="go" data-r="start">Zur Startseite</button></section>`;
+}
+
+/* ---------- Modale ---------- */
+function modal(){
+  const m=S.modal; let h='';
+  const head = (t)=>`<div class="shead"><h2>${t}</h2><button class="ibtn" data-a="close" aria-label="Schließen">${ic('x')}</button></div>`;
+  if(m.type==='end'){ const e=END[m.key]||END.more; h=`<div class="endart">${S.brand==='sgl'?LOGO:ic('building',64,1.4)}</div><div style="text-align:center"><div class="eyebrow">${esc(e[0])}</div><h2 style="font-size:1.5rem;margin:.3rem 0 .6rem">Hier endet die Demo – vorerst.</h2><p class="muted" style="margin:0 auto;max-width:42ch">${esc(e[1])}</p></div><div class="note b" style="justify-content:center">${ic('sparkle',18)}<span>Gute Nachricht: Das Datenmodell ist schon darauf vorbereitet.</span></div><button class="btn pri" data-a="close" style="min-height:50px">Verstanden, zurück zur Demo</button>`; }
+  if(m.type==='lang') h=`${head('Sprache')}<p class="muted" style="margin:0">Inhalte wie News, SOPs und Chatnachrichten übersetzt die Wirkstatt schon auf Knopfdruck. Die Oberfläche selbst gibt es zum Start auf Deutsch und Englisch, Polnisch folgt.</p><div class="stack">${[['Deutsch','aktiv'],['English','Oberfläche in Vorbereitung'],['Polski','Inhalte werden übersetzt']].map(([l,s],i)=>`<button class="pcard" data-a="${i?'end':'close'}" data-k="more" aria-pressed="${!i}"><span class="grow"><span class="t" style="display:block">${l}</span><span class="small muted">${s}</span></span></button>`).join('')}</div>`;
+  if(m.type==='more') h=`${head('Alle Bereiche')}<div class="kpis" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem">${[...navItems(), ...(can('admin')?[['verwaltung','Verwaltung','admin']]:[]), ['einstellungen','Einstellungen','admin']].map(([r,l,i])=>`<button class="pcard" data-a="go" data-r="${r}" style="align-items:center">${ic(i,22)}<span class="t">${l}</span></button>`).join('')}</div>`;
+  if(m.type==='diff'){ const a=KNOW.articles[m.id]; h=`${head(`Änderungen: Version ${a.ver-1} → ${a.ver}`)}<div class="stack diff">${a.diff.map(([t,x])=>t==='ins'?`<div><ins>+ ${x}</ins></div>`:t==='del'?`<div><del>− ${x}</del></div>`:`<div class="muted">${x}</div>`).join('')}</div><div class="xs muted">Freigegeben am ${a.valid} von ${a.owner}. Alle, die Version ${a.ver-1} bestätigt hatten, werden erneut gefragt.</div>`; }
+  if(m.type==='newpost') h=`${head('Neue Mitteilung')}<form class="stack" data-f="newpost"><div class="field"><label for="np-t">Titel</label><input id="np-t" name="title" class="input" required placeholder="Worum geht es?"></div><div class="field"><label for="np-b">Text</label><textarea id="np-b" name="body" class="input" rows="4" required placeholder="Kurz und klar – Übersetzung macht die Plattform."></textarea></div>
+     <div class="field"><label for="np-a">An wen?</label><select id="np-a" name="aud" class="select"><option>${me().team}</option>${can('newsAll')?'<option>Alle Mitarbeitenden</option><option>Ganze Stiftungsgruppe</option>':''}<option>Rezeption</option><option>Service</option><option>Küche</option></select>${can('newsAll')?'':'<span class="xs muted">An alle schreiben Abteilungsleitungen und Direktion.</span>'}</div>
+     <label class="btn sm" for="np-p" style="cursor:pointer;align-self:flex-start">${ic('image',16)} Foto anhängen</label><input type="file" id="np-p" class="sr" accept="image/*" data-c="postphoto">${S.postPhoto?`<div style="max-width:240px">${photo(S.postPhoto,120)}</div>`:''}
+     ${can('important')?`<label class="check"><input type="checkbox" name="imp"> Als wichtig markieren</label><label class="check"><input type="checkbox" name="track" checked> Lesestatus und Erinnerungen aktivieren</label>`:''}
+     <button class="btn pri" style="min-height:50px">Veröffentlichen</button></form>`;
+  if(m.type==='newhandover') h=`${head('Neue Übergabe')}<form class="stack" data-f="newhandover"><div class="row wrap"><div class="field grow"><label for="nh-team">Team</label><select id="nh-team" name="team" class="select"><option>Rezeption</option><option>Service</option></select></div><div class="field grow"><label for="nh-s">Schicht</label><select id="nh-s" name="shift" class="select"><option>Früh → Spät</option><option>Spät → Nacht</option><option>Nacht → Früh</option></select></div></div>
+     <div class="field"><label for="nh-sub">Betreff</label><input id="nh-sub" name="subject" class="input" required placeholder="z. B. Ruhige Schicht, ein offener Punkt"></div><div class="field"><label for="nh-p">Punkte (eine Zeile pro Punkt)</label><textarea id="nh-p" name="points" class="input" rows="4" required placeholder="Zi. 214 Late Check-out bis 14 Uhr&#10;Tagung: Beamer im Schlosssaal tauschen"></textarea></div>
+     <div class="row wrap"><label class="btn sm" for="nh-ph" style="cursor:pointer">${ic('camera',16)} Foto</label><input type="file" id="nh-ph" class="sr" accept="image/*" data-c="hophoto"><button type="button" class="btn sm" data-a="end" data-k="mic">${ic('mic',16)} Diktieren</button></div>${S.hoPhoto?`<div style="max-width:220px">${photo(S.hoPhoto,120)}</div>`:''}
+     <button class="btn pri" style="min-height:50px">Übergabe senden</button></form>`;
+  if(m.type==='newtask') h=`${head('Neue Aufgabe')}<form class="stack" data-f="newtask"><div class="field"><label for="nt-t">Was ist zu tun?</label><input id="nt-t" name="title" class="input" required value="${esc(m.prefill||'')}"></div><div class="row wrap"><div class="field grow"><label for="nt-p">Priorität</label><select id="nt-p" name="prio" class="select"><option>normal</option><option>hoch</option><option>niedrig</option></select></div><div class="field grow"><label for="nt-d">Fällig</label><select id="nt-d" name="due" class="select"><option>heute</option><option>morgen</option><option>diese Woche</option></select></div></div><button class="btn pri" style="min-height:50px">Aufgabe anlegen</button></form>`;
+  if(m.type==='newidea') h=`${head('Idee einreichen')}<form class="stack" data-f="newidea"><div class="field"><label for="ni-t">Deine Idee in einem Satz</label><input id="ni-t" name="title" class="input" required></div><div class="field"><label for="ni-x">Was bringt sie?</label><textarea id="ni-x" name="text" class="input" rows="3"></textarea></div><div class="field"><label for="ni-c">Kategorie</label><select id="ni-c" name="cat" class="select"><option>Team</option><option>Gäste</option><option>Nachhaltigkeit</option></select></div><button class="btn pri" style="min-height:50px">Einreichen</button></form>`;
+  if(m.type==='newchat') h=`${head('Neuer Chat')}<div class="stack">${Object.keys(S.people).filter(id=>!S.people[id].external&&id!==me().id).map(id=>`<button class="pcard" data-a="dm" data-id="${id}" style="align-items:center">${av(id)}<span><span class="t" style="display:block">${P(id).name}</span><span class="small muted">${P(id).job}</span></span></button>`).join('')}</div>`;
+  if(m.type==='approve'){ const p=S.pending.find(x=>x.id===m.id); const done=S.approved[m.id];
+    h = done ? `${head(`${p.name} ist freigeschaltet`)}<div style="text-align:center"><div class="eyebrow">Einmal-Code</div><div class="tab" style="font-size:2.6rem;font-weight:700;letter-spacing:.15em;color:var(--brand-ink)">${done.code}</div><div class="small muted">gültig 24 Stunden · bitte persönlich übergeben</div></div>
+      <div class="note b">${ic('check',18,2.4)}<span>Onboarding „${p.area.split(' ')[0]}“ gestartet: 12 Aufgaben für Leitung, Personal und ${p.name.split(' ')[0]} angelegt. Beim ersten Login legt ${p.name.split(' ')[0]} ein eigenes Passwort fest.</span></div><button class="btn pri" data-a="finishapprove" data-id="${p.id}" style="min-height:50px">Fertig</button>`
+    : `${head(`${p.name} freischalten`)}<div class="card" style="background:var(--surface-2)"><div class="eyebrow row" style="gap:6px">${ic('lock',14,2)} Aus Gastromatic · nur dort änderbar</div><div class="kpis" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem;margin-top:.5rem">${[['Personalnummer',p.nr],['Eintritt',p.start],['Gesellschaft',p.comp],['Bereich',p.area]].map(([k,v])=>`<div><div class="xs muted">${k}</div><div>${v}</div></div>`).join('')}</div></div>
+      <div class="field"><label for="ap-u">Benutzername</label><input id="ap-u" class="input" value="${p.name.toLowerCase().replace(/[^a-zäöü ]/g,'').replace(' ','.')}"></div>
+      <div><div class="flabel" style="margin-bottom:6px">Gruppen</div><div class="chips">${p.groups.map(g=>`<span class="chip b">${g}</span>`).join('')}<span class="chip">+ Gruppe</span></div><div class="xs muted" style="margin-top:4px">Vorschlag aus dem Bereich in Gastromatic</div></div>
+      <div class="field"><label for="ap-r">Rolle</label><select id="ap-r" class="select"><option>Mitarbeitende</option><option>Teamleitung</option></select></div>
+      <fieldset style="border:0;padding:0;margin:0"><legend class="flabel">Erster Zugang</legend><label class="check"><input type="radio" name="acc" checked> Einmal-Code persönlich übergeben</label><label class="check" style="opacity:.6"><input type="radio" name="acc" disabled> Per E-Mail (keine hinterlegt)</label></fieldset>
+      <label class="check note b" style="padding:12px 14px"><input type="checkbox" checked> Onboarding-Vorlage starten</label>
+      <button class="btn pri" data-a="doapprove" data-id="${p.id}" style="min-height:50px">Freischalten & Code erzeugen</button>`; }
+  return `<div class="overlay" data-a="overlay"><div class="sheet" role="dialog" aria-modal="true">${h}</div></div>`;
+}
+
+/* ---------- Demo-Leiste ---------- */
+function demoFab(){
+  const canPhone = window.innerWidth >= 560;
+  return `<div class="demofab">${S.demoOpen?`<div class="demopanel" role="dialog" aria-label="Demo-Steuerung"><div class="row" style="justify-content:space-between"><strong>Demo-Leitfaden</strong><button class="ibtn" style="width:36px;height:36px" data-a="demo" aria-label="Schließen">${ic('x',18)}</button></div>
+     ${S.user?`<div class="small muted">Angemeldet als <strong style="color:var(--fg)">${me().name}</strong> · ${me().role}</div>
+     <div class="row wrap"><button class="btn sm" data-a="switch">${ic('user',16)} Person wechseln</button>${canPhone?`<button class="btn sm ${S.phone?'on':''}" data-a="phone">${ic('device',16)} ${S.phone?'Desktop-Ansicht':'Handy-Ansicht'}</button>`:''}</div>
+     <div class="eyebrow">Probier das aus</div><ol>${[
+       ['Wichtige SOP lesen und bestätigen','wissen','kuehlkette'],['News öffnen, übersetzen, vorlesen lassen','news','n1'],['Den Assistenten fragen','ask',''],['HACCP-Checkliste mit 9 °C ausfüllen','checklisten','kuehl'],['Im Chat schreiben – es antwortet jemand','chat',''],['Fahrrad bei Social anfragen','social',''],['Übergabe mit Foto schreiben','uebergaben',''],['Als Maren: Lesestatus und Erinnerung','tip-maren',''],['Als Lena: neue Kollegin freischalten','tip-lena',''],['Als Lena: Design einer anderen Gesellschaft','tip-design','']
+     ].map(([l,r,p])=>`<li><button data-a="tour" data-r="${r}" data-p="${p}">${l}</button></li>`).join('')}</ol>
+     <button class="btn sm" data-a="reset">${ic('refresh',16)} Demo zurücksetzen</button>`:`<div class="small">Wähle eine Person und melde dich mit dem Demo-Code an. ${canPhone?'Mit der Handy-Ansicht zeigst du die App wie auf dem Smartphone.':''}</div>${canPhone?`<button class="btn sm ${S.phone?'on':''}" data-a="phone">${ic('device',16)} ${S.phone?'Desktop-Ansicht':'Handy-Ansicht'}</button>`:''}`}
+     <div class="xs muted">Demo: Alle Personen, Zahlen und Firmen sind erfunden. Nichts wird gespeichert oder versendet.</div></div>`:''}
+    <button class="demobtn" data-a="demo" aria-expanded="${S.demoOpen}">${ic('sparkle',18)} Demo</button></div>`;
+}
+
+/* ===================== Aktionen ===================== */
+const A = {
+  go:(d)=>{ if(d.r==='suche') S.query=''; go(d.r, d.p||null); },
+  set:(d)=>{ S[d.k]=d.v; render(); },
+  pick:(d)=>{ S.pick=d.id; S.loginStep=2; render(); setTimeout(()=>{ const el=document.getElementById('lc'); if(el) el.focus(); },30); },
+  loginback:()=>{ S.loginStep=1; render(); },
+  fillcode:()=>{ const el=document.getElementById('lc'); if(el){ el.value='482 913'; el.focus(); } },
+  pop:(d)=>{ S.pop = S.pop===d.p? null : d.p; render(); },
+  readall:()=>{ (S.notifs[me().id]||[]).forEach(n=>n.read=true); render(); },
+  notif:(d)=>{ const n=(S.notifs[me().id]||[]).find(x=>x.id===d.id); if(n){ n.read=true; if(n.route==='ideen'||n.route==='verwaltung'||n.route==='social'||n.route==='aufgaben') go(n.route); else go(n.route, n.param||null);} },
+  switch:()=>{ S.user=null; S.pick=null; S.loginStep=1; S.pop=null; S.demoOpen=false; render(true); },
+  logout:()=>{ S.user=null; S.loginStep=1; S.pop=null; render(true); },
+  end:(d)=>endDemo(d.k),
+  modal:(d)=>{ S.modal={type:d.t, id:d.id}; S.pop=null; render(); setTimeout(()=>{ const f=root.querySelector('.sheet input:not([type=file]):not([type=checkbox]):not([type=radio]),.sheet textarea'); if(f) f.focus(); },30); },
+  close:()=>{ S.modal=null; render(); },
+  overlay:(d,el,e)=>{ if(e.target===el){ S.modal=null; render(); } },
+  customize:()=>{ S.customize=!S.customize; render(); },
+  newslang:(d)=>{ S.newsLang[d.id]=d.l; render(); },
+  like:(d)=>{ const it=S[d.col].find(x=>x.id===d.id); it.liked=!it.liked; it.likes+=it.liked?1:-1; render(); },
+  orig:(d)=>{ const c=S.news.find(n=>n.id===d.id).comments[+d.i]; c.showOrig=!c.showOrig; render(); },
+  sorig:(d)=>{ const p=S.social.find(x=>x.id===d.id); p.showOrig=!p.showOrig; render(); },
+  morig:(d)=>{ const m=S.chats.find(c=>c.id===d.c).msgs[+d.i]; m.showOrig=!m.showOrig; render(); },
+  remind:(d)=>{ const n=S.news.find(x=>x.id===d.id); const un=n.recipients.filter(r=>!n.readBy[r]&&!P(r).absent); n.reminded=(n.reminded||0)+1; audit(`Erinnerung zu „${n.title.slice(0,40)}…“ an ${un.length} Personen gesendet`);
+    toast(`Erinnerung an ${un.length} gesendet – per App, Push nach deren Zeitfenster`);
+    setTimeout(()=>{ const r=un[0]; if(r && !n.readBy[r]){ n.readBy[r]=nowT(); if(S.route==='news') render(); toast(`${P(r).name} hat gerade gelesen`);} }, 2600); },
+  speak:(d)=>{ const n=S.news.find(x=>x.id===d.id); const l=S.newsLang[n.id]||'de'; const T=l==='de'?n:(n[l]||n); say(T.title+'. '+T.body.join(' '), l==='en'?'en-GB':l==='pl'?'pl-PL':'de-DE'); },
+  speakho:(d)=>{ const h=S.handovers.find(x=>x.id===d.id); say(h.subject+'. '+h.points.join(' ')); },
+  speakk:(d)=>{ const a=KNOW.articles[d.id]; const st=S.kPlain&&a.plain?a.plain:(S.kLang==='en'&&a.en?a.en.steps:a.steps); say((S.kLang==='en'&&a.en?a.en.title:a.title)+'. '+st.map((s,i)=>(i+1)+'. '+s[0]+'. '+s[1]).join(' '), S.kLang==='en'&&a.en?'en-GB':'de-DE'); },
+  ack:(d)=>{ const t=new Date(); S.ack[me().id+':'+d.id]=t.toLocaleDateString('de-DE')+' um '+nowT(); (S.notifs[me().id]||[]).forEach(n=>{ if(n.param==='kuehlkette') n.read=true; }); const n4=S.news.find(n=>n.id==='n4'); if(n4) n4.readBy[me().id]=nowT(); confetti(); toast('Danke! Kenntnisnahme für Version 3 gespeichert'); },
+  ask:(d)=>ask(d.q),
+  aifb:(d)=>{ S.ai.fb=d.v; render(); toast('Danke für dein Feedback – anonym gespeichert'); },
+  openchat:(d)=>{ S.chatId=d.id||null; render(true); setTimeout(()=>{ const el=document.getElementById('msg'); if(el && !isM()) el.focus(); },20); },
+  dm:(d)=>{ let c=S.chats.find(x=>x.type==='direct'&&x.with===d.id); if(!c){ c={id:'c'+uid(), type:'direct', with:d.id, unread:0, msgs:[{by:d.id, text:'Hallo! Was gibt’s?', t:nowT()}], replies:[{by:d.id,text:'Klingt gut, machen wir so.'},{by:d.id,text:'Danke dir!'}]}; S.chats.unshift(c);} S.chatId=c.id; S.modal=null; go('chat'); },
+  marketchat:(d)=>{ const p=S.social.find(x=>x.id===d.id); let c=S.chats.find(x=>x.type==='direct'&&x.with===p.by); if(!c){ c={id:'c'+uid(), type:'direct', with:p.by, unread:0, msgs:[], replies:[{by:p.by,text:'Ja, ist noch da! Magst du es dir morgen nach dem Frühdienst anschauen?'},{by:p.by,text:'Super, dann bis morgen am Gutshof.'}]}; S.chats.unshift(c);} S.chatId=c.id; go('chat'); setTimeout(()=>{ const el=document.getElementById('msg'); if(el){ el.value=`Hallo ${P(p.by).name.split(' ')[0]}, ist das ${p.market.title.split(',')[0]} noch zu haben?`; el.focus(); } },40); },
+  join:(d)=>{ const p=S.social.find(x=>x.id===d.id); p.joined=!p.joined; p.join+=p.joined?1:-1; render(); if(p.joined) toast('Du bist dabei – Dienstag, 17 Uhr am Gutshof'); },
+  sold:(d)=>{ const p=S.social.find(x=>x.id===d.id); p.market.status=p.market.status==='Verfügbar'?'Erledigt':'Verfügbar'; render(); },
+  delsocial:(d)=>{ S.social=S.social.filter(x=>x.id!==d.id); toast('Beitrag gelöscht'); },
+  congrats:(d)=>{ S['cg'+d.id]=true; toast(`Glückwunsch an ${P(d.id).name.split(' ')[0]} gesendet`); },
+  vote:(d)=>{ const i=S.ideas.find(x=>x.id===d.id); i.voted=!i.voted; i.votes+=i.voted?1:-1; render(); },
+  advance:(d)=>{ const i=S.ideas.find(x=>x.id===d.id); const order=['Eingereicht','In Prüfung','Umgesetzt']; i.status=order[Math.min(order.indexOf(i.status)+1,2)]; if(i.status==='Umgesetzt') confetti(); toast(`„${i.title}“ ist jetzt: ${i.status}`); },
+  copy:(d,el)=>{ const done=()=>toast(`${d.v} kopiert`); try{ navigator.clipboard.writeText(d.v).then(done,()=>toast('Nummer markiert – bitte manuell kopieren')); }catch(e){ toast('Nummer markiert – bitte manuell kopieren'); } },
+  finish:(d)=>{ const c=S.checklists.find(x=>x.id===d.id); c.finished=nowT(); audit(`Checkliste „${c.title}“ abgeschlossen`); confetti(); toast('Checkliste abgeschlossen – Nachweis gespeichert'); },
+  mktask:(d)=>{ S.modal={type:'newtask', prefill:`Abweichung prüfen: ${d.t}`}; render(); },
+  rate:(d,el,e)=>{ e.preventDefault(); S.rate=+d.i; render(); },
+  sync:(d)=>{ S.syncing=d.id; render(); setTimeout(()=>{ S.syncing=null; const i=S.integrations.find(x=>x.id===d.id); if(i) i.note='Demo-Daten · letzter Abgleich '+nowT(); audit(`${i?i.name:'Gastromatic'}-Abgleich manuell gestartet: keine Änderungen`); toast(`${i?i.name:'Gastromatic'}: Abgleich erfolgreich, keine Änderungen`); },1500); },
+  doapprove:(d)=>{ const p=S.pending.find(x=>x.id===d.id); const code=String(Math.floor(100000+Math.random()*900000)).replace(/(\d{3})(\d{3})/,'$1 $2'); S.approved[d.id]={code}; audit(`${p.name} freigeschaltet, Einmal-Code persönlich übergeben, Onboarding gestartet`); render(); },
+  finishapprove:(d)=>{ const p=S.pending.find(x=>x.id===d.id); S.pending=S.pending.filter(x=>x.id!==d.id); const key='new'+d.id; S.people[key]={name:p.name, ini:p.name.split(' ').map(x=>x[0]).join(''), team:p.area.split(' ')[0], job:p.area, c:'c2', isNew:true};
+    S.tasks.unshift({id:uid(), owner:'lena', title:`Willkommensmappe für ${p.name} vorbereiten`, prio:'normal', due:'vor Eintritt', done:false, tag:'Onboarding '+p.name});
+    S.modal=null; confetti(); toast(`${p.name} ist freigeschaltet und im Team-Verzeichnis`); },
+  brand:(d)=>{ S.brand=d.v; applyBrand(); render(); toast(d.v==='sgl'?'Design: Schloss & Gut Liebenberg':'Beispiel-Design aktiv – so könnte eine weitere Gesellschaft aussehen'); },
+  theme:(d)=>{ if(d.v==='system') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', d.v); render(); },
+  phone:()=>{ S.phone=!S.phone; S.pop=null; render(true); },
+  demo:()=>{ S.demoOpen=!S.demoOpen; render(); },
+  reset:()=>{ const keep={phone:S.phone, brand:'sgl'}; S=freshState(); Object.assign(S,keep); applyBrand(); render(true); toast('Demo zurückgesetzt'); },
+  tour:(d)=>{ S.demoOpen=false;
+    if(d.r==='ask'){ if(!can('ai')){ toast('Externe nutzen keinen KI-Assistenten – wechsle die Person'); return; } ask('Was mache ich, wenn eine TK-Lieferung zu warm ist?'); return; }
+    if(d.r==='tip-maren'||d.r==='tip-lena'||d.r==='tip-design'){ const who=d.r==='tip-maren'?'maren':'lena'; if(me().id!==who){ S.user=PERSONAS[who]; toast(`Du bist jetzt ${PERSONAS[who].name}`);} if(d.r==='tip-maren') go('news','n1'); else { S.adminTab=d.r==='tip-lena'?'neu':'design'; go('verwaltung'); } return; }
+    if(d.r==='chat'){ S.chatId='c2'; }
+    go(d.r, d.p||null); }
+};
+function say(text, lang='de-DE'){
+  try{ if(!('speechSynthesis' in window)) throw 0; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text); u.lang=lang; u.rate=1; speechSynthesis.speak(u); toast('Wird vorgelesen …'); }
+  catch(e){ endDemo('audiolang'); }
+}
+function confetti(){
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const box=document.createElement('div'); box.className='confetti';
+  const cols=['#6B7A3E','#B8924A','#9B7FAB','#A04050','#1E3560','#E9EDDD'];
+  for(let i=0;i<46;i++){ const s=document.createElement('i'); s.style.left=Math.random()*100+'%'; s.style.background=cols[i%cols.length]; s.style.animationDelay=(Math.random()*.5)+'s'; s.style.transform=`rotate(${Math.random()*180}deg)`; box.appendChild(s); }
+  document.body.appendChild(box); setTimeout(()=>box.remove(), 2600);
+}
+
+/* ---------- Formulare ---------- */
+const F = {
+  login:(fd)=>{ const c=String(fd.get('c')||'').replace(/\s/g,''); if(c!=='482913'){ toast('Der Code stimmt nicht. Tipp: 482 913'); const el=document.getElementById('lc'); if(el){el.value='';} return; }
+    S.user=PERSONAS[S.pick]; S.route='start'; S.param=null; S.chatId=null; render(true); toast(`Willkommen in der Wirkstatt, ${S.user.name.split(' ')[0]}!`); },
+  search:(fd)=>{ const q=String(fd.get('q')||'').trim(); if(!q) return; ask(q); },
+  comment:(fd,f)=>{ const t=String(fd.get('t')||'').trim(); if(!t) return; const n=S.news.find(x=>x.id===f.dataset.id); n.comments.push({by:'__me', text:t, time:nowT()}); S.people.__me = {name:me().name, ini:me().initials}; document.getElementById('cm-'+n.id).value=''; render();
+    const m=t.match(/@([A-ZÄÖÜ][\wäöüß]+ [A-ZÄÖÜ]\.)/); if(m) toast(`${m[1]} wird benachrichtigt`); },
+  social:(fd)=>{ const t=String(fd.get('t')||'').trim(); if(!t && !S.socialPhoto) { toast('Schreib etwas oder füge ein Foto hinzu'); return; } S.social.unshift({id:uid(), by:me().id, cat:fd.get('cat'), vis:fd.get('vis'), time:'gerade eben', text:t, photo:S.socialPhoto||null, likes:0, liked:false, comments:[]}); S.socialPhoto=null; document.getElementById('sp').value=''; S.socialFilter='Alle'; toast('Geteilt mit '+fd.get('vis')); },
+  scomment:(fd,f)=>{ const t=String(fd.get('t')||'').trim(); if(!t) return; S.social.find(x=>x.id===f.dataset.id).comments.push({by:'me', text:t}); document.getElementById('sc-'+f.dataset.id).value=''; render(); },
+  hcomment:(fd,f)=>{ const t=String(fd.get('t')||'').trim(); if(!t) return; S.handovers.find(x=>x.id===f.dataset.id).comments.push({by:'me', text:t, time:nowT()}); document.getElementById('hc').value=''; render(); },
+  chat:(fd,f)=>{ const t=String(fd.get('t')||'').trim(); if(!t) return; const c=S.chats.find(x=>x.id===f.dataset.id); c.msgs.push({by:'me', text:t, t:nowT(), status:'sent'}); document.getElementById('msg').value=''; render();
+    setTimeout(()=>{ S.typing=c.id; if(S.route==='chat') render(); }, 700);
+    setTimeout(()=>{ const r=c.replies[(c.ri=(c.ri||0))%c.replies.length]; c.ri++; c.msgs.forEach(x=>{ if(x.by==='me') x.status='read'; }); c.msgs.push({by:r.by, text:r.text, orig:r.orig, t:nowT()}); S.typing=null; if(S.route==='chat' && S.chatId===c.id) render(); else { c.unread=(c.unread||0)+1; toast(`Neue Nachricht von ${P(r.by).name}`); } }, 2300); },
+  temp:(fd,f)=>{ const v=String(fd.get('v')||'').trim(); if(!v || isNaN(parseFloat(v.replace(',','.')))) { toast('Bitte eine Zahl eingeben, z. B. 4,5'); return; } const c=S.checklists.find(x=>x.id===f.dataset.cl); const i=c.items.find(x=>x.id===f.dataset.id); i.value=v.replace('.',','); i.by=me().name; i.at=nowT(); render(); if(outOfRange(i)) toast('Wert über dem Sollwert – bitte Maßnahme eintragen'); },
+  tnote:(fd,f)=>{ const n=String(fd.get('n')||'').trim(); if(!n){ toast('Bitte kurz beschreiben, was du getan hast'); return; } const c=S.checklists.find(x=>x.id===f.dataset.cl); c.items.find(x=>x.id===f.dataset.id).note=n; render(); toast('Maßnahme dokumentiert'); },
+  survey:(fd)=>{ const s=S.survey; s.q1.counts[S.rate??3]++; fd.getAll('q2').forEach(i=>s.q2.counts[+i]++); const t=String(fd.get('q3')||'').trim(); if(t) s.q3.texts.splice(Math.floor(Math.random()*(s.q3.texts.length+1)),0,t); s.answered=true; render(); toast('Danke! Deine Antwort ist anonym gespeichert'); },
+  newpost:(fd)=>{ const n={id:'n'+uid(), author:'__me', team:me().team, time:'gerade eben', title:fd.get('title'), body:String(fd.get('body')).split(/\n+/), important:!!fd.get('imp'), aud:[fd.get('aud')], likes:0, liked:false, comments:[], recipients:['jana','selin','jonas','piotr','tobias'].filter(x=>x!==me().id), readBy:{}, track:!!fd.get('track'), uploaded:S.postPhoto||null};
+    S.people.__me={name:me().name, ini:me().initials, job:me().role}; n.author='__me'; S.news.unshift(n); S.postPhoto=null; S.modal=null; S.newsTab='all'; go('news', n.id); toast('Veröffentlicht'); if(n.track) setTimeout(()=>{ n.readBy.selin=nowT(); if(S.route==='news') render(); },3000); },
+  newhandover:(fd)=>{ const h={id:'h'+uid(), team:fd.get('team'), shift:fd.get('shift'), by:me().id, time:'gerade eben', subject:fd.get('subject'), points:String(fd.get('points')).split(/\n+/).filter(Boolean), photos:0, img:S.hoPhoto||null, readBy:{}, comments:[]};
+    S.people[me().id] ||= {name:me().name, ini:me().initials}; S.handovers.unshift(h); S.hoPhoto=null; S.modal=null; S.handTeam=h.team; go('uebergaben', h.id); toast('Übergabe gesendet – das Team wird benachrichtigt'); setTimeout(()=>{ h.readBy.jonas=nowT(); if(S.route==='uebergaben') render(); },3500); },
+  newtask:(fd)=>{ S.tasks.unshift({id:uid(), owner:me().id, title:fd.get('title'), prio:fd.get('prio'), due:fd.get('due'), done:false}); S.modal=null; S.taskTab='offen'; render(); toast('Aufgabe angelegt'); },
+  newidea:(fd)=>{ S.ideas.unshift({id:uid(), title:fd.get('title'), text:fd.get('text')||'', cat:fd.get('cat'), status:'Eingereicht', votes:1, voted:true, by:me().name}); S.modal=null; render(); toast('Danke! Deine Idee ist eingereicht'); }
+};
+
+/* ---------- Änderungen (Checkboxen, Selects, Dateien) ---------- */
+const C = {
+  widget:(el)=>{ S.widgets[el.dataset.k]=el.checked; render(); },
+  task:(el)=>{ const t=S.tasks.find(x=>x.id===el.dataset.id); t.done=el.checked; render(); if(t.done) toast('Erledigt!'); },
+  citem:(el)=>{ const c=S.checklists.find(x=>x.id===el.dataset.cl); const i=c.items.find(x=>x.id===el.dataset.id); i.value=el.checked; i.by=el.checked?me().name:null; i.at=nowT(); render(); },
+  klang:(el)=>{ S.kLang=el.value; render(); },
+  kplain:(el)=>{ S.kPlain=el.checked; render(); },
+  cq:(el)=>{ S.contactQ=el.value; render(); },
+  emerg:(el)=>{ S.emergencyOnly=el.checked; render(); },
+  fs:(el)=>{ S.fs=+el.value; applyVars(); const v=document.getElementById('fsv'); if(v) v.textContent=Math.round(S.fs/16*100)+' %'; },
+  np:(el)=>{ S.notifPrefs[+el.dataset.i][el.dataset.k]=el.checked; toast('Gespeichert'); },
+  nw:(el)=>{ S.notifPrefs[+el.dataset.i].win=el.value; toast('Zeitfenster gespeichert'); },
+  navm:(el)=>{ const r=el.dataset.r; if(el.checked){ if(S.navMobile.length>=4){ el.checked=false; toast('Höchstens vier Bereiche – nimm erst einen raus'); return; } S.navMobile.push(r);} else S.navMobile=S.navMobile.filter(x=>x!==r); render(); },
+  socialphoto:(el)=>readImg(el, d=>{ S.socialPhoto=d; render(); }),
+  postphoto:(el)=>readImg(el, d=>{ S.postPhoto=d; render(); }),
+  hophoto:(el)=>readImg(el, d=>{ S.hoPhoto=d; render(); }),
+  upload:(el)=>{ const f=el.files&&el.files[0]; if(!f) return; S.docs.unshift({id:uid(), name:f.name, cat:'Meine Uploads', ver:'1', date:'heute', size:Math.max(1,Math.round(f.size/1024))+' KB', isNew:true}); S.docsFilter='Alle'; render(); toast(`${f.name} hochgeladen – wird auf Viren geprüft`); }
+};
+function readImg(el, cb){ const f=el.files&&el.files[0]; if(!f) return; if(f.size>8e6){ toast('Das Foto ist größer als 8 MB'); return; } const r=new FileReader(); r.onload=()=>cb(r.result); r.readAsDataURL(f); }
+
+root.addEventListener('click', e=>{ const t=e.target.closest('[data-a]'); if(!t || !root.contains(t)) { if(S.pop && !e.target.closest('.popwrap')){ S.pop=null; render(); } return; }
+  const a=t.dataset.a; if(A[a]){ if(t.tagName==='A') e.preventDefault(); A[a](t.dataset, t, e); } });
+root.addEventListener('submit', e=>{ const f=e.target.closest('form[data-f]'); if(!f) return; e.preventDefault(); F[f.dataset.f] && F[f.dataset.f](new FormData(f), f); });
+root.addEventListener('change', e=>{ const el=e.target.closest('[data-c]'); if(el && C[el.dataset.c] && el.dataset.c!=='cq' && el.dataset.c!=='fs') C[el.dataset.c](el); });
+root.addEventListener('input', e=>{ const el=e.target.closest('[data-c="cq"],[data-c="fs"]'); if(el) C[el.dataset.c](el); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ if(S.modal){ S.modal=null; render(); } else if(S.pop){ S.pop=null; render(); } else if(S.demoOpen){ S.demoOpen=false; render(); } } });
+let rz; window.addEventListener('resize', ()=>{ clearTimeout(rz); rz=setTimeout(()=>render(), 150); });
+
+function applyBrand(){ const c={sgl:'#6B7A3E', teal:'#00706E', blau:'#1E3560'}[S.brand]; document.documentElement.style.setProperty('--brand', c); }
+function applyVars(){ document.documentElement.style.setProperty('--fs', S.fs+'px'); }
+applyBrand(); applyVars(); render();
+</script></body></html>
