@@ -9,7 +9,7 @@ export interface NavItem {
   intro: string;
 }
 
-export type IconName = 'home' | 'news' | 'heart' | 'hand' | 'chat' | 'book' | 'doc' | 'task' | 'list' | 'poll' | 'idea' | 'contact' | 'team' | 'admin' | 'settings' | 'logout' | 'search' | 'bell' | 'menu' | 'lock' | 'check' | 'key' | 'globe' | 'x' | 'arrow';
+export type IconName = 'home' | 'news' | 'heart' | 'hand' | 'chat' | 'book' | 'doc' | 'task' | 'list' | 'poll' | 'idea' | 'contact' | 'team' | 'admin' | 'settings' | 'logout' | 'search' | 'bell' | 'menu' | 'lock' | 'check' | 'key' | 'globe' | 'x' | 'arrow' | 'camera' | 'thumb' | 'flag' | 'send' | 'plus' | 'trash' | 'pin' | 'back' | 'users' | 'bellring';
 
 export const NAV: NavItem[] = [
   { href: '/', label: 'Start', icon: 'home', module: null, phase: 1, intro: '' },

@@ -8,6 +8,7 @@ import { ZodPipe } from '../common/zod.pipe';
 import { config } from '../common/config';
 import { AllowPendingPassword, CurrentUser, Public, SessionUser } from '../auth/decorators';
 import { MODULE_PERMISSION, enabledModules, resolveBranding } from './branding';
+import { ContentService } from '../content/content.service';
 
 const SettingsBody = z.object({
   theme: z.enum(['SYSTEM', 'LIGHT', 'DARK']).optional(),
@@ -20,7 +21,7 @@ const RecoveryBody = z.object({ email: z.email().max(200).nullable() });
 
 @Controller()
 export class MeController {
-  constructor(private readonly prisma: PrismaService, private readonly policy: PolicyService) {}
+  constructor(private readonly prisma: PrismaService, private readonly policy: PolicyService, private readonly content: ContentService) {}
 
   /** Auftritt der Anmeldeseite (öffentlich, ohne personenbezogene Daten). */
   @Public()
@@ -78,6 +79,25 @@ export class MeController {
           }
         : null,
     };
+  }
+
+  /** Zähler für Menü und Glocke (nur eigene Daten). */
+  @Get('me/badges')
+  async badges(@CurrentUser() me: SessionUser) {
+    const db = this.prisma.db;
+    const visible = this.content.visibleWhere(me.id);
+    const unreadOf = (extra: object) => db.contentItem.count({ where: { ...visible, ...extra, authorId: { not: me.id }, readReceipts: { none: { userId: me.id } } } });
+    const parts = await db.chatParticipant.findMany({ where: { userId: me.id, leftAt: null }, include: { lastReadMessage: { select: { createdAt: true } } } });
+    let chat = 0;
+    for (const p of parts) {
+      chat += await db.chatMessage.count({ where: { conversationId: p.conversationId, deletedAt: null, senderId: { not: me.id }, createdAt: { gt: p.lastReadMessage?.createdAt ?? p.joinedAt } } });
+    }
+    const [news, handovers, notifications] = await Promise.all([
+      unreadOf({ type: 'POST', post: { kind: 'NEWS' } }),
+      unreadOf({ type: 'HANDOVER' }),
+      db.notification.count({ where: { recipientId: me.id, readAt: null } }),
+    ]);
+    return { news, handovers, chat, notifications };
   }
 
   @Patch('me/settings')

@@ -11,6 +11,7 @@ interface AdminUser {
   lastLoginAt: string | null; validUntil: string | null;
 }
 interface Issued { code: string; expiresAt: string; username: string; displayName: string }
+interface Report { id: string; kind: string; reason: string; createdAt: string; link: string | null; title: string; excerpt: string; author: string }
 interface AuditRow { id: string; at: string; actor: string; action: string; target: string | null }
 
 const STATUS: Record<string, string> = { PROVISIONED: 'wartet auf Freischaltung', INVITED: 'Code ausgegeben', ACTIVE: 'aktiv', LOCKED: 'gesperrt', DEACTIVATED: 'deaktiviert' };
@@ -22,17 +23,21 @@ const ACTIONS: Record<string, string> = {
 
 export default function AdminPage() {
   const { can } = useMe();
-  const [tab, setTab] = useState<'neu' | 'alle' | 'protokoll'>('neu');
+  const [tab, setTab] = useState<'neu' | 'alle' | 'protokoll' | 'meldungen'>(can('users.read') ? 'neu' : 'meldungen');
+  const [reports, setReports] = useState<Report[] | null>(null);
   const [users, setUsers] = useState<AdminUser[] | null>(null);
   const [audit, setAudit] = useState<AuditRow[] | null>(null);
   const [issued, setIssued] = useState<Issued | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<AdminUser | null>(null);
 
+  useEffect(() => { if (new URLSearchParams(window.location.search).get('tab') === 'meldungen' && can('social.moderate')) setTab('meldungen'); }, [can]);
+
   const load = useCallback(async () => {
     setError(null);
     try {
       if (tab === 'protokoll') setAudit(await api<AuditRow[]>('/admin/audit?limit=60'));
+      else if (tab === 'meldungen') setReports(await api<Report[]>('/moderation/reports'));
       else setUsers(await api<AdminUser[]>(`/admin/users${tab === 'neu' ? '?status=PROVISIONED' : ''}`));
     } catch (e) { setError(e instanceof ApiError ? e.message : 'Laden hat nicht geklappt.'); }
   }, [tab]);
@@ -48,12 +53,12 @@ export default function AdminPage() {
     } catch (e) { setError(e instanceof ApiError ? e.message : `Das hat bei ${u.displayName} nicht geklappt.`); }
   }
 
-  if (!can('users.read') && !can('audit.read')) {
+  if (!can('users.read') && !can('audit.read') && !can('social.moderate')) {
     return <div className="card narrow stack"><h1>Kein Zugriff</h1><p className="muted">Die Verwaltung ist nur für berechtigte Personen.</p></div>;
   }
 
   const tabs: Array<[typeof tab, string, boolean]> = [
-    ['neu', 'Neu aus Gastromatic', can('users.read')], ['alle', 'Alle Personen', can('users.read')], ['protokoll', 'Protokoll', can('audit.read')],
+    ['neu', 'Neu aus Gastromatic', can('users.read')], ['alle', 'Alle Personen', can('users.read')], ['protokoll', 'Protokoll', can('audit.read')], ['meldungen', 'Meldungen', can('social.moderate')],
   ];
 
   return (
@@ -133,6 +138,25 @@ export default function AdminPage() {
               ))}
             </tbody>
           </table>
+        </section>
+      )}
+
+      {tab === 'meldungen' && (
+        <section className="stack">
+          <div className="note info"><Icon name="flag" size={18} /><span>Gemeldete Beiträge und Kommentare. Wer gemeldet hat, bleibt anonym. Ausblenden ist protokolliert.</span></div>
+          {reports?.length === 0 && <div className="card empty">Keine offenen Meldungen.</div>}
+          {reports?.map((r) => (
+            <div className="card stack-s" key={r.id}>
+              <div className="row wrap gap-s"><span className="chip">{r.kind}</span><strong>{r.title}</strong><span className="small muted">von {r.author}</span></div>
+              {r.excerpt && <p className="excerpt">{r.excerpt}</p>}
+              <div className="note warn small"><span><strong>Grund:</strong> {r.reason}</span></div>
+              <div className="row wrap">
+                {r.link && <a className="btn sm" href={r.link}>Ansehen</a>}
+                <button className="btn sm warn" onClick={async () => { await api(`/moderation/reports/${r.id}/hide`, { method: 'POST' }); await load(); }}>Ausblenden</button>
+                <button className="btn sm" onClick={async () => { await api(`/moderation/reports/${r.id}/dismiss`, { method: 'POST' }); await load(); }}>Ist in Ordnung</button>
+              </div>
+            </div>
+          ))}
         </section>
       )}
 

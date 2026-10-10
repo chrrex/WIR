@@ -8,6 +8,8 @@ import { useMe } from '@/lib/me';
 import { NAV } from '@/lib/nav';
 import { Icon } from './Icon';
 import { Logo, Wordmark } from './Logo';
+import { Bell } from './Bell';
+import { useBadges } from '@/lib/badges';
 
 const DEFAULT_MOBILE = ['/', '/news', '/uebergaben', '/chat'];
 
@@ -16,13 +18,15 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [more, setMore] = useState(false);
+  const { badges } = useBadges();
 
   if (!me) {
     return <div className="loading" role="status">WIR wird geladen …</div>;
   }
 
   const items = NAV.filter((n) => !n.module || me.modules.includes(n.module));
-  const isAdmin = can('users.read') || can('audit.read');
+  const isAdmin = can('users.read') || can('audit.read') || can('social.moderate');
+  const badgeOf = (href: string) => (href === '/news' ? badges.news : href === '/uebergaben' ? badges.handovers : href === '/chat' ? badges.chat : 0);
   const active = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
   const preferred = me.settings?.mobileNavItems?.length ? me.settings.mobileNavItems : DEFAULT_MOBILE;
   const mobileItems = preferred.map((h) => items.find((i) => i.href === h)).filter(Boolean).slice(0, 4) as typeof items;
@@ -44,7 +48,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
           {items.map((n) => (
             <Link key={n.href} href={n.href} aria-current={active(n.href) ? 'page' : undefined}>
               <Icon name={n.icon} />
-              <span>{n.label}</span>
+              <span className="grow">{n.label}</span>
+              {badgeOf(n.href) > 0 && !active(n.href) && <span className="nbadge" aria-label={`${badgeOf(n.href)} neu`}>{badgeOf(n.href)}</span>}
             </Link>
           ))}
           {isAdmin && (
@@ -68,6 +73,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <label htmlFor="q" className="sr">Suchen</label>
             <input id="q" placeholder="Suche und KI-Assistent kommen in Phase 3" disabled />
           </div>
+          <Bell />
           <Link className="avatar" href="/einstellungen" aria-label={`Einstellungen von ${me.user.displayName}`}>{initials}</Link>
           <button className="iconbtn" onClick={logout} aria-label="Abmelden" title="Abmelden"><Icon name="logout" /></button>
         </header>
@@ -77,7 +83,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <nav className="bnav" aria-label="Hauptnavigation (mobil)" style={{ gridTemplateColumns: `repeat(${mobileItems.length + 1}, minmax(0, 1fr))` }}>
         {mobileItems.map((n) => (
           <Link key={n.href} href={n.href} aria-current={active(n.href) ? 'page' : undefined}>
-            <span className="pill"><Icon name={n.icon} size={22} /></span>
+            <span className="pill"><Icon name={n.icon} size={22} />{badgeOf(n.href) > 0 && <span className="nbadge mini">{badgeOf(n.href)}</span>}</span>
             {n.label.split(' ')[0]}
           </Link>
         ))}

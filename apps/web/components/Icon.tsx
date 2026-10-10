@@ -26,6 +26,16 @@ const P: Record<IconName, string> = {
   globe: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z',
   x: 'M6 6l12 12M18 6L6 18',
   arrow: 'M5 12h14M13 6l6 6-6 6',
+  camera: 'M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
+  thumb: 'M7 10v10H4V10zM7 10l4-7a2 2 0 0 1 3 2l-1 5h6a2 2 0 0 1 2 2l-2 7a2 2 0 0 1-2 1H7',
+  flag: 'M5 21V4M5 4h11l-2 4 2 4H5',
+  send: 'M4 12l16-8-6 16-2-7z',
+  plus: 'M12 5v14M5 12h14',
+  trash: 'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3',
+  pin: 'M9 4h6l-1 6 4 3H6l4-3zM12 13v8',
+  back: 'M15 6l-6 6 6 6',
+  users: 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 20a6 6 0 0 1 12 0M16 5a3 3 0 0 1 0 6M21 20a6 6 0 0 0-4-5.6',
+  bellring: 'M6 16v-5a6 6 0 1 1 12 0v5l2 2H4zM10 21a2 2 0 0 0 4 0M3 7a9 9 0 0 1 3-4M21 7a9 9 0 0 0-3-4',
 };
 
 export function Icon({ name, size = 20, stroke = 1.8 }: { name: IconName; size?: number; stroke?: number }) {
