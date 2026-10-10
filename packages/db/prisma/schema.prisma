@@ -1,0 +1,2191 @@
+// =============================================================================
+// WIR – Das Mitarbeiterportal (Schloss & Gut Liebenberg / DKB STIFTUNG)
+// PostgreSQL / Prisma 7 Schema – Phase 1
+//
+// Konventionen
+// - Tabellen snake_case (Plural) via @@map, Spalten snake_case via @map.
+// - Primärschlüssel UUID (gen_random_uuid(), pgcrypto / PG >= 13).
+// - created_at / updated_at auf fachlichen Tabellen; Soft Delete via deleted_at
+//   bzw. Status DEACTIVATED, wo Audit/Datenschutz/Integrität es verlangen.
+// - Content-Registry (content_items): Alle "Inhalte" (News, Übergaben, Wissen,
+//   Dokumente, Umfragen, Aufgaben, Checklisten-Läufe, Ideen) teilen sich eine
+//   Basistabelle (Shared Primary Key 1:1). Querschnittsfunktionen (Lesestatus,
+//   Erinnerungen, Kommentare, Reaktionen, Anhänge, Zielgruppen, ACL, Suche)
+//   referenzieren content_items per echtem Foreign Key – keine polymorphen IDs.
+//   Siehe ARCHITECTURE_DECISIONS.md, ADR-004.
+// - Nicht in Prisma ausdrückbar und per SQL-Migration zu ergänzen
+//   (siehe Kommentare "RAW-SQL"): CHECK-Constraints, GIN-Indizes auf tsvector,
+//   UNIQUE ... NULLS NOT DISTINCT, pgvector, Append-only-Rechte für audit_logs.
+// =============================================================================
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated"
+  moduleFormat = "cjs"
+  runtime      = "nodejs"
+}
+
+// Verbindung (DATABASE_URL) steht in prisma.config.ts (Prisma 7).
+// Erweiterungen pgcrypto, pg_trgm, unaccent legt die Init-Migration an.
+datasource db {
+  provider = "postgresql"
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+enum ReadListVisibility {
+  AUTHOR_AND_LEADS // Spec §20 – voreingestellt
+  ALL_RECIPIENTS // nur nach Betriebsvereinbarung (ADR-012)
+}
+
+enum CompanyKind {
+  FOUNDATION // Stiftungsebene (gruppenweite Inhalte, Stiftungsadmins)
+  LOCATION // Wirkungsort / Marke mit eigenem Auftritt, z. B. Schloss & Gut Liebenberg
+  LEGAL_ENTITY // rechtliche Gesellschaft unterhalb eines Wirkungsorts
+}
+
+// Fachmodule, die je Gesellschaft abgeschaltet werden können (ADR-039).
+// Beispiel: Die Stiftungsebene braucht keine Übergaben, Checklisten, Dienstpläne
+// oder Belegungszahlen – diese Module sind dort deaktiviert.
+enum AppModule {
+  NEWS
+  SOCIAL
+  CHAT
+  KNOWLEDGE
+  DOCUMENTS
+  TASKS
+  CHECKLISTS
+  HANDOVERS
+  SHIFTS // Dienstplan-Anzeige (Gastromatic)
+  OCCUPANCY // Belegung, An-/Abreisen (Flexkeeping)
+  EVENTS // Veranstaltungen & Räume (Eventtool)
+  SURVEYS
+  IDEAS
+  CONTACTS
+  TEAM
+}
+
+enum UserStatus {
+  PROVISIONED // automatisch aus Gastromatic angelegt, wartet auf Freischaltung (ADR-021)
+  INVITED // freigeschaltet, Einmal-Code ausgegeben, noch nicht eingeloggt
+  ACTIVE
+  LOCKED
+  DEACTIVATED
+}
+
+enum UserType {
+  EMPLOYEE
+  EXTERNAL // z. B. Dienstleister, Aushilfe, Partner – Account ohne vollständiges Profil
+  SERVICE // technische Accounts (Integrationen)
+}
+
+enum MfaFactorType {
+  TOTP
+  WEBAUTHN
+}
+
+enum GroupType {
+  DEPARTMENT
+  TEAM
+  LOCATION
+  PROJECT
+  CUSTOM
+}
+
+enum DataSource {
+  LOCAL
+  GASTROMATIC // Personalsoftware + Dienstplanung (führend für Stammdaten, ADR-021)
+  EVENT_TOOL
+  FLEXKEEPING
+  REVIEW_TOOL
+  MICROSOFT_365 // Prüfauftrag: Outlook-Kalender, Teams, Entra ID (ADR-035)
+  EXTERNAL // weitere Systeme über die offene API / generische Adapter
+}
+
+enum IntegrationCategory {
+  PERSONNEL
+  EVENTS
+  HOUSEKEEPING
+  REVIEWS
+  PRODUCTIVITY // z. B. Microsoft 365
+  LEARNING // z. B. digitales Berichtsheft, E-Learning
+  OTHER
+}
+
+enum ApiClientStatus {
+  ACTIVE
+  SUSPENDED
+  REVOKED
+}
+
+enum ContentType {
+  POST
+  HANDOVER
+  KNOWLEDGE_ARTICLE
+  DOCUMENT
+  SURVEY
+  TASK
+  CHECKLIST_RUN
+  IDEA
+}
+
+enum ContentStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+  DEACTIVATED
+  DELETED
+}
+
+enum Importance {
+  NORMAL
+  IMPORTANT
+}
+
+enum AudienceTargetType {
+  ALL_USERS
+  COMPANY
+  GROUP
+  ROLE
+  USER
+}
+
+enum PrincipalType {
+  ALL_USERS
+  COMPANY
+  GROUP
+  ROLE
+  USER
+}
+
+enum ResourceAction {
+  READ
+  CREATE
+  UPDATE
+  DELETE
+  DEACTIVATE
+  DOWNLOAD
+  MANAGE // Rechte am Objekt vergeben, Leserliste sehen, Erinnern
+}
+
+enum RecipientReason {
+  AUDIENCE // beim Veröffentlichen aus Zielgruppe materialisiert
+  LATE_JOIN // später in Gruppe eingetreten
+  MANUAL
+}
+
+enum ReminderTrigger {
+  MANUAL
+  AUTOMATIC
+}
+
+enum ReminderStatus {
+  SCHEDULED
+  SENT
+  SKIPPED // z. B. inzwischen gelesen, abwesend, Limit erreicht
+  FAILED
+  CANCELLED
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  PUSH
+}
+
+enum DeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+  SUPPRESSED // Präferenz, Ruhezeit, Abwesenheit
+}
+
+enum PostKind {
+  NEWS // dienstliche Mitteilung (Redaktion/Leitungen, optional Lesestatus)
+  SOCIAL // Privates unter Kolleg:innen (alle dürfen posten, nie Lesestatus) – ADR-031
+}
+
+enum SocialCategory {
+  GREETINGS // Grüße & Momente, z. B. Urlaubsgrüße mit Foto
+  MARKETPLACE // Biete & Suche
+  CONGRATULATIONS
+  LEISURE // Freizeit & Sport
+  OTHER
+}
+
+enum MarketplaceIntent {
+  OFFER
+  SEARCH
+}
+
+enum ReportStatus {
+  OPEN
+  RESOLVED // Inhalt entfernt/ausgeblendet
+  DISMISSED
+}
+
+enum ReactionType {
+  LIKE
+}
+
+enum AttachmentKind {
+  ATTACHMENT
+  IMAGE
+  VIDEO
+  INLINE_IMAGE
+}
+
+enum ScanStatus {
+  PENDING
+  CLEAN
+  INFECTED
+  FAILED
+}
+
+enum TranslatableEntity {
+  CONTENT_ITEM
+  KNOWLEDGE_VERSION
+  COMMENT
+  CHAT_MESSAGE
+  CHECKLIST_ITEM
+  CHECKLIST_RUN_ITEM
+  SURVEY_QUESTION
+  SURVEY_OPTION
+}
+
+enum ChatType {
+  DIRECT
+  GROUP
+}
+
+enum ChatRole {
+  MEMBER
+  ADMIN
+}
+
+enum KnowledgeArticleType {
+  WIKI
+  SOP
+  POLICY // Mitarbeiterrichtlinie
+  BRAND_STANDARD
+  HACCP
+  PROCESS // z. B. Check-in-Prozess
+  MANUAL // Geräte-/Reinigungsmittelanleitung
+  TEMPLATE_FORM // Vorlage/Formular
+}
+
+enum VersionStatus {
+  DRAFT
+  PUBLISHED
+  SUPERSEDED
+}
+
+enum TaskStatus {
+  OPEN
+  IN_PROGRESS
+  BLOCKED
+  DONE
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum ChecklistKind {
+  GENERAL
+  SHIFT
+  HACCP
+  EVENT
+  ONBOARDING
+  OFFBOARDING
+  AUDIT
+}
+
+enum ChecklistResponseType {
+  CHECK
+  YES_NO
+  TEXT
+  NUMBER
+  TEMPERATURE
+  PHOTO
+}
+
+enum RunStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  OVERDUE
+  CANCELLED
+}
+
+enum ApprovalStatus {
+  NOT_REQUIRED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum LifecycleKind {
+  ONBOARDING
+  OFFBOARDING
+}
+
+enum LifecycleStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum ResponsibleType {
+  SUBJECT_EMPLOYEE // die/der neue bzw. ausscheidende Mitarbeitende selbst
+  LINE_MANAGER
+  USER
+  GROUP
+  ROLE
+}
+
+enum SurveyQuestionType {
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  SCALE
+  FREE_TEXT
+}
+
+enum SurveyResultsVisibility {
+  AUTHOR_ONLY
+  RECIPIENTS_AFTER_SUBMIT
+  RECIPIENTS_AFTER_CLOSE
+}
+
+enum IdeaStatus {
+  SUBMITTED
+  IN_REVIEW
+  ACCEPTED
+  IN_PROGRESS
+  IMPLEMENTED
+  PARKED
+  REJECTED
+}
+
+enum AbsenceType {
+  // bewusst ohne Grund (keine Gesundheitsdaten, Art. 9 DSGVO)
+  ABSENT
+  VACATION
+  BUSINESS_TRIP
+  TRAINING
+}
+
+enum ContactType {
+  SUPPLIER
+  PARTNER
+  MAINTENANCE
+  SERVICE_PROVIDER
+  AUTHORITY
+  OTHER
+}
+
+enum IntegrationStatus {
+  NOT_CONFIGURED
+  ACTIVE
+  DEGRADED
+  ERROR
+  DISABLED
+}
+
+enum SyncStatus {
+  RUNNING
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+
+enum SyncDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum ExternalEntityType {
+  EVENT
+  ROOM_ALLOCATION
+  OCCUPANCY_DAY
+  ARRIVALS_DAY
+  DEPARTURES_DAY
+  SHIFT
+  REVIEW
+  EMPLOYEE
+}
+
+enum ActorType {
+  USER
+  SYSTEM
+  INTEGRATION
+}
+
+enum Theme {
+  SYSTEM
+  LIGHT
+  DARK
+}
+
+// =============================================================================
+// ORGANISATION & IDENTITY
+// =============================================================================
+
+model Company {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  shortName String   @unique @map("short_name")
+  kind      CompanyKind @default(LEGAL_ENTITY)
+  readListVisibility ReadListVisibility @default(AUTHOR_AND_LEADS) @map("read_list_visibility")
+  parentId  String?  @map("parent_id") @db.Uuid // Stiftung → Wirkungsort → Gesellschaft (ADR-034)
+  // Standard: alle Module an. Abgeschaltete Module erscheinen für Personen, deren
+  // Zuordnungen ausschließlich in dieser Gesellschaft liegen, nicht (ADR-039).
+  disabledModules AppModule[] @default([]) @map("disabled_modules")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  parent            Company?          @relation("CompanyTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children          Company[]         @relation("CompanyTree")
+  branding          CompanyBranding?
+  employeeProfiles  EmployeeProfile[]
+  employeeAssignments EmployeeCompanyAssignment[]
+  groups            Group[]
+  userRoles         UserRole[]
+  contentItems      ContentItem[]
+  audienceTargets   ContentAudience[]
+  aclPrincipals     ResourceAcl[]
+  checklists        Checklist[]
+  lifecycleTemplate LifecycleTemplate[]
+  ideaCategories    IdeaCategory[]
+  contacts          Contact[]
+  externalEntities  ExternalEntity[]
+  integrations      Integration[]
+  apiClients        ApiClient[]
+  auditLogs         AuditLog[]
+
+  @@map("companies")
+}
+
+/// Auftritt je Wirkungsort/Gesellschaft (Ausbaustufe 2, ADR-034). Fehlt ein
+/// Eintrag, gilt das Branding des nächsten Elternknotens. Farben werden beim
+/// Speichern gegen WCAG-Kontrast (4.5:1 zu Weiß) geprüft.
+model CompanyBranding {
+  companyId      String    @id @map("company_id") @db.Uuid
+  displayName    String    @map("display_name")
+  primaryColor   String    @map("primary_color") // Aktionsfarbe (Buttons, Links) – muss mit Weiß ≥ 4,5:1 Kontrast haben, z. B. SGL "#6B7A3E", DKB STIFTUNG "#0066CC"
+  surfaceColor   String?   @map("surface_color") // große Flächen (Navigation, Kopfzeile), Default = primaryColor; z. B. DKB STIFTUNG "#1A8FE3" (Logo-Blau)
+  primaryDark    String?   @map("primary_dark") // für Text/aktive Zustände
+  primaryTint    String?   @map("primary_tint") // Flächen
+  accentColor    String?   @map("accent_color")
+  logoFileId     String?   @map("logo_file_id") @db.Uuid // Logo auf Weiß
+  logoInverseFileId String? @map("logo_inverse_file_id") @db.Uuid // Logo auf Farbfläche (nur wenn logoRequiresWhite = false)
+  // Markenregel: true = Logo darf nur auf Weiß stehen. Die UI setzt es dann auf eine
+  // weiße Fläche und ignoriert logoInverse (verbindlich für die DKB STIFTUNG, ADR-039).
+  logoRequiresWhite Boolean @default(false) @map("logo_requires_white")
+  faviconFileId  String?   @map("favicon_file_id") @db.Uuid
+  footerText     String?   @map("footer_text") // z. B. "Ein Wirkungsort der DKB STIFTUNG"
+  customDomain   String?   @unique @map("custom_domain")
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company     Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  logo        FileObject? @relation("BrandingLogo", fields: [logoFileId], references: [id], onDelete: SetNull)
+  logoInverse FileObject? @relation("BrandingLogoInverse", fields: [logoInverseFileId], references: [id], onDelete: SetNull)
+  favicon     FileObject? @relation("BrandingFavicon", fields: [faviconFileId], references: [id], onDelete: SetNull)
+
+  @@map("company_brandings")
+}
+
+model User {
+  id                 String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // Login per Benutzername; E-Mail optional (nicht alle Mitarbeitenden haben eine
+  // dienstliche E-Mail) – siehe ADR-011.
+  username           String     @unique
+  email              String?    @unique
+  emailVerifiedAt    DateTime?  @map("email_verified_at") @db.Timestamptz(6)
+  recoveryEmail      String?    @map("recovery_email") // freiwillig, privat, nur für Passwort-Reset (ADR-011)
+  recoveryEmailVerifiedAt DateTime? @map("recovery_email_verified_at") @db.Timestamptz(6)
+  displayName        String     @map("display_name")
+  userType           UserType   @default(EMPLOYEE) @map("user_type")
+  status             UserStatus @default(INVITED)
+  passwordHash       String?    @map("password_hash") // Argon2id
+  passwordChangedAt  DateTime?  @map("password_changed_at") @db.Timestamptz(6)
+  mustChangePassword Boolean    @default(true) @map("must_change_password")
+  failedLoginCount   Int        @default(0) @map("failed_login_count")
+  lockedUntil        DateTime?  @map("locked_until") @db.Timestamptz(6)
+  mfaEnabled         Boolean    @default(false) @map("mfa_enabled")
+  lastLoginAt        DateTime?  @map("last_login_at") @db.Timestamptz(6)
+  activatedAt        DateTime?  @map("activated_at") @db.Timestamptz(6) // "live geschaltet"
+  validUntil         DateTime?  @map("valid_until") @db.Timestamptz(6) // befristete externe Accounts
+  deactivatedAt      DateTime?  @map("deactivated_at") @db.Timestamptz(6)
+  createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  employeeProfile EmployeeProfile?
+  settings        UserSettings?
+  sessions        Session[]
+  credentialResets       CredentialReset[] @relation("ResetForUser")
+  credentialResetsIssued CredentialReset[] @relation("ResetIssuedBy")
+  mfaFactors      MfaFactor[]
+  groupMemberships GroupMembership[]
+  userRoles       UserRole[] @relation("UserRoleUser")
+  userRolesGranted UserRole[] @relation("UserRoleGrantedBy")
+
+  authoredContent      ContentItem[]      @relation("ContentAuthor")
+  audienceTargets      ContentAudience[]
+  aclPrincipals        ResourceAcl[]
+  contentRecipients    ContentRecipient[]
+  readReceipts         ReadReceipt[]
+  remindersReceived    Reminder[]         @relation("ReminderRecipient")
+  remindersTriggered   Reminder[]         @relation("ReminderTriggeredBy")
+  comments             Comment[]
+  reactions            Reaction[]
+  mentionsReceived     Mention[]          @relation("MentionedUser")
+  uploadedFiles        FileObject[]
+
+  chatConversationsCreated ChatConversation[] @relation("ChatCreatedBy")
+  chatParticipations       ChatParticipant[]
+  chatMessages             ChatMessage[]
+
+  notifications        Notification[]           @relation("NotificationRecipient")
+  notificationsCaused  Notification[]           @relation("NotificationActor")
+  notificationPrefs    NotificationPreference[]
+  pushSubscriptions    PushSubscription[]
+
+  knowledgeArticlesOwned KnowledgeArticle[] @relation("ArticleOwner")
+  knowledgeVersions      KnowledgeVersion[]
+  documentVersions       DocumentVersion[]
+
+  taskAssignments       TaskAssignee[]
+  checklistRunsCompleted ChecklistRun[]     @relation("RunCompletedBy")
+  checklistRunsApproved  ChecklistRun[]     @relation("RunApprovedBy")
+  checklistItemsDone     ChecklistRunItem[]
+
+  lifecycleStepsResponsible LifecycleTemplateStep[]
+  lifecycleInstancesStarted LifecycleInstance[]
+
+  surveyParticipations SurveyParticipation[]
+  surveyResponses      SurveyResponse[]
+
+  ideasOwned        Idea[]              @relation("IdeaOwner")
+  ideaStatusChanges IdeaStatusHistory[]
+
+  dashboardPreferences DashboardPreference[]
+  reportsFiled         ContentReport[]       @relation("ReportReporter")
+  reportsResolved      ContentReport[]       @relation("ReportResolver")
+  auditLogs            AuditLog[]
+
+  @@index([status])
+  @@map("users")
+}
+
+model Session {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  tokenHash    String    @unique @map("token_hash") // nur Hash des Session-Tokens
+  userAgent    String?   @map("user_agent")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastSeenAt   DateTime  @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+  expiresAt    DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt    DateTime? @map("revoked_at") @db.Timestamptz(6)
+  mfaVerified  Boolean   @default(false) @map("mfa_verified")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+/// Passwort-Reset / Erstzugang. Einmal-Code bzw. -Link, nur gehasht gespeichert.
+model CredentialReset {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  issuedById  String?   @map("issued_by_id") @db.Uuid // null = Self-Service
+  tokenHash   String    @unique @map("token_hash")
+  channel     String // EMAIL | IN_PERSON (siehe ADR-011)
+  expiresAt   DateTime  @map("expires_at") @db.Timestamptz(6)
+  usedAt      DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user     User  @relation("ResetForUser", fields: [userId], references: [id], onDelete: Cascade)
+  issuedBy User? @relation("ResetIssuedBy", fields: [issuedById], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@map("credential_resets")
+}
+
+model MfaFactor {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String        @map("user_id") @db.Uuid
+  type            MfaFactorType
+  label           String?
+  secretEncrypted Bytes?        @map("secret_encrypted") // TOTP, app-seitig verschlüsselt
+  credentialId    String?       @unique @map("credential_id") // WebAuthn
+  publicKey       Bytes?        @map("public_key")
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastUsedAt      DateTime?     @map("last_used_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("mfa_factors")
+}
+
+/// Mitarbeiterprofil – getrennt vom Account (users 1:0..1 employee_profiles).
+/// Felder mit führender Quelle Gastromatic werden nur per Sync geändert.
+/// company_id = Hauptgesellschaft; weitere Gesellschaften über
+/// employee_company_assignments (ADR-020).
+model EmployeeProfile {
+  id               String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String     @unique @map("user_id") @db.Uuid
+  companyId        String     @map("company_id") @db.Uuid
+  lineManagerId    String?    @map("line_manager_id") @db.Uuid
+  personnelNumber  String?    @map("personnel_number")
+  firstName        String     @map("first_name")
+  lastName         String     @map("last_name")
+  jobTitle         String?    @map("job_title")
+  phoneWork        String?    @map("phone_work")
+  aboutMe          String?    @map("about_me") // freiwillig
+  avatarFileId     String?    @map("avatar_file_id") @db.Uuid
+  entryDate        DateTime?  @map("entry_date") @db.Date
+  exitDate         DateTime?  @map("exit_date") @db.Date
+  source           DataSource @default(LOCAL)
+  createdAt        DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user        User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  company     Company           @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  lineManager EmployeeProfile?  @relation("LineManager", fields: [lineManagerId], references: [id], onDelete: SetNull)
+  reports     EmployeeProfile[] @relation("LineManager")
+  avatarFile  FileObject?       @relation(fields: [avatarFileId], references: [id], onDelete: SetNull)
+
+  absences           Absence[]
+  lifecycleInstances LifecycleInstance[]
+  companyAssignments EmployeeCompanyAssignment[]
+
+  @@unique([companyId, personnelNumber])
+  @@index([companyId])
+  @@map("employee_profiles")
+}
+
+/// Zuordnung von Mitarbeitenden zu (weiteren) Gesellschaften, z. B. Personal,
+/// das für mehrere der vier Gesellschaften arbeitet (ADR-020). Die Haupt-
+/// gesellschaft steht zusätzlich als is_primary-Zeile hier, damit Scope-Prüfungen
+/// nur diese Tabelle lesen müssen. Quelle i. d. R. Gastromatic (Betrieb/Location).
+/// RAW-SQL: genau eine aktive Zeile mit is_primary je Profil (partieller Unique-Index);
+///          CHECK (valid_to IS NULL OR valid_to >= valid_from).
+model EmployeeCompanyAssignment {
+  id                String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  employeeProfileId String     @map("employee_profile_id") @db.Uuid
+  companyId         String     @map("company_id") @db.Uuid
+  isPrimary         Boolean    @default(false) @map("is_primary")
+  jobTitle          String?    @map("job_title") // Tätigkeit in dieser Gesellschaft
+  validFrom         DateTime   @map("valid_from") @db.Date
+  validTo           DateTime?  @map("valid_to") @db.Date
+  source            DataSource @default(LOCAL)
+  createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  employeeProfile EmployeeProfile @relation(fields: [employeeProfileId], references: [id], onDelete: Cascade)
+  company         Company         @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  @@unique([employeeProfileId, companyId, validFrom])
+  @@index([companyId, validTo])
+  @@map("employee_company_assignments")
+}
+
+model Group {
+  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId     String?    @map("company_id") @db.Uuid // null = gesellschaftsübergreifend
+  parentGroupId String?    @map("parent_group_id") @db.Uuid
+  name          String
+  type          GroupType  @default(TEAM)
+  description   String?
+  source        DataSource @default(LOCAL)
+  isActive      Boolean    @default(true) @map("is_active")
+  createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company  Company? @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  parent   Group?   @relation("GroupHierarchy", fields: [parentGroupId], references: [id], onDelete: SetNull)
+  children Group[]  @relation("GroupHierarchy")
+
+  memberships         GroupMembership[]
+  userRoles           UserRole[]
+  audienceTargets     ContentAudience[]
+  aclPrincipals       ResourceAcl[]
+  handovers           Handover[]
+  tasks               Task[]
+  taskAssignees       TaskAssignee[]
+  checklists          Checklist[]
+  checklistRuns       ChecklistRun[]
+  lifecycleSteps      LifecycleTemplateStep[]
+
+  @@unique([companyId, name])
+  @@map("groups")
+}
+
+/// Spec-Tabelle "user_groups". Mitgliedschaft hängt am User (nicht am Profil),
+/// damit auch externe Accounts Zielgruppen angehören können – siehe ADR-006.
+model GroupMembership {
+  userId    String   @map("user_id") @db.Uuid
+  groupId   String   @map("group_id") @db.Uuid
+  isLead    Boolean  @default(false) @map("is_lead")
+  source    DataSource @default(LOCAL)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([userId, groupId])
+  @@index([groupId])
+  @@map("user_groups")
+}
+
+model Role {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key         String   @unique // z. B. "platform_admin", "team_lead"
+  name        String
+  description String?
+  isSystem    Boolean  @default(false) @map("is_system") // nicht löschbar
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  permissions     RolePermission[]
+  userRoles       UserRole[]
+  audienceTargets ContentAudience[]
+  aclPrincipals   ResourceAcl[]
+  lifecycleSteps  LifecycleTemplateStep[]
+  widgetPolicies  DashboardWidgetPolicy[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key         String  @unique // "<modul>.<aktion>", z. B. "news.publish"
+  module      String
+  description String?
+  isSensitive Boolean @default(false) @map("is_sensitive") // z. B. reset_password
+
+  roles RolePermission[]
+
+  @@index([module])
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String @map("role_id") @db.Uuid
+  permissionId String @map("permission_id") @db.Uuid
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+/// Rollenzuweisung mit optionalem Scope (global / Gesellschaft / Gruppe).
+/// RAW-SQL: UNIQUE (user_id, role_id, company_id, group_id) NULLS NOT DISTINCT;
+///          CHECK (NOT (company_id IS NOT NULL AND group_id IS NOT NULL)).
+model UserRole {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  roleId      String    @map("role_id") @db.Uuid
+  companyId   String?   @map("company_id") @db.Uuid
+  groupId     String?   @map("group_id") @db.Uuid
+  grantedById String?   @map("granted_by_id") @db.Uuid
+  validUntil  DateTime? @map("valid_until") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user      User     @relation("UserRoleUser", fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  group     Group?   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  grantedBy User?    @relation("UserRoleGrantedBy", fields: [grantedById], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([roleId])
+  @@map("user_roles")
+}
+
+// =============================================================================
+// CONTENT-REGISTRY & QUERSCHNITTSFUNKTIONEN
+// =============================================================================
+
+/// Basistabelle aller Inhalte. Subtyp-Tabellen nutzen dieselbe ID (1:1).
+model ContentItem {
+  id                      String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type                    ContentType
+  companyId               String?       @map("company_id") @db.Uuid // Eigentümer-Gesellschaft (Admin-Scope)
+  authorId                String?       @map("author_id") @db.Uuid
+  status                  ContentStatus @default(DRAFT)
+  importance              Importance    @default(NORMAL)
+  sourceLocale            String        @default("de") @map("source_locale")
+  currentVersion          Int           @default(1) @map("current_version")
+  commentsEnabled         Boolean       @default(true) @map("comments_enabled")
+  reactionsEnabled        Boolean       @default(true) @map("reactions_enabled")
+  readTrackingEnabled     Boolean       @default(false) @map("read_tracking_enabled")
+  requiresAcknowledgement Boolean       @default(false) @map("requires_acknowledgement")
+  // Erinnerungs-Policy (null = keine automatische Erinnerung)
+  autoRemindAfterHours    Int?          @map("auto_remind_after_hours")
+  remindIntervalHours     Int?          @map("remind_interval_hours")
+  maxReminders            Int           @default(2) @map("max_reminders")
+  publishAt               DateTime?     @map("publish_at") @db.Timestamptz(6)
+  publishedAt             DateTime?     @map("published_at") @db.Timestamptz(6)
+  expiresAt               DateTime?     @map("expires_at") @db.Timestamptz(6)
+  createdAt               DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt               DateTime?     @map("deleted_at") @db.Timestamptz(6)
+
+  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  author  User?    @relation("ContentAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  // Subtypen (genau einer passend zu "type"; per RAW-SQL-Trigger abgesichert)
+  post             Post?
+  handover         Handover?
+  knowledgeArticle KnowledgeArticle?
+  document         Document?
+  survey           Survey?
+  task             Task?
+  checklistRun     ChecklistRun?
+  idea             Idea?
+
+  audiences    ContentAudience[]
+  recipients   ContentRecipient[]
+  acl          ResourceAcl[]
+  readReceipts ReadReceipt[]
+  reminders    Reminder[]
+  comments     Comment[]
+  reactions    Reaction[]
+  mentions     Mention[]
+  attachments  Attachment[]
+  searchChunks SearchChunk[]
+  notifications Notification[]
+  qrLinks      QrLink[]
+  reports      ContentReport[]
+  embeddedInPosts Post[] @relation("PostEmbeddedSurvey")
+  contactLinks ContactDocument[]
+  lifecycleStepLinks LifecycleTemplateStep[] @relation("LifecycleStepContent")
+
+  @@index([type, status, publishedAt])
+  @@index([companyId])
+  @@index([authorId])
+  @@map("content_items")
+}
+
+/// Ersetzt post_targets / handover_targets: Verteiler eines Inhalts.
+/// RAW-SQL: CHECK – genau das zum target_type passende FK-Feld ist gesetzt.
+model ContentAudience {
+  id            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contentItemId String             @map("content_item_id") @db.Uuid
+  targetType    AudienceTargetType @map("target_type")
+  companyId     String?            @map("company_id") @db.Uuid
+  groupId       String?            @map("group_id") @db.Uuid
+  roleId        String?            @map("role_id") @db.Uuid
+  userId        String?            @map("user_id") @db.Uuid
+  includeLateJoiners Boolean       @default(true) @map("include_late_joiners")
+  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  company     Company?    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  group       Group?      @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  role        Role?       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user        User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([contentItemId])
+  @@index([groupId])
+  @@map("content_audiences")
+}
+
+/// Materialisierter Empfängerkreis (Basis für "18 von 24 gelesen").
+model ContentRecipient {
+  contentItemId String          @map("content_item_id") @db.Uuid
+  userId        String          @map("user_id") @db.Uuid
+  reason        RecipientReason @default(AUDIENCE)
+  addedAt       DateTime        @default(now()) @map("added_at") @db.Timestamptz(6)
+  removedAt     DateTime?       @map("removed_at") @db.Timestamptz(6) // Zugriff entzogen/Austritt
+
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([contentItemId, userId])
+  @@index([userId])
+  @@map("content_recipients")
+}
+
+/// Objektbezogene Rechte (ersetzt knowledge_permissions / document_permissions).
+/// Ziel: genau eines von content_item_id / knowledge_category_id /
+/// document_category_id / contact_category_id. Principal: passend zu principal_type.
+/// RAW-SQL: CHECK-Constraints für beide Bedingungen.
+model ResourceAcl {
+  id                  String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contentItemId       String?          @map("content_item_id") @db.Uuid
+  knowledgeCategoryId String?          @map("knowledge_category_id") @db.Uuid
+  documentCategoryId  String?          @map("document_category_id") @db.Uuid
+  contactCategoryId   String?          @map("contact_category_id") @db.Uuid
+  principalType       PrincipalType    @map("principal_type")
+  companyId           String?          @map("company_id") @db.Uuid
+  groupId             String?          @map("group_id") @db.Uuid
+  roleId              String?          @map("role_id") @db.Uuid
+  userId              String?          @map("user_id") @db.Uuid
+  actions             ResourceAction[]
+  inherit             Boolean          @default(true) // gilt für Unterkategorien/Inhalte
+  createdAt           DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  contentItem       ContentItem?       @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  knowledgeCategory KnowledgeCategory? @relation(fields: [knowledgeCategoryId], references: [id], onDelete: Cascade)
+  documentCategory  DocumentCategory?  @relation(fields: [documentCategoryId], references: [id], onDelete: Cascade)
+  contactCategory   ContactCategory?   @relation(fields: [contactCategoryId], references: [id], onDelete: Cascade)
+  company           Company?           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  group             Group?             @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  role              Role?              @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user              User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([contentItemId])
+  @@index([knowledgeCategoryId])
+  @@index([documentCategoryId])
+  @@index([contactCategoryId])
+  @@index([groupId])
+  @@index([userId])
+  @@map("resource_acl")
+}
+
+/// Generischer Lesestatus (§21). Ersetzt post_reads / handover_reads.
+/// "seen" = in Liste/Vorschau, "opened" = Detail geöffnet,
+/// "acknowledged" = ausdrückliche Kenntnisnahme einer bestimmten Version.
+model ReadReceipt {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contentItemId       String    @map("content_item_id") @db.Uuid
+  userId              String    @map("user_id") @db.Uuid
+  firstSeenAt         DateTime? @map("first_seen_at") @db.Timestamptz(6)
+  openedAt            DateTime? @map("opened_at") @db.Timestamptz(6)
+  acknowledgedAt      DateTime? @map("acknowledged_at") @db.Timestamptz(6)
+  acknowledgedVersion Int?      @map("acknowledged_version")
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([contentItemId, userId])
+  @@index([userId])
+  @@map("read_receipts")
+}
+
+model Reminder {
+  id            String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contentItemId String              @map("content_item_id") @db.Uuid
+  recipientId   String              @map("recipient_id") @db.Uuid
+  triggeredById String?             @map("triggered_by_id") @db.Uuid // null = automatisch
+  trigger       ReminderTrigger
+  channel       NotificationChannel
+  sequenceNo    Int                 @map("sequence_no") // 1., 2., ... Erinnerung
+  status        ReminderStatus      @default(SCHEDULED)
+  scheduledAt   DateTime            @map("scheduled_at") @db.Timestamptz(6)
+  sentAt        DateTime?           @map("sent_at") @db.Timestamptz(6)
+  skipReason    String?             @map("skip_reason")
+  createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  recipient   User        @relation("ReminderRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  triggeredBy User?       @relation("ReminderTriggeredBy", fields: [triggeredById], references: [id], onDelete: SetNull)
+
+  @@unique([contentItemId, recipientId, sequenceNo, channel]) // Doppelversand-Schutz
+  @@index([recipientId, status])
+  @@index([status, scheduledAt])
+  @@map("reminders")
+}
+
+/// Generische Kommentare (auch für Ideen – ersetzt idea_comments, §19).
+model Comment {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contentItemId   String    @map("content_item_id") @db.Uuid
+  authorId        String?   @map("author_id") @db.Uuid
+  parentCommentId String?   @map("parent_comment_id") @db.Uuid
+  body            Json // strukturiertes Rich-Text-Dokument (sanitized)
+  bodyText        String    @map("body_text") // Plaintext für Suche/Übersetzung
+  sourceLocale    String    @default("de") @map("source_locale")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  editedAt        DateTime? @map("edited_at") @db.Timestamptz(6)
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  author      User?       @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  parent      Comment?    @relation("CommentThread", fields: [parentCommentId], references: [id], onDelete: Cascade)
+  replies     Comment[]   @relation("CommentThread")
+  reactions   Reaction[]
+  mentions    Mention[]
+  attachments Attachment[]
+  reports     ContentReport[]
+
+  @@index([contentItemId, createdAt])
+  @@map("comments")
+}
+
+/// RAW-SQL: CHECK (num_nonnulls(content_item_id, comment_id) = 1);
+///          UNIQUE (user_id, content_item_id, type) bzw. (user_id, comment_id, type) als partielle Indizes.
+model Reaction {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contentItemId String?      @map("content_item_id") @db.Uuid
+  commentId     String?      @map("comment_id") @db.Uuid
+  userId        String       @map("user_id") @db.Uuid
+  type          ReactionType @default(LIKE)
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  contentItem ContentItem? @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  comment     Comment?     @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([contentItemId])
+  @@index([commentId])
+  @@map("reactions")
+}
+
+/// @Mentions. RAW-SQL: CHECK (num_nonnulls(content_item_id, comment_id, chat_message_id) = 1).
+model Mention {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  mentionedUserId String   @map("mentioned_user_id") @db.Uuid
+  contentItemId   String?  @map("content_item_id") @db.Uuid
+  commentId       String?  @map("comment_id") @db.Uuid
+  chatMessageId   String?  @map("chat_message_id") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  mentionedUser User         @relation("MentionedUser", fields: [mentionedUserId], references: [id], onDelete: Cascade)
+  contentItem   ContentItem? @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  comment       Comment?     @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  chatMessage   ChatMessage? @relation(fields: [chatMessageId], references: [id], onDelete: Cascade)
+
+  @@index([mentionedUserId])
+  @@map("mentions")
+}
+
+// =============================================================================
+// DATEIEN & MEDIEN (Object Storage, keine Binärdaten in PostgreSQL)
+// =============================================================================
+
+model FileObject {
+  id               String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storageKey       String     @unique @map("storage_key") // Pfad im Object Storage
+  originalFilename String     @map("original_filename")
+  mimeType         String     @map("mime_type")
+  sizeBytes        BigInt     @map("size_bytes")
+  checksumSha256   String     @map("checksum_sha256")
+  scanStatus       ScanStatus @default(PENDING) @map("scan_status")
+  uploadedById     String?    @map("uploaded_by_id") @db.Uuid
+  createdAt        DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  deletedAt        DateTime?  @map("deleted_at") @db.Timestamptz(6)
+
+  uploadedBy User? @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  attachments       Attachment[]
+  documentVersions  DocumentVersion[]
+  avatarOf          EmployeeProfile[]
+  checklistRunItems ChecklistRunItem[]
+  brandingLogos        CompanyBranding[] @relation("BrandingLogo")
+  brandingLogosInverse CompanyBranding[] @relation("BrandingLogoInverse")
+  brandingFavicons     CompanyBranding[] @relation("BrandingFavicon")
+
+  @@index([scanStatus])
+  @@map("file_objects")
+}
+
+/// Anhänge & Medien (deckt content_media ab). Zuordnung zu Inhalt, Kommentar
+/// oder Chatnachricht. RAW-SQL: CHECK (num_nonnulls(content_item_id, comment_id, chat_message_id) = 1).
+model Attachment {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fileObjectId  String         @map("file_object_id") @db.Uuid
+  contentItemId String?        @map("content_item_id") @db.Uuid
+  commentId     String?        @map("comment_id") @db.Uuid
+  chatMessageId String?        @map("chat_message_id") @db.Uuid
+  kind          AttachmentKind @default(ATTACHMENT)
+  caption       String?
+  altText       String?        @map("alt_text") // Accessibility
+  sortOrder     Int            @default(0) @map("sort_order")
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  fileObject  FileObject   @relation(fields: [fileObjectId], references: [id], onDelete: Restrict)
+  contentItem ContentItem? @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  comment     Comment?     @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  chatMessage ChatMessage? @relation(fields: [chatMessageId], references: [id], onDelete: Cascade)
+
+  @@index([contentItemId])
+  @@index([commentId])
+  @@index([chatMessageId])
+  @@map("attachments")
+}
+
+/// Übersetzungen als Querschnittsfunktion (§15.5). Abgeleitete, jederzeit
+/// neu erzeugbare Daten – daher bewusst polymorph (entity_type/entity_id);
+/// Aufräumen beim Löschen erfolgt per Domain-Event. Original wird nie überschrieben.
+model ContentTranslation {
+  id           String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entityType   TranslatableEntity @map("entity_type")
+  entityId     String             @map("entity_id") @db.Uuid
+  field        String // "title" | "body" | ...
+  sourceLocale String             @map("source_locale")
+  targetLocale String             @map("target_locale")
+  sourceHash   String             @map("source_hash") // invalidiert bei Änderung des Originals
+  text         String
+  isMachine    Boolean            @default(true) @map("is_machine")
+  isPlainLanguage Boolean         @default(false) @map("is_plain_language") // "Einfache Sprache"
+  provider     String?
+  createdAt    DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([entityType, entityId, field, targetLocale, isPlainLanguage, sourceHash])
+  @@index([entityType, entityId])
+  @@map("content_translations")
+}
+
+// =============================================================================
+// KOMMUNIKATION
+// =============================================================================
+
+model Post {
+  id               String    @id @db.Uuid // = content_items.id
+  title            String
+  body             Json
+  bodyText         String    @map("body_text")
+  isPinned         Boolean   @default(false) @map("is_pinned")
+  pinnedUntil      DateTime? @map("pinned_until") @db.Timestamptz(6)
+  embeddedSurveyId String?   @map("embedded_survey_id") @db.Uuid
+  kind             PostKind  @default(NEWS)
+  // nur SOCIAL:
+  socialCategory    SocialCategory?    @map("social_category")
+  marketplaceIntent MarketplaceIntent? @map("marketplace_intent")
+  priceLabel        String?            @map("price_label") // Freitext: "80 €", "zu verschenken"
+  listingClosedAt   DateTime?          @map("listing_closed_at") @db.Timestamptz(6) // "verkauft/erledigt"
+
+  contentItem    ContentItem  @relation(fields: [id], references: [id], onDelete: Cascade)
+  embeddedSurvey ContentItem? @relation("PostEmbeddedSurvey", fields: [embeddedSurveyId], references: [id], onDelete: SetNull)
+
+  @@index([kind, socialCategory])
+  @@map("posts")
+}
+
+model Handover {
+  id        String    @id @db.Uuid // = content_items.id
+  groupId   String?   @map("group_id") @db.Uuid // Team/Abteilung
+  subject   String
+  body      Json
+  bodyText  String    @map("body_text")
+  shiftDate DateTime? @map("shift_date") @db.Date
+  shiftLabel String?  @map("shift_label") // z. B. "Früh", "Spät", "Nacht"
+
+  contentItem ContentItem @relation(fields: [id], references: [id], onDelete: Cascade)
+  group       Group?      @relation(fields: [groupId], references: [id], onDelete: SetNull)
+
+  @@index([groupId, shiftDate])
+  @@map("handovers")
+}
+
+model ChatConversation {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type        ChatType
+  title       String?
+  directKey   String?   @unique @map("direct_key") // sortierte User-IDs, verhindert doppelte 1:1-Chats
+  createdById String?   @map("created_by_id") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  lastMessageAt DateTime? @map("last_message_at") @db.Timestamptz(6)
+  archivedAt  DateTime? @map("archived_at") @db.Timestamptz(6)
+
+  createdBy    User?             @relation("ChatCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  participants ChatParticipant[]
+  messages     ChatMessage[]
+
+  @@map("chat_conversations")
+}
+
+model ChatParticipant {
+  conversationId    String    @map("conversation_id") @db.Uuid
+  userId            String    @map("user_id") @db.Uuid
+  role              ChatRole  @default(MEMBER)
+  joinedAt          DateTime  @default(now()) @map("joined_at") @db.Timestamptz(6)
+  leftAt            DateTime? @map("left_at") @db.Timestamptz(6)
+  lastReadMessageId String?   @map("last_read_message_id") @db.Uuid // nur für Ungelesen-Zähler
+  mutedUntil        DateTime? @map("muted_until") @db.Timestamptz(6)
+
+  conversation    ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastReadMessage ChatMessage?     @relation("ParticipantLastRead", fields: [lastReadMessageId], references: [id], onDelete: SetNull)
+
+  @@id([conversationId, userId])
+  @@index([userId])
+  @@map("chat_participants")
+}
+
+model ChatMessage {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId String    @map("conversation_id") @db.Uuid
+  senderId       String?   @map("sender_id") @db.Uuid
+  replyToId      String?   @map("reply_to_id") @db.Uuid
+  body           String // Plaintext/Markdown-Subset, sanitized
+  sourceLocale   String    @default("de") @map("source_locale")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  editedAt       DateTime? @map("edited_at") @db.Timestamptz(6)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  conversation ChatConversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User?             @relation(fields: [senderId], references: [id], onDelete: SetNull)
+  replyTo      ChatMessage?      @relation("ChatReply", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies      ChatMessage[]     @relation("ChatReply")
+  lastReadBy   ChatParticipant[] @relation("ParticipantLastRead")
+  mentions     Mention[]
+  attachments  Attachment[]
+
+  @@index([conversationId, createdAt])
+  @@map("chat_messages")
+}
+
+// =============================================================================
+// BENACHRICHTIGUNGEN
+// =============================================================================
+
+model Notification {
+  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recipientId   String     @map("recipient_id") @db.Uuid
+  actorId       String?    @map("actor_id") @db.Uuid
+  eventType     String     @map("event_type") // z. B. "post.published", "mention", "reminder"
+  importance    Importance @default(NORMAL)
+  title         String
+  body          String?
+  linkPath      String?    @map("link_path") // relativer App-Pfad, keine externen URLs
+  contentItemId String?    @map("content_item_id") @db.Uuid
+  dedupeKey     String?    @map("dedupe_key")
+  createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  readAt        DateTime?  @map("read_at") @db.Timestamptz(6)
+  expiresAt     DateTime?  @map("expires_at") @db.Timestamptz(6)
+
+  recipient   User                   @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  actor       User?                  @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+  contentItem ContentItem?           @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  deliveries  NotificationDelivery[]
+
+  @@unique([recipientId, dedupeKey])
+  @@index([recipientId, readAt, createdAt])
+  @@map("notifications")
+}
+
+model NotificationDelivery {
+  id             String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  notificationId String              @map("notification_id") @db.Uuid
+  channel        NotificationChannel
+  status         DeliveryStatus      @default(PENDING)
+  attempts       Int                 @default(0)
+  sentAt         DateTime?           @map("sent_at") @db.Timestamptz(6)
+  errorCode      String?             @map("error_code")
+  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@unique([notificationId, channel])
+  @@index([status])
+  @@map("notification_deliveries")
+}
+
+model NotificationPreference {
+  id        String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String              @map("user_id") @db.Uuid
+  eventType String              @map("event_type") // "*" = Default
+  channel   NotificationChannel
+  enabled   Boolean             @default(true)
+  // Persönliches Zustellfenster (ADR-014); null = jederzeit. Außerhalb: gebündelt zum Fensterbeginn.
+  windowStart   String?     @map("window_start") // "07:00" (Zeitzone aus user_settings)
+  windowEnd     String?     @map("window_end") // "21:00"
+  weekdays      Int[]       @default([1, 2, 3, 4, 5, 6, 7]) // ISO 1=Mo … 7=So
+  minImportance Importance? @map("min_importance") // z. B. nur IMPORTANT per Push
+  updatedAt DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventType, channel])
+  @@map("notification_preferences")
+}
+
+model PushSubscription {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  endpoint   String    @unique
+  p256dh     String
+  auth       String
+  userAgent  String?   @map("user_agent")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastUsedAt DateTime? @map("last_used_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
+// =============================================================================
+// WISSEN & SOP
+// =============================================================================
+
+model KnowledgeCategory {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  parentId  String?  @map("parent_id") @db.Uuid
+  name      String
+  slug      String
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  parent   KnowledgeCategory?  @relation("KnowledgeCategoryTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children KnowledgeCategory[] @relation("KnowledgeCategoryTree")
+  articles KnowledgeArticle[]
+  acl      ResourceAcl[]
+
+  @@unique([parentId, slug])
+  @@map("knowledge_categories")
+}
+
+/// Wissenseintrag; Kapitel = Artikel mit parent_article_id.
+model KnowledgeArticle {
+  id              String               @id @db.Uuid // = content_items.id
+  categoryId      String               @map("category_id") @db.Uuid
+  parentArticleId String?              @map("parent_article_id") @db.Uuid
+  articleType     KnowledgeArticleType @default(WIKI) @map("article_type")
+  slug            String
+  sortOrder       Int                  @default(0) @map("sort_order")
+  ownerId         String?              @map("owner_id") @db.Uuid // fachlich verantwortlich
+  isTemplate      Boolean              @default(false) @map("is_template")
+  reviewDueAt     DateTime?            @map("review_due_at") @db.Date
+
+  contentItem   ContentItem        @relation(fields: [id], references: [id], onDelete: Cascade)
+  category      KnowledgeCategory  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  parentArticle KnowledgeArticle?  @relation("ArticleChapters", fields: [parentArticleId], references: [id], onDelete: Restrict)
+  chapters      KnowledgeArticle[] @relation("ArticleChapters")
+  owner         User?              @relation("ArticleOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  versions      KnowledgeVersion[]
+  checklistItems ChecklistItem[]
+
+  @@unique([categoryId, slug])
+  @@index([articleType])
+  @@map("knowledge_articles")
+}
+
+model KnowledgeVersion {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  articleId     String        @map("article_id") @db.Uuid
+  versionNumber Int           @map("version_number")
+  status        VersionStatus @default(DRAFT)
+  title         String
+  body          Json // strukturierter Editor (Blöcke)
+  bodyText      String        @map("body_text")
+  plainLanguageText String?   @map("plain_language_text") // redaktionell gepflegte "Einfache Sprache"
+  changeSummary String?       @map("change_summary")
+  authorId      String?       @map("author_id") @db.Uuid
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  publishedAt   DateTime?     @map("published_at") @db.Timestamptz(6)
+
+  article KnowledgeArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  author  User?            @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@unique([articleId, versionNumber])
+  @@map("knowledge_versions")
+}
+
+// =============================================================================
+// DOKUMENTE
+// =============================================================================
+
+model DocumentCategory {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  parentId  String?  @map("parent_id") @db.Uuid
+  name      String
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  isSensitive Boolean @default(false) @map("is_sensitive") // z. B. HR-Unterlagen: nie erben, nie KI
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  parent    DocumentCategory?  @relation("DocumentCategoryTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children  DocumentCategory[] @relation("DocumentCategoryTree")
+  documents Document[]
+  acl       ResourceAcl[]
+
+  @@unique([parentId, name])
+  @@map("document_categories")
+}
+
+model Document {
+  id             String    @id @db.Uuid // = content_items.id
+  categoryId     String    @map("category_id") @db.Uuid
+  title          String
+  description    String?
+  retentionUntil DateTime? @map("retention_until") @db.Date
+
+  contentItem ContentItem       @relation(fields: [id], references: [id], onDelete: Cascade)
+  category    DocumentCategory  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  versions    DocumentVersion[]
+
+  @@index([categoryId])
+  @@map("documents")
+}
+
+model DocumentVersion {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  documentId    String   @map("document_id") @db.Uuid
+  versionNumber Int      @map("version_number")
+  fileObjectId  String   @map("file_object_id") @db.Uuid
+  changeNote    String?  @map("change_note")
+  extractedText String?  @map("extracted_text") // für Suche/KI (nur nicht-sensible Kategorien)
+  uploadedById  String?  @map("uploaded_by_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  document   Document   @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  fileObject FileObject @relation(fields: [fileObjectId], references: [id], onDelete: Restrict)
+  uploadedBy User?      @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@unique([documentId, versionNumber])
+  @@map("document_versions")
+}
+
+// =============================================================================
+// SUCHE & KI (permission-aware Retrieval)
+// =============================================================================
+
+/// Such-/Retrieval-Index auf Chunk-Ebene. Zugriff ausschließlich über den
+/// Retrieval-Layer, der vorab die berechtigten content_item_ids bestimmt.
+/// RAW-SQL: tsv tsvector GENERATED ALWAYS AS (to_tsvector(regconfig, title||' '||text)) STORED,
+///          GIN-Index auf tsv; später: embedding vector(…) + HNSW-Index (pgvector).
+model SearchChunk {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contentItemId String   @map("content_item_id") @db.Uuid
+  versionNumber Int      @map("version_number")
+  chunkIndex    Int      @map("chunk_index")
+  locale        String
+  title         String
+  text          String
+  tsv           Unsupported("tsvector")?
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+
+  @@unique([contentItemId, versionNumber, chunkIndex, locale])
+  @@map("search_chunks")
+}
+
+// =============================================================================
+// AUFGABEN, CHECKLISTEN, ON-/OFFBOARDING
+// =============================================================================
+
+model Task {
+  id                      String     @id @db.Uuid // = content_items.id
+  title                   String
+  description             String?
+  status                  TaskStatus @default(OPEN)
+  priority                Priority   @default(NORMAL)
+  dueAt                   DateTime?  @map("due_at") @db.Timestamptz(6)
+  completedAt             DateTime?  @map("completed_at") @db.Timestamptz(6)
+  groupId                 String?    @map("group_id") @db.Uuid
+  lifecycleInstanceId     String?    @map("lifecycle_instance_id") @db.Uuid
+  lifecycleTemplateStepId String?    @map("lifecycle_template_step_id") @db.Uuid
+
+  contentItem           ContentItem            @relation(fields: [id], references: [id], onDelete: Cascade)
+  group                 Group?                 @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  lifecycleInstance     LifecycleInstance?     @relation(fields: [lifecycleInstanceId], references: [id], onDelete: Cascade)
+  lifecycleTemplateStep LifecycleTemplateStep? @relation(fields: [lifecycleTemplateStepId], references: [id], onDelete: SetNull)
+  assignees             TaskAssignee[]
+
+  @@index([status, dueAt])
+  @@index([lifecycleInstanceId])
+  @@map("tasks")
+}
+
+/// RAW-SQL: CHECK (num_nonnulls(user_id, group_id) = 1).
+model TaskAssignee {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  taskId        String   @map("task_id") @db.Uuid
+  userId        String?  @map("user_id") @db.Uuid
+  groupId       String?  @map("group_id") @db.Uuid
+  isResponsible Boolean  @default(false) @map("is_responsible") // Hauptverantwortliche/r
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  task  Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user  User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([taskId])
+  @@map("task_assignees")
+}
+
+/// Checklisten-VORLAGE (Spec: "checklists"). Ausführungen = checklist_runs.
+model Checklist {
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId        String?       @map("company_id") @db.Uuid
+  groupId          String?       @map("group_id") @db.Uuid // ausführendes Team
+  title            String
+  description      String?
+  kind             ChecklistKind @default(GENERAL)
+  version          Int           @default(1)
+  recurrenceRule   String?       @map("recurrence_rule") // RFC 5545 RRULE, z. B. täglich 06:00
+  recurrenceTz     String        @default("Europe/Berlin") @map("recurrence_tz")
+  nextRunAt        DateTime?     @map("next_run_at") @db.Timestamptz(6)
+  requiresApproval Boolean       @default(false) @map("requires_approval") // Approval-Vorbereitung
+  isActive         Boolean       @default(true) @map("is_active")
+  sourceLocale     String        @default("de") @map("source_locale")
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company        Company?                @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  group          Group?                  @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  items          ChecklistItem[]
+  runs           ChecklistRun[]
+  lifecycleSteps LifecycleTemplateStep[]
+
+  @@index([kind, isActive])
+  @@index([nextRunAt])
+  @@map("checklists")
+}
+
+model ChecklistItem {
+  id                 String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  checklistId        String                @map("checklist_id") @db.Uuid
+  title              String
+  description        String?
+  sortOrder          Int                   @default(0) @map("sort_order")
+  responseType       ChecklistResponseType @default(CHECK) @map("response_type")
+  isRequired         Boolean               @default(true) @map("is_required")
+  minValue           Decimal?              @map("min_value") @db.Decimal(10, 2) // z. B. HACCP-Grenzwert
+  maxValue           Decimal?              @map("max_value") @db.Decimal(10, 2)
+  unit               String?
+  knowledgeArticleId String?               @map("knowledge_article_id") @db.Uuid // verlinkte SOP
+  isActive           Boolean               @default(true) @map("is_active")
+
+  checklist        Checklist          @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  knowledgeArticle KnowledgeArticle?  @relation(fields: [knowledgeArticleId], references: [id], onDelete: SetNull)
+  runItems         ChecklistRunItem[]
+
+  @@index([checklistId, sortOrder])
+  @@map("checklist_items")
+}
+
+/// Konkrete Ausführung einer Checkliste (Content-Item → Lesestatus, Kommentare, Erinnerungen).
+model ChecklistRun {
+  id                  String         @id @db.Uuid // = content_items.id
+  checklistId         String         @map("checklist_id") @db.Uuid
+  checklistVersion    Int            @map("checklist_version")
+  assignedGroupId     String?        @map("assigned_group_id") @db.Uuid
+  lifecycleInstanceId String?        @map("lifecycle_instance_id") @db.Uuid
+  title               String
+  status              RunStatus      @default(PLANNED)
+  dueAt               DateTime?      @map("due_at") @db.Timestamptz(6)
+  startedAt           DateTime?      @map("started_at") @db.Timestamptz(6)
+  completedAt         DateTime?      @map("completed_at") @db.Timestamptz(6)
+  completedById       String?        @map("completed_by_id") @db.Uuid
+  approvalStatus      ApprovalStatus @default(NOT_REQUIRED) @map("approval_status")
+  approvedById        String?        @map("approved_by_id") @db.Uuid
+  approvedAt          DateTime?      @map("approved_at") @db.Timestamptz(6)
+
+  contentItem       ContentItem        @relation(fields: [id], references: [id], onDelete: Cascade)
+  checklist         Checklist          @relation(fields: [checklistId], references: [id], onDelete: Restrict)
+  assignedGroup     Group?             @relation(fields: [assignedGroupId], references: [id], onDelete: SetNull)
+  lifecycleInstance LifecycleInstance? @relation(fields: [lifecycleInstanceId], references: [id], onDelete: Cascade)
+  completedBy       User?              @relation("RunCompletedBy", fields: [completedById], references: [id], onDelete: SetNull)
+  approvedBy        User?              @relation("RunApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  items             ChecklistRunItem[]
+
+  @@index([checklistId, dueAt])
+  @@index([status, dueAt])
+  @@map("checklist_runs")
+}
+
+/// Ergebnis je Punkt eines Laufs (Snapshot des Titels, da Vorlage sich ändern kann).
+model ChecklistRunItem {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  runId           String    @map("run_id") @db.Uuid
+  checklistItemId String?   @map("checklist_item_id") @db.Uuid
+  titleSnapshot   String    @map("title_snapshot")
+  sortOrder       Int       @default(0) @map("sort_order")
+  isDone          Boolean   @default(false) @map("is_done")
+  valueText       String?   @map("value_text")
+  valueNumber     Decimal?  @map("value_number") @db.Decimal(10, 2)
+  isOutOfRange    Boolean?  @map("is_out_of_range")
+  photoFileId     String?   @map("photo_file_id") @db.Uuid
+  note            String?
+  completedById   String?   @map("completed_by_id") @db.Uuid
+  completedAt     DateTime? @map("completed_at") @db.Timestamptz(6)
+
+  run           ChecklistRun   @relation(fields: [runId], references: [id], onDelete: Cascade)
+  checklistItem ChecklistItem? @relation(fields: [checklistItemId], references: [id], onDelete: SetNull)
+  photoFile     FileObject?    @relation(fields: [photoFileId], references: [id], onDelete: SetNull)
+  completedBy   User?          @relation(fields: [completedById], references: [id], onDelete: SetNull)
+
+  @@index([runId, sortOrder])
+  @@map("checklist_run_items")
+}
+
+/// On-/Offboarding-Vorlage (deckt onboarding_templates + offboarding_templates ab).
+model LifecycleTemplate {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId   String?       @map("company_id") @db.Uuid
+  kind        LifecycleKind
+  name        String
+  description String?
+  isActive    Boolean       @default(true) @map("is_active")
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company   Company?                @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  steps     LifecycleTemplateStep[]
+  instances LifecycleInstance[]
+
+  @@map("lifecycle_templates")
+}
+
+/// Schritt einer Vorlage (Spec: onboarding_steps). Erzeugt beim Start eine
+/// Aufgabe und/oder einen Checklisten-Lauf; kann Richtlinien/Dokumente verlinken.
+model LifecycleTemplateStep {
+  id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  templateId        String          @map("template_id") @db.Uuid
+  title             String
+  description       String?
+  sortOrder         Int             @default(0) @map("sort_order")
+  offsetDays        Int             @default(0) @map("offset_days") // relativ zu Eintritt/Austritt
+  responsibleType   ResponsibleType @map("responsible_type")
+  responsibleUserId String?         @map("responsible_user_id") @db.Uuid
+  responsibleGroupId String?        @map("responsible_group_id") @db.Uuid
+  responsibleRoleId String?         @map("responsible_role_id") @db.Uuid
+  checklistId       String?         @map("checklist_id") @db.Uuid
+  linkedContentId   String?         @map("linked_content_id") @db.Uuid // Richtlinie, Dokument, Benefit-Info
+  requiresAcknowledgement Boolean   @default(false) @map("requires_acknowledgement")
+
+  template          LifecycleTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  responsibleUser   User?             @relation(fields: [responsibleUserId], references: [id], onDelete: SetNull)
+  responsibleGroup  Group?            @relation(fields: [responsibleGroupId], references: [id], onDelete: SetNull)
+  responsibleRole   Role?             @relation(fields: [responsibleRoleId], references: [id], onDelete: SetNull)
+  checklist         Checklist?        @relation(fields: [checklistId], references: [id], onDelete: SetNull)
+  linkedContent     ContentItem?      @relation("LifecycleStepContent", fields: [linkedContentId], references: [id], onDelete: SetNull)
+  tasks             Task[]
+
+  @@index([templateId, sortOrder])
+  @@map("lifecycle_template_steps")
+}
+
+model LifecycleInstance {
+  id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  templateId        String          @map("template_id") @db.Uuid
+  kind              LifecycleKind
+  employeeProfileId String          @map("employee_profile_id") @db.Uuid
+  referenceDate     DateTime        @map("reference_date") @db.Date // Eintritts- bzw. Austrittsdatum
+  status            LifecycleStatus @default(ACTIVE)
+  startedById       String?         @map("started_by_id") @db.Uuid
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  completedAt       DateTime?       @map("completed_at") @db.Timestamptz(6)
+
+  template        LifecycleTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  employeeProfile EmployeeProfile   @relation(fields: [employeeProfileId], references: [id], onDelete: Cascade)
+  startedBy       User?             @relation(fields: [startedById], references: [id], onDelete: SetNull)
+  tasks           Task[]
+  checklistRuns   ChecklistRun[]
+
+  @@index([employeeProfileId])
+  @@map("lifecycle_instances")
+}
+
+// =============================================================================
+// UMFRAGEN
+// =============================================================================
+
+model Survey {
+  id                 String                  @id @db.Uuid // = content_items.id
+  title              String
+  description        String?
+  isAnonymous        Boolean                 @default(false) @map("is_anonymous")
+  resultsVisibility  SurveyResultsVisibility @default(AUTHOR_ONLY) @map("results_visibility")
+  minGroupSize       Int                     @default(5) @map("min_group_size") // Ergebnisse erst ab n Antworten
+  opensAt            DateTime?               @map("opens_at") @db.Timestamptz(6)
+  closesAt           DateTime?               @map("closes_at") @db.Timestamptz(6)
+  purpose            String? // Zweckbindung, z. B. "Mitarbeitendenverpflegung"
+
+  contentItem    ContentItem           @relation(fields: [id], references: [id], onDelete: Cascade)
+  questions      SurveyQuestion[]
+  participations SurveyParticipation[]
+  responses      SurveyResponse[]
+
+  @@map("surveys")
+}
+
+model SurveyQuestion {
+  id         String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  surveyId   String             @map("survey_id") @db.Uuid
+  prompt     String
+  type       SurveyQuestionType
+  isRequired Boolean            @default(true) @map("is_required")
+  scaleMin   Int?               @map("scale_min")
+  scaleMax   Int?               @map("scale_max")
+  sortOrder  Int                @default(0) @map("sort_order")
+
+  survey  Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  options SurveyOption[]
+  answers SurveyAnswer[]
+
+  @@index([surveyId, sortOrder])
+  @@map("survey_questions")
+}
+
+model SurveyOption {
+  id         String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questionId String @map("question_id") @db.Uuid
+  label      String
+  sortOrder  Int    @default(0) @map("sort_order")
+
+  question SurveyQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answers  SurveyAnswer[]
+
+  @@map("survey_options")
+}
+
+/// WER teilgenommen hat (Doppelabgabe-Schutz, Erinnerungen). Bei anonymen
+/// Umfragen gibt es KEINE Verknüpfung zur Antwort (siehe ADR-013).
+model SurveyParticipation {
+  surveyId    String   @map("survey_id") @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  submittedOn DateTime @map("submitted_on") @db.Date // nur Datum, erschwert Korrelation
+
+  survey Survey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([surveyId, userId])
+  @@map("survey_participations")
+}
+
+/// WAS geantwortet wurde. respondent_id ist bei anonymen Umfragen immer NULL.
+model SurveyResponse {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  surveyId     String   @map("survey_id") @db.Uuid
+  respondentId String?  @map("respondent_id") @db.Uuid
+  submittedOn  DateTime @map("submitted_on") @db.Date
+
+  survey     Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  respondent User?          @relation(fields: [respondentId], references: [id], onDelete: SetNull)
+  answers    SurveyAnswer[]
+
+  @@index([surveyId])
+  @@map("survey_responses")
+}
+
+model SurveyAnswer {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  responseId  String  @map("response_id") @db.Uuid
+  questionId  String  @map("question_id") @db.Uuid
+  optionId    String? @map("option_id") @db.Uuid
+  valueNumber Int?    @map("value_number")
+  valueText   String? @map("value_text")
+
+  response SurveyResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  question SurveyQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  option   SurveyOption?  @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId, optionId])
+  @@map("survey_answers")
+}
+
+// =============================================================================
+// IDEEN
+// =============================================================================
+
+model IdeaCategory {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId String?  @map("company_id") @db.Uuid
+  name      String
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+
+  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  ideas   Idea[]
+
+  @@map("idea_categories")
+}
+
+model Idea {
+  id          String     @id @db.Uuid // = content_items.id
+  categoryId  String?    @map("category_id") @db.Uuid
+  title       String
+  description String
+  status      IdeaStatus @default(SUBMITTED)
+  ownerId     String?    @map("owner_id") @db.Uuid // Verantwortliche/r
+
+  contentItem   ContentItem         @relation(fields: [id], references: [id], onDelete: Cascade)
+  category      IdeaCategory?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  owner         User?               @relation("IdeaOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  statusHistory IdeaStatusHistory[]
+
+  @@index([status])
+  @@map("ideas")
+}
+
+model IdeaStatusHistory {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ideaId      String      @map("idea_id") @db.Uuid
+  fromStatus  IdeaStatus? @map("from_status")
+  toStatus    IdeaStatus  @map("to_status")
+  note        String?
+  changedById String?     @map("changed_by_id") @db.Uuid
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  idea      Idea  @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  changedBy User? @relation(fields: [changedById], references: [id], onDelete: SetNull)
+
+  @@index([ideaId, createdAt])
+  @@map("idea_status_history")
+}
+
+// =============================================================================
+// MITARBEITER: ABWESENHEITEN, EINSTELLUNGEN, DASHBOARD
+// =============================================================================
+
+model Absence {
+  id                String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  employeeProfileId String      @map("employee_profile_id") @db.Uuid
+  type              AbsenceType @default(ABSENT)
+  startsOn          DateTime    @map("starts_on") @db.Date
+  endsOn            DateTime    @map("ends_on") @db.Date
+  showAsAbsent      Boolean     @default(true) @map("show_as_absent") // für Abwesenheitshinweise
+  source            DataSource  @default(LOCAL)
+  createdAt         DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  employeeProfile EmployeeProfile @relation(fields: [employeeProfileId], references: [id], onDelete: Cascade)
+
+  @@index([employeeProfileId, startsOn, endsOn])
+  @@map("absences")
+}
+
+/// Spec "employee_settings" – am User, da auch externe Accounts Einstellungen haben.
+model UserSettings {
+  userId           String   @id @map("user_id") @db.Uuid
+  locale           String   @default("de")
+  timeZone         String   @default("Europe/Berlin") @map("time_zone")
+  autoTranslate    Boolean  @default(false) @map("auto_translate")
+  plainLanguage    Boolean  @default(false) @map("plain_language")
+  fontScalePercent Int      @default(100) @map("font_scale_percent")
+  theme            Theme    @default(SYSTEM)
+  highContrast     Boolean  @default(false) @map("high_contrast")
+  reducedMotion    Boolean  @default(false) @map("reduced_motion")
+  ttsEnabled       Boolean  @default(false) @map("tts_enabled")
+  quietHoursStart  String?  @map("quiet_hours_start") // globale Ruhezeit (Kurzform), Feinsteuerung je Typ in notification_preferences
+  quietHoursEnd    String?  @map("quiet_hours_end")
+  // Social – alles Opt-in, Default aus (ADR-031)
+  socialNotifications  Boolean @default(false) @map("social_notifications")
+  showBirthday         Boolean @default(false) @map("show_birthday")
+  birthdayMonthDay     String? @map("birthday_month_day") // "MM-DD", selbst eingetragen, ohne Jahr
+  showWorkAnniversary  Boolean @default(false) @map("show_work_anniversary")
+  // Untere App-Leiste (ADR-036); leer = Voreinstellung der Rolle bzw. Start, News, Übergaben, Chat
+  mobileNavItems       String[] @default([]) @map("mobile_nav_items")
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}
+
+/// Vom Admin erlaubte Widgets je Rolle (Grenzen der Personalisierung).
+model DashboardWidgetPolicy {
+  id           String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  widgetKey    String  @map("widget_key") // Code-Registry, z. B. "my_tasks", "occupancy_today"
+  roleId       String  @map("role_id") @db.Uuid
+  isAllowed    Boolean @default(true) @map("is_allowed")
+  isMandatory  Boolean @default(false) @map("is_mandatory") // nicht ausblendbar
+  defaultOrder Int     @default(0) @map("default_order")
+
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([widgetKey, roleId])
+  @@map("dashboard_widget_policies")
+}
+
+model DashboardPreference {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  widgetKey String   @map("widget_key")
+  isVisible Boolean  @default(true) @map("is_visible")
+  sortOrder Int      @default(0) @map("sort_order")
+  size      String?  // "S" | "M" | "L"
+  config    Json?
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, widgetKey])
+  @@map("dashboard_preferences")
+}
+
+// =============================================================================
+// KONTAKTE
+// =============================================================================
+
+model ContactCategory {
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  parentId  String? @map("parent_id") @db.Uuid
+  name      String
+  sortOrder Int     @default(0) @map("sort_order")
+
+  parent   ContactCategory?  @relation("ContactCategoryTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children ContactCategory[] @relation("ContactCategoryTree")
+  contacts Contact[]
+  acl      ResourceAcl[]
+
+  @@unique([parentId, name])
+  @@map("contact_categories")
+}
+
+model Contact {
+  id                 String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  categoryId         String?     @map("category_id") @db.Uuid
+  companyId          String?     @map("company_id") @db.Uuid
+  type               ContactType @default(SUPPLIER)
+  organizationName   String      @map("organization_name")
+  contactPerson      String?     @map("contact_person")
+  email              String?
+  phone              String?
+  mobile             String?
+  emergencyPhone     String?     @map("emergency_phone")
+  isEmergencyContact Boolean     @default(false) @map("is_emergency_contact") // z. B. 24/7-Störungsdienst
+  street             String?
+  postalCode         String?     @map("postal_code")
+  city               String?
+  website            String?
+  customerNumber     String?     @map("customer_number") // unsere Kundennummer beim Lieferanten
+  notes              String?
+  isActive           Boolean     @default(true) @map("is_active")
+  createdAt          DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  category  ContactCategory?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  company   Company?          @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  documents ContactDocument[]
+
+  @@index([organizationName])
+  @@index([isEmergencyContact])
+  @@map("contacts")
+}
+
+/// Verknüpft Kontakte mit Dokumenten aus dem Dokumentenmodul (keine eigene Ablage).
+model ContactDocument {
+  contactId  String   @map("contact_id") @db.Uuid
+  documentId String   @map("document_id") @db.Uuid // content_items.id eines DOCUMENT
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  contact  Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  document ContentItem @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@id([contactId, documentId])
+  @@map("contact_documents")
+}
+
+// =============================================================================
+// INTEGRATIONEN
+// =============================================================================
+
+model Integration {
+  id            String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key           String            @unique // frei wählbar: "gastromatic", "flexkeeping", "ms365", "berichtsheft" ...
+  source        DataSource        @default(EXTERNAL) // Herkunftskennzeichen für übernommene Daten
+  category      IntegrationCategory @default(OTHER)
+  adapter       String // Adapter-Kennung im Code, z. B. "gastromatic.v1", "msgraph.v1", "generic-webhook.v1"
+  companyId     String?           @map("company_id") @db.Uuid // je Gesellschaft eigene Zugänge möglich (ADR-034)
+  name          String
+  vendor        String?
+  status        IntegrationStatus @default(NOT_CONFIGURED)
+  isEnabled     Boolean           @default(false) @map("is_enabled")
+  config        Json? // nur nicht-geheime Konfiguration
+  secretRef     String?           @map("secret_ref") // Verweis auf Secret-Manager, nie das Secret selbst
+  syncCron      String?           @map("sync_cron")
+  lastSyncAt    DateTime?         @map("last_sync_at") @db.Timestamptz(6)
+  lastSuccessAt DateTime?         @map("last_success_at") @db.Timestamptz(6)
+  createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  company          Company?                @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  syncLogs         IntegrationSyncLog[]
+  externalEntities ExternalEntity[]
+  mappings         ExternalEntityMapping[]
+
+  @@map("integrations")
+}
+
+model IntegrationSyncLog {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  integrationId  String        @map("integration_id") @db.Uuid
+  direction      SyncDirection @default(INBOUND)
+  status         SyncStatus    @default(RUNNING)
+  startedAt      DateTime      @default(now()) @map("started_at") @db.Timestamptz(6)
+  finishedAt     DateTime?     @map("finished_at") @db.Timestamptz(6)
+  recordsRead    Int           @default(0) @map("records_read")
+  recordsCreated Int           @default(0) @map("records_created")
+  recordsUpdated Int           @default(0) @map("records_updated")
+  recordsFailed  Int           @default(0) @map("records_failed")
+  errorSummary   String?       @map("error_summary") // ohne personenbezogene Daten
+
+  integration Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@index([integrationId, startedAt])
+  @@map("integration_sync_logs")
+}
+
+/// Read-Model/Cache externer Daten (Events, Belegung, Schichten, Bewertungen).
+/// Externe Systeme bleiben führend; Daten laufen nach expires_at ab.
+model ExternalEntity {
+  id            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  integrationId String             @map("integration_id") @db.Uuid
+  entityType    ExternalEntityType @map("entity_type")
+  externalId    String             @map("external_id")
+  companyId     String?            @map("company_id") @db.Uuid
+  validFrom     DateTime?          @map("valid_from") @db.Timestamptz(6)
+  validTo       DateTime?          @map("valid_to") @db.Timestamptz(6)
+  payload       Json // minimiert: keine Gästenamen im MVP (ADR-016)
+  fetchedAt     DateTime           @default(now()) @map("fetched_at") @db.Timestamptz(6)
+  expiresAt     DateTime?          @map("expires_at") @db.Timestamptz(6)
+
+  integration Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  company     Company?    @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  @@unique([integrationId, entityType, externalId])
+  @@index([entityType, validFrom])
+  @@map("external_entities")
+}
+
+/// Zuordnung extern ↔ intern (z. B. Personalnummer ↔ users.id, Abteilung ↔ groups.id).
+model ExternalEntityMapping {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  integrationId String   @map("integration_id") @db.Uuid
+  externalType  String   @map("external_type")
+  externalId    String   @map("external_id")
+  internalType  String   @map("internal_type") // "user" | "employee_profile" | "group" | ...
+  internalId    String   @map("internal_id") @db.Uuid
+  lastSyncedAt  DateTime? @map("last_synced_at") @db.Timestamptz(6)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  integration Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@unique([integrationId, externalType, externalId])
+  @@unique([integrationId, internalType, internalId])
+  @@map("external_entity_mappings")
+}
+
+// =============================================================================
+// SYSTEM
+// =============================================================================
+
+/// QR-/NFC-Schnellzugriff (optional, Phase 2 laut §17). Nicht-erratbarer Slug;
+/// Aufruf erfordert Login + Leserecht auf das Ziel.
+model QrLink {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug          String   @unique
+  contentItemId String   @map("content_item_id") @db.Uuid
+  label         String
+  location      String? // z. B. "Spülküche, Gerät 3"
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+
+  @@map("qr_nfc_links")
+}
+
+/// Meldungen unangemessener Inhalte (v. a. Social). RAW-SQL: CHECK (num_nonnulls(content_item_id, comment_id) = 1).
+model ContentReport {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contentItemId String?      @map("content_item_id") @db.Uuid
+  commentId     String?      @map("comment_id") @db.Uuid
+  reporterId    String?      @map("reporter_id") @db.Uuid
+  reason        String
+  status        ReportStatus @default(OPEN)
+  resolvedById  String?      @map("resolved_by_id") @db.Uuid
+  resolvedAt    DateTime?    @map("resolved_at") @db.Timestamptz(6)
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  contentItem ContentItem? @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  comment     Comment?     @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  reporter    User?        @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: SetNull)
+  resolvedBy  User?        @relation("ReportResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@map("content_reports")
+}
+
+/// Open-API-Strategie (ADR-035): externe Systeme greifen über die dokumentierte
+/// REST-API (OpenAPI 3.1) mit OAuth2 Client Credentials zu. Nur Hash des Secrets,
+/// Rechte als eng begrenzte Scopes ("events:write", "users:read" ...), nie Inhalte sensibler Kategorien.
+model ApiClient {
+  id           String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String
+  companyId    String?         @map("company_id") @db.Uuid
+  clientId     String          @unique @map("client_id")
+  secretHash   String          @map("secret_hash")
+  scopes       String[]
+  status       ApiClientStatus @default(ACTIVE)
+  rateLimitPerMinute Int       @default(120) @map("rate_limit_per_minute")
+  ipAllowlist  String[]        @map("ip_allowlist")
+  lastUsedAt   DateTime?       @map("last_used_at") @db.Timestamptz(6)
+  expiresAt    DateTime?       @map("expires_at") @db.Timestamptz(6)
+  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company       Company?              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  subscriptions WebhookSubscription[]
+
+  @@map("api_clients")
+}
+
+/// Ausgehende Ereignisse an externe Systeme (z. B. "task.created", "checklist_run.completed").
+/// Nutzlast nur mit IDs + Minimaldaten; Empfänger holt Details mit eigenen Rechten über die API.
+model WebhookSubscription {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  apiClientId String   @map("api_client_id") @db.Uuid
+  eventTypes  String[] @map("event_types")
+  targetUrl   String   @map("target_url")
+  secretRef   String   @map("secret_ref") // HMAC-Signaturschlüssel im Secret-Manager
+  isActive    Boolean  @default(true) @map("is_active")
+  failureCount Int     @default(0) @map("failure_count")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  apiClient ApiClient @relation(fields: [apiClientId], references: [id], onDelete: Cascade)
+
+  @@index([apiClientId])
+  @@map("webhook_subscriptions")
+}
+
+model SystemSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("system_settings")
+}
+
+/// Append-only. RAW-SQL: App-DB-Rolle erhält nur INSERT/SELECT (kein UPDATE/DELETE);
+/// Löschung nur per Retention-Job unter separater Rolle. Keine Inhaltsdaten in metadata.
+model AuditLog {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  occurredAt DateTime  @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  actorType  ActorType @default(USER) @map("actor_type")
+  actorId    String?   @map("actor_id") @db.Uuid
+  companyId  String?   @map("company_id") @db.Uuid
+  action     String // z. B. "user.password_reset", "role.granted", "reminder.manual_sent"
+  entityType String    @map("entity_type")
+  entityId   String?   @map("entity_id") @db.Uuid
+  requestId  String?   @map("request_id")
+  metadata   Json?
+
+  actor   User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  @@index([occurredAt])
+  @@index([entityType, entityId])
+  @@index([actorId, occurredAt])
+  @@map("audit_logs")
+}

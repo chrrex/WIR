@@ -1,0 +1,23 @@
+{
+  "name": "wir",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WIR – Das Mitarbeiterportal (Schloss & Gut Liebenberg / DKB STIFTUNG)",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "setup": "npm run build -w @wir/db && npm run migrate -w @wir/db && npm run seed -w @wir/db",
+    "dev": "npm run build -w @wir/db && concurrently -n api,web -c blue,green \"npm run dev -w @wir/api\" \"npm run dev -w @wir/web\"",
+    "build": "npm run build -w @wir/db && npm run build -w @wir/api && npm run build -w @wir/web",
+    "test": "npm run test -w @wir/api",
+    "lint": "npm run lint -w @wir/web"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
