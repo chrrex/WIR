@@ -8,7 +8,7 @@ Stand: 10.10.2026 · Grundlage: `MASTER_SPEC.md` §12 (Phase 1) und §13 (Tests,
 |---|---|---|
 | Architektur, ER-Modell, Prisma-Schema | `docs/`, `packages/db/prisma/schema.prisma` (77 Modelle), Init-Migration + SQL-Constraints | fertig |
 | Authentication | Benutzername + Passwort; Erstzugang/Reset per Einmal-Code mit Pflicht-Passwortwechsel (ADR-011); Sessions; Sperre; Abmelden | fertig |
-| RBAC | Rechtekatalog (88 Rechte), 11 Rollen, Scopes global/Gesellschaft/Gruppe mit Vererbung, Default Deny | fertig |
+| RBAC | Rechtekatalog (81 Rechte), 11 Rollen, Scopes global/Gesellschaft/Gruppe mit Vererbung, Default Deny | fertig |
 | Benutzer/Gruppen/Gesellschaften | Freischalten aus Gastromatic-Import, Einmal-Code ausgeben, deaktivieren; Gesellschaftsbaum mit Auftritt und Modulen je Gesellschaft | Kern fertig – Pflege von Gruppen, Gesellschaften und Rollenvergabe per Oberfläche folgt (bis dahin per Seed/Datenbank) |
 | Dashboard-Grundstruktur | Startseite mit Bausteinen je Modul und Rolle; gruppenweite Sicht für die Stiftung | fertig (Inhalte ab Phase 2) |
 | CI/CD | GitHub Actions: Datenbank, Migration, Tests, Build, Typprüfung | CI fertig – Deployment folgt nach Anbieterentscheidung (ADR-022) |
