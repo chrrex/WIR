@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: wir
+          POSTGRES_PASSWORD: wir
+          POSTGRES_DB: wir
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U wir" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://wir:wir@localhost:5432/wir
+      APP_SECRET: ci-nur-fuer-tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Datenbank vorbereiten
+        run: npm run setup
+      - name: Tests (Rechte, Anmeldung, Verwaltung)
+        run: npm test
+      - name: Typprüfung und Build
+        run: npm run build && npm run lint

@@ -15,7 +15,8 @@
     "dev": "npm run build -w @wir/db && concurrently -n api,web -c blue,green \"npm run dev -w @wir/api\" \"npm run dev -w @wir/web\"",
     "build": "npm run build -w @wir/db && npm run build -w @wir/api && npm run build -w @wir/web",
     "test": "npm run test -w @wir/api",
-    "lint": "npm run lint -w @wir/web"
+    "lint": "npm run lint -w @wir/web",
+    "reset-demo": "npm run seed -w @wir/db"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"

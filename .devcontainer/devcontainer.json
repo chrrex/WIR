@@ -1,0 +1,21 @@
+{
+  "name": "WIR – Das Mitarbeiterportal",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "hostRequirements": { "cpus": 2, "memory": "8gb" },
+  "forwardPorts": [3000, 3001],
+  "portsAttributes": {
+    "3000": { "label": "WIR (Web-App)", "onAutoForward": "openBrowser" },
+    "3001": { "label": "WIR-API", "onAutoForward": "silent" }
+  },
+  "postCreateCommand": "npm ci && npm run setup",
+  "postAttachCommand": { "wir": "npm run dev" },
+  "customizations": {
+    "codespaces": { "openFiles": ["README.md"] },
+    "vscode": {
+      "extensions": ["Prisma.prisma", "dbaeumer.vscode-eslint"],
+      "settings": { "files.autoSave": "afterDelay" }
+    }
+  }
+}

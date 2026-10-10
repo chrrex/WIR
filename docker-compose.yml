@@ -1,0 +1,16 @@
+# Nur die Datenbank – für lokale Entwicklung mit Docker (ohne Codespaces).
+# Start: docker compose up -d
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: wir
+      POSTGRES_PASSWORD: wir
+      POSTGRES_DB: wir
+    volumes:
+      - wir-db:/var/lib/postgresql/data
+volumes:
+  wir-db:
