@@ -155,4 +155,21 @@ describe('Phase 3+4 (e2e)', () => {
     await (await as('sven.r')).post('/api/v1/contacts').send({ organizationName: 'Fischhandel Beispiel', type: 'SUPPLIER', phone: '0' }).expect(201);
     await (await as('tom.b.extern')).get('/api/v1/contacts').expect(403);
   });
+
+  test('Lesestatus für alle dienstlichen Einträge, Umfrage = Teilnahme, nie für Social (ADR-042)', async () => {
+    const lena = await as('lena.k');
+    const tobias = await as('tobias.k');
+    const doc = (await prisma.db.document.findFirstOrThrow({ where: { title: 'Urlaubsantrag' }, include: { versions: { orderBy: { versionNumber: 'desc' }, take: 1 } } }));
+    await tobias.get(`/api/v1/files/${doc.versions[0].fileObjectId}`).expect(200); // Öffnen zählt als gelesen
+    const st = (await lena.get(`/api/v1/content/${doc.id}/read-status?details=1`).expect(200)).body;
+    expect(st).toMatchObject({ enabled: true, visible: true });
+    expect(st.people.find((p: { name: string }) => p.name === 'Tobias K.').readOn).toBeTruthy();
+    expect(st.people.find((p: { name: string }) => p.name === 'Jana M.').readOn).toBeNull();
+    const survey = (await prisma.db.survey.findFirstOrThrow({ where: { title: { startsWith: 'Wie zufrieden' } } })).id;
+    const sv = (await lena.get(`/api/v1/content/${survey}/read-status?details=1`).expect(200)).body;
+    expect(sv.read).toBeGreaterThanOrEqual(6); // Teilnahmen, Antworten bleiben anonym
+    await (await as('jana.m')).get(`/api/v1/content/${doc.id}/read-status?details=1`).expect(200).expect((r) => expect(r.body.visible).toBe(false));
+    const social = (await prisma.db.post.findFirstOrThrow({ where: { kind: 'SOCIAL' } })).id;
+    expect((await lena.get(`/api/v1/content/${social}/read-status`).expect(200)).body.enabled).toBe(false);
+  });
 });

@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { ReadStatus } from '@/components/content/ReadStatus';
 import { api } from '@/lib/api';
 import { Comments } from '@/components/content/Comments';
 import { RichText } from '@/components/content/MentionText';
@@ -18,7 +19,6 @@ export default function Article() {
   const [plain, setPlain] = useState(false);
   const [old, setOld] = useState<{ n: number; text: string } | null>(null);
   const { busy, error: err, run } = useSubmit();
-  useEffect(() => { if (a) api(`/content/${id}/seen`, { method: 'POST' }).catch(() => null); }, [a, id]);
   if (!a) return <State error={error} loading back={['/wissen', 'Zum Wissen']} />;
   return (
     <div className="stack-lg narrow-col wide">
@@ -48,6 +48,7 @@ export default function Article() {
         </ol>
         {old && <div className="note info stack-s"><strong>Version {old.n} (veraltet)</strong><div className="prose"><RichText text={old.text} /></div><button className="btn sm" onClick={() => setOld(null)}>Schließen</button></div>}
       </section>
+      <ReadStatus contentId={a.id} />
       <section className="card stack"><h2 className="h-sub">Fragen & Hinweise</h2><Comments contentId={a.id} /></section>
     </div>
   );

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { ReadStatus } from '@/components/content/ReadStatus';
 import { api } from '@/lib/api';
 import { Back, ErrorNote, State, dayTime, upload, useLoad, useSubmit } from '@/components/work';
 import { RUN_STATUS } from '@/lib/labels';
@@ -62,6 +63,7 @@ export default function RunPage() {
       <ErrorNote error={err} />
       {!locked ? <button className="btn pri big" disabled={busy} onClick={() => run(() => api(`/checklists/runs/${id}/complete`, { method: 'POST' })).then((x) => x && api<Run>(`/checklists/runs/${id}`).then(setData))}>Checkliste abschließen</button>
         : <Link className="btn" href="/checklisten">Zur Übersicht</Link>}
+      <ReadStatus contentId={r.id} />
     </div>
   );
 }

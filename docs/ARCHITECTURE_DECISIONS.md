@@ -456,6 +456,16 @@ Phase 3 und 4 wurden zusammengelegt und bewusst schlank umgesetzt: **kein neues 
 9. **Team:** Verzeichnis der eigenen Gesellschaft(en) – Name, Tätigkeit, Bereich, Leitung. Keine privaten Daten.
 10. **Ausgeschaltete Module sperren jetzt auch die API** (nicht nur das Menü), z. B. Checklisten und Übergaben für die Stiftung → 403.
 
+## ADR-042 · Lesestatus für alle dienstlichen Einträge — ENTSCHIEDEN (10.10.2026)
+
+**Wunsch der Hoteldirektion:** Bei allen Einträgen sehen, wer gelesen hat und wer nicht.
+**Umsetzung:**
+- Gilt automatisch für News, Übergaben, Wissen, Dokumente, Aufgaben, Checklisten und Ideen. Bei Umfragen zählt die **Teilnahme** – Antworten bleiben anonym (ADR-013). Das Häkchen pro Beitrag beim Schreiben entfällt (`news.require_read` gestrichen).
+- **Nicht** für Social (privat, ADR-031) und Chat (1:1 hat ✓✓, Gruppen nicht).
+- Gelesen = Detailseite geöffnet; bei Dokumenten auch Öffnen der Datei. Gespeichert wird nur das Datum.
+- Sehen dürfen weiterhin nur Autor:in sowie Leitungen mit `read_status.view_summary`/`view_details`; erinnern mit `reminders.send_manual` (max. 2×).
+- **Der globale Schalter `feature.read_tracking` bleibt.** In der Demo ist er an. Für den Echtbetrieb gilt weiter ADR-012: personengenaue Leserlisten sind mitbestimmungspflichtig (§ 87 Abs. 1 Nr. 6 BetrVG) – Schalter erst nach unterschriebener Betriebsvereinbarung einschalten. (Keine Rechtsberatung.)
+
 ## Nächste Schritte
 
 1. Anbieterauswahl (ADR-022) bestätigen und Gastromatic-Prüfauftrag (ADR-021) stellen.

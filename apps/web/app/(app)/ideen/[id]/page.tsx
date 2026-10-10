@@ -2,6 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { ReadStatus } from '@/components/content/ReadStatus';
 import { api } from '@/lib/api';
 import { Comments } from '@/components/content/Comments';
 import { LikeButton } from '@/components/content/LikeButton';
@@ -40,6 +41,7 @@ export default function Idea() {
         <h2 className="h-sub">Kommentare</h2>
         <Comments contentId={i.id} />
       </article>
+      <ReadStatus contentId={i.id} />
     </div>
   );
 }

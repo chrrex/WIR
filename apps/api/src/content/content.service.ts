@@ -24,7 +24,6 @@ export interface CreateContentInput {
   companyId: string | null;
   authorId: string;
   importance?: 'NORMAL' | 'IMPORTANT';
-  readTrackingEnabled?: boolean;
   commentsEnabled?: boolean;
   requiresAcknowledgement?: boolean;
   reactionsEnabled?: boolean;
@@ -80,7 +79,6 @@ export class ContentService {
           status: 'PUBLISHED',
           publishedAt: new Date(),
           importance: input.importance ?? 'NORMAL',
-          readTrackingEnabled: input.readTrackingEnabled ?? false,
           commentsEnabled: input.commentsEnabled ?? true,
           reactionsEnabled: input.reactionsEnabled ?? true,
           requiresAcknowledgement: input.requiresAcknowledgement ?? false,
@@ -299,9 +297,7 @@ export class ContentService {
 
   async readStatus(ctx: PolicyContext, userId: string, id: string, details: boolean) {
     const item = await this.getVisible(userId, id);
-    if (!(await this.features.readTracking()) || !item.readTrackingEnabled) {
-      return { enabled: false as const };
-    }
+    if (!(await this.tracked(item))) return { enabled: false as const };
     const isAuthor = item.authorId === userId;
     const company = item.companyId ? await this.prisma.db.company.findUnique({ where: { id: item.companyId } }) : null;
     const allRecipients = company?.readListVisibility === 'ALL_RECIPIENTS';
@@ -312,8 +308,7 @@ export class ContentService {
       where: { contentItemId: id, removedAt: null, userId: { not: item.authorId ?? undefined } },
       include: { user: { select: { id: true, displayName: true, groupMemberships: { include: { group: { select: { name: true } } } } } } },
     });
-    const receipts = await db.readReceipt.findMany({ where: { contentItemId: id }, select: { userId: true, openedAt: true } });
-    const readMap = new Map(receipts.map((r) => [r.userId, r.openedAt]));
+    const readMap = await this.readMap(item);
     const read = recipients.filter((r) => readMap.has(r.userId)).length;
     const mayDetails = details && (isAuthor || allRecipients || can(ctx, 'read_status.view_details', { companyId: item.companyId }));
     return {
@@ -328,14 +323,27 @@ export class ContentService {
     };
   }
 
+  /** Lesestatus gilt für alle dienstlichen Inhalte, solange der Schalter an ist – nie für Social (ADR-031, ADR-042). */
+  private async tracked(item: { type: string; post: { kind: string } | null }) {
+    return (await this.features.readTracking()) && item.post?.kind !== 'SOCIAL';
+  }
+
+  /** Wer hat gelesen (Datum)? Bei Umfragen zählt die Teilnahme – Antworten bleiben anonym (ADR-013). */
+  private async readMap(item: { id: string; type: string }) {
+    const rows = item.type === 'SURVEY'
+      ? (await this.prisma.db.surveyParticipation.findMany({ where: { surveyId: item.id } })).map((p) => ({ userId: p.userId, on: p.submittedOn }))
+      : (await this.prisma.db.readReceipt.findMany({ where: { contentItemId: item.id }, select: { userId: true, openedAt: true } })).map((r) => ({ userId: r.userId, on: r.openedAt }));
+    return new Map(rows.map((r) => [r.userId, r.on]));
+  }
+
   async remind(ctx: PolicyContext, userId: string, actorName: string, id: string, linkPath: string) {
     const item = await this.getVisible(userId, id);
-    if (!(await this.features.readTracking()) || !item.readTrackingEnabled) throw new BadRequestException('Lesestatus ist für diesen Beitrag nicht aktiv.');
+    if (!(await this.tracked(item))) throw new BadRequestException('Lesestatus ist für diesen Beitrag nicht aktiv.');
     const allowed = item.authorId === userId ? can(ctx, 'reminders.send_manual') : can(ctx, 'reminders.send_manual', { companyId: item.companyId });
     if (!allowed) throw new ForbiddenException('Erinnern dürfen Autor:innen und Leitungen.');
     const db = this.prisma.db;
     const recipients = await db.contentRecipient.findMany({ where: { contentItemId: id, removedAt: null }, select: { userId: true } });
-    const read = new Set((await db.readReceipt.findMany({ where: { contentItemId: id }, select: { userId: true } })).map((r) => r.userId));
+    const read = await this.readMap(item);
     const open = recipients.map((r) => r.userId).filter((u) => !read.has(u) && u !== item.authorId);
     const sent: string[] = [];
     for (const u of open) {
@@ -346,7 +354,7 @@ export class ContentService {
     }
     await this.notifications.notify({
       recipientIds: sent, actorId: userId, eventType: 'reminder', importance: item.importance,
-      title: `Erinnerung: „${this.titleOf(item)}“`, body: `${actorName} bittet dich, den Beitrag zu lesen.`, linkPath, contentItemId: id,
+      title: `Erinnerung: „${this.titleOf(item)}“`, body: item.type === 'SURVEY' ? `${actorName} bittet dich, an der Umfrage teilzunehmen.` : `${actorName} bittet dich, den Beitrag zu lesen.`, linkPath, contentItemId: id,
     });
     await this.audit.log({ actorId: userId, companyId: item.companyId, action: 'reminder.manual_sent', entityType: 'content_item', entityId: id, metadata: { count: sent.length } });
     return { reminded: sent.length, skipped: open.length - sent.length };

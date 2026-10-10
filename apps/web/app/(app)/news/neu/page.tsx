@@ -7,7 +7,7 @@ import { api, ApiError } from '@/lib/api';
 import { ImagePicker, PickedImage } from '@/components/content/ImagePicker';
 import { Icon } from '@/components/Icon';
 
-interface Options { audiences: Array<{ key: string; label: string; wide: boolean }>; canImportant: boolean; canReadTracking: boolean; readTrackingFeature: boolean; canPin: boolean }
+interface Options { audiences: Array<{ key: string; label: string; wide: boolean }>; canImportant: boolean; canPin: boolean }
 
 export default function NewNews() {
   const router = useRouter();
@@ -16,7 +16,6 @@ export default function NewNews() {
   const [title, setTitle] = useState('');
   const [text, setText] = useState('');
   const [important, setImportant] = useState(false);
-  const [tracking, setTracking] = useState(false);
   const [pinned, setPinned] = useState(false);
   const [images, setImages] = useState<PickedImage[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +26,7 @@ export default function NewNews() {
     e.preventDefault();
     setBusy(true); setError(null);
     try {
-      const r = await api<{ id: string }>('/news', { method: 'POST', json: { title, text, targets, important, readTracking: tracking, pinned, images: images.map((i) => ({ fileId: i.fileId, altText: i.altText || null })) } });
+      const r = await api<{ id: string }>('/news', { method: 'POST', json: { title, text, targets, important, pinned, images: images.map((i) => ({ fileId: i.fileId, altText: i.altText || null })) } });
       router.replace(`/news/${r.id}`);
     } catch (err) { setError(err instanceof ApiError ? err.message : 'Veröffentlichen hat nicht geklappt.'); setBusy(false); }
   }
@@ -58,12 +57,11 @@ export default function NewNews() {
         )}
         {o && !o.audiences.some((a) => a.wide) && <p className="small muted">Mitteilungen an das ganze Haus schreiben Abteilungsleitungen und Direktion.</p>}
       </section>
-      {o && (o.canImportant || o.canPin || o.readTrackingFeature) && (
+      {o && (o.canImportant || o.canPin) && (
         <section className="card stack">
           <h2>Optionen</h2>
           {o.canImportant && <label className="check"><input type="checkbox" checked={important} onChange={(e) => setImportant(e.target.checked)} />Als <strong>wichtig</strong> markieren – alle Empfänger:innen werden benachrichtigt</label>}
           {o.canPin && <label className="check"><input type="checkbox" checked={pinned} onChange={(e) => setPinned(e.target.checked)} />Oben anheften</label>}
-          {o.canReadTracking && <label className="check"><input type="checkbox" checked={tracking} onChange={(e) => setTracking(e.target.checked)} />Lesestatus anzeigen (wer hat gelesen, Erinnerungen)</label>}
         </section>
       )}
       {error && <div className="note warn" role="alert">{error}</div>}

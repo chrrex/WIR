@@ -266,7 +266,7 @@ async function main() {
   // ---- Systemeinstellungen --------------------------------------------------
   await prisma.systemSetting.createMany({
     data: [
-      { key: 'feature.read_tracking', value: false }, // erst nach Betriebsvereinbarung (ADR-012)
+      { key: 'feature.read_tracking', value: true }, // Demo: an. Produktiv erst nach Betriebsvereinbarung (ADR-012)
       { key: 'auth.one_time_code_hours', value: 24 },
       { key: 'auth.max_failed_logins', value: 5 },
     ],

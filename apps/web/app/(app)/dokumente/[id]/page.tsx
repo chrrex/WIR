@@ -2,6 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { ReadStatus } from '@/components/content/ReadStatus';
 import { api } from '@/lib/api';
 import { Back, ErrorNote, State, dayTime, size, upload, useLoad, useSubmit } from '@/components/work';
 
@@ -44,6 +45,7 @@ export default function DocumentDetail() {
           </form>
         )}
       </section>
+      <ReadStatus contentId={d.id} />
     </div>
   );
 }

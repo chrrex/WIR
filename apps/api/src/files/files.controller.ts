@@ -94,6 +94,9 @@ export class FilesController {
       allowed = (await db.contentItem.count({ where: { AND: [visible, { OR: [{ document: { versions: { some: { fileObjectId: id } } } }, { checklistRun: { items: { some: { photoFileId: id } } } }] }] } })) > 0;
     }
     if (!allowed) throw new NotFoundException();
+    // Dokument geöffnet = gelesen (Lesestatus, nur Datum)
+    const docVersion = await db.documentVersion.findFirst({ where: { fileObjectId: id }, select: { documentId: true } });
+    if (docVersion) await this.content.markSeen(me.id, docVersion.documentId).catch(() => null);
     const data = await readFile(path.join(STORAGE_DIR, fo.storageKey));
     res.setHeader('Content-Type', fo.mimeType);
     res.setHeader('Cache-Control', 'private, max-age=86400');

@@ -41,6 +41,8 @@ Passwort für alle oben: **`Wir-Demo-2026`**
 - Oben im Suchfeld z. B. `Defibrillator` – oder unten auf der Suchseite **„Frag das WIR“**. Als `jana.m` findest du die Küchen-SOP nicht, als `sven.r` schon.
 - Als `jana.m` die anonyme Umfrage beantworten; als `lena.k` die Ergebnisse ansehen.
 
+**Lesestatus ausprobieren:** Als `lena.k` die Umfrage oder ein Dokument öffnen – unten steht, wer gelesen bzw. teilgenommen hat und wer noch nicht. In der Demo ist der Lesestatus eingeschaltet; im Echtbetrieb erst nach der Betriebsvereinbarung (ADR-042).
+
 **Alles zurücksetzen:** im Terminal des Codespace `npm run reset-demo`.
 
 ---
