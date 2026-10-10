@@ -17,3 +17,4 @@ export function createPrismaClient(connectionString = process.env.DATABASE_URL):
 
 export * from './rbac-catalog';
 export * from './codes';
+export * from './search';

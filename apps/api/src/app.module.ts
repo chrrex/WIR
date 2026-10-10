@@ -8,6 +8,7 @@ import { MeModule } from './me/me.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { AdminModule } from './admin/admin.module';
 import { ContentModule } from './content/content.module';
+import { WorkModule } from './work/work.module';
 import { Public } from './auth/decorators';
 
 @Controller('health')
@@ -20,7 +21,7 @@ class HealthController {
 }
 
 @Module({
-  imports: [ThrottlerModule.forRoot([{ ttl: 60_000, limit: 300 }]), CommonModule, AuthModule, MeModule, DashboardModule, AdminModule, ContentModule],
+  imports: [ThrottlerModule.forRoot([{ ttl: 60_000, limit: 300 }]), CommonModule, AuthModule, MeModule, DashboardModule, AdminModule, ContentModule, WorkModule],
   controllers: [HealthController],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

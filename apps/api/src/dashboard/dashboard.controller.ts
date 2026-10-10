@@ -43,7 +43,7 @@ export class DashboardController {
     const isFoundation = companies.some((c) => ctx.companyIds.includes(c.id) && c.kind === 'FOUNDATION');
 
     const widgets: Widget[] = WIDGETS.filter((w) => !w.module || modules.includes(w.module)).map(({ readyInPhase, ...w }) => ({
-      ...w, state: readyInPhase <= 2 ? 'ready' : 'coming', phase: readyInPhase,
+      ...w, state: readyInPhase <= 4 ? 'ready' : 'coming', phase: readyInPhase,
     }));
     const db = this.prisma.db;
     const visible = this.content.visibleWhere(me.id);
@@ -64,6 +64,20 @@ export class DashboardController {
       if (w.key === 'social') {
         const rows = await db.contentItem.findMany({ where: { type: 'POST', post: { kind: 'SOCIAL' }, ...visible }, include: { post: true, author: { select: { displayName: true } } }, orderBy: { publishedAt: 'desc' }, take: 2 });
         w.items = rows.map((r) => ({ id: r.id, title: r.post!.title, meta: r.author?.displayName ?? '', unread: false, href: `/social/${r.id}` }));
+      }
+      if (w.key === 'tasks') {
+        const where = { type: 'TASK' as const, ...visible, task: { status: { notIn: ['DONE' as const, 'CANCELLED' as const] }, assignees: { some: { OR: [{ userId: me.id }, { groupId: { in: ctx.groupIds } }] } } } };
+        const rows = await db.contentItem.findMany({ where, include: { task: true }, orderBy: { task: { dueAt: { sort: 'asc', nulls: 'last' } } }, take: 4 });
+        w.items = rows.map((r) => ({ id: r.id, title: r.task!.title, meta: r.task!.dueAt ? `fällig ${fmt(r.task!.dueAt)}` : 'ohne Termin', unread: false, important: r.task!.priority === 'URGENT', href: `/aufgaben/${r.id}` }));
+        w.count = await db.contentItem.count({ where });
+      }
+      if (w.key === 'checklists') {
+        const rows = await db.contentItem.findMany({ where: { type: 'CHECKLIST_RUN', ...visible, checklistRun: { status: { in: ['PLANNED', 'IN_PROGRESS'] } } }, include: { checklistRun: true }, orderBy: { publishedAt: 'desc' }, take: 4 });
+        w.items = rows.map((r) => ({ id: r.id, title: r.checklistRun!.title, meta: 'offen', unread: true, href: `/checklisten/${r.id}` }));
+      }
+      if (w.key === 'surveys') {
+        const rows = await db.contentItem.findMany({ where: { type: 'SURVEY', ...visible, authorId: { not: me.id }, survey: { participations: { none: { userId: me.id } }, OR: [{ closesAt: null }, { closesAt: { gt: new Date() } }] } }, include: { survey: true }, orderBy: { publishedAt: 'desc' }, take: 2 });
+        w.items = rows.map((r) => ({ id: r.id, title: r.survey!.title, meta: r.survey!.isAnonymous ? 'anonym' : '', unread: true, href: `/umfragen/${r.id}` }));
       }
     }
 

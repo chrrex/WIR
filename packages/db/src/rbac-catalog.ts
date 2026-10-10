@@ -44,7 +44,7 @@ const EMPLOYEE: PermissionKey[] = [
   'dashboard.view', 'news.read', 'news.create', 'news.publish', 'social.read', 'social.post',
   'handovers.read', 'handovers.create', 'comments.create', 'reactions.create', 'chat.use',
   'knowledge.read', 'documents.read', 'documents.download', 'search.use', 'ai.use', 'tasks.read',
-  'checklists.execute', 'surveys.respond', 'ideas.read', 'ideas.create', 'contacts.read', 'employees.directory',
+  'checklists.execute', 'surveys.respond', 'ideas.read', 'ideas.create', 'contacts.read', 'contacts.view_emergency', 'employees.directory',
 ];
 
 const TEAM_LEAD: PermissionKey[] = [
@@ -70,8 +70,8 @@ export const ROLES: RoleDefinition[] = [
   { key: 'team_lead', name: 'Teamleitung', description: 'Leitung einer Gruppe: Lesestatus, Erinnerungen, Aufgaben.', permissions: TEAM_LEAD },
   {
     key: 'department_head', name: 'Abteilungsleitung', description: 'Wie Teamleitung für die Gesellschaft, zusätzlich Wissen und Vorlagen.',
-    permissions: [...TEAM_LEAD, 'knowledge.publish', 'knowledge.create', 'knowledge.update', 'documents.create', 'documents.update',
-      'documents.deactivate', 'checklists.manage_templates', 'checklists.view_reports', 'lifecycle.start', 'ideas.manage', 'news.pin', 'news.publish_wide'],
+    permissions: [...TEAM_LEAD, 'knowledge.publish', 'knowledge.create', 'knowledge.update', 'knowledge.require_acknowledgement', 'documents.create', 'documents.update',
+      'documents.deactivate', 'checklists.manage_templates', 'checklists.view_reports', 'lifecycle.start', 'ideas.manage', 'news.pin', 'news.publish_wide', 'contacts.manage'],
   },
   {
     key: 'editor_knowledge', name: 'Redaktion Wissen', description: 'Pflegt Wissen & SOPs.',

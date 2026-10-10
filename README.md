@@ -2,7 +2,7 @@
 
 Das interne Portal für Kommunikation, Wissen und Zusammenarbeit von **Schloss & Gut Liebenberg** und – in Ausbaustufe 2 – der ganzen Gruppe der **DKB STIFTUNG**.
 
-> **Stand: Phase 2** – Anmeldung, Rollen und Rechte, Auftritt je Gesellschaft, Verwaltung (Phase 1) sowie **News, Social, Übergaben, Kommentare, Erwähnungen, Benachrichtigungen und Chat** (Phase 2). Wissen & SOPs, Dokumente und Suche folgen in Phase 3.
+> **Stand: Phase 3+4** – Anmeldung, Rollen, Auftritt je Gesellschaft, Verwaltung (Phase 1) · News, Social, Übergaben, Chat (Phase 2) · **Wissen & SOPs, Dokumente, Suche und KI-Assistent, Aufgaben, Checklisten, Umfragen, Ideen, Kontakte, Team** (Phase 3+4). Als Nächstes: Anbindungen (Gastromatic, Flexkeeping, Eventtool).
 > Alle Personen und Daten im Projekt sind **erfunden**. Bitte keine echten Mitarbeiterdaten eintragen, solange das System nicht produktiv betrieben wird.
 
 ---
@@ -26,7 +26,7 @@ Du brauchst nichts zu installieren – nur einen Browser und dein GitHub-Konto.
 | `lena.k` | Personal & IT (SGL) | **Verwaltung:** Freischalten aus Gastromatic, Einmal-Codes, Protokoll |
 | `nora.s` | Kommunikation · DKB STIFTUNG | Auftritt der DKB STIFTUNG, gruppenweite Sicht ohne Hausmodule |
 | `tom.b.extern` | Externer Dienstleister | befristeter Zugang, ohne KI und Mitarbeiterverzeichnis |
-| `sven.r` | Küchenleitung | darf an das ganze Haus schreiben und „wichtig“ markieren |
+| `sven.r` | Küchenleitung | darf ans ganze Haus schreiben, SOPs pflegen, Checklisten-Vorlagen und Kontakte anlegen, Ideen bewerten |
 | `tobias.k`, `selin.a`, `piotr.n` … | Kolleg:innen aus Service und Rezeption | zum Ausprobieren von Chat, Erwähnungen und Übergaben |
 
 Passwort für alle oben: **`Wir-Demo-2026`**
@@ -34,6 +34,12 @@ Passwort für alle oben: **`Wir-Demo-2026`**
 **Erstzugang ausprobieren:** Auf der Anmeldeseite „Ich habe einen Einmal-Code“ wählen, Benutzername `paula.s`, Code **`482 913`** – danach vergibst du ein eigenes Passwort.
 
 **Freischaltung ausprobieren:** Als `lena.k` anmelden → **Verwaltung** → „Neu aus Gastromatic“ → **Freischalten**. Der angezeigte Code funktioniert sofort für die freigeschaltete Person.
+
+**Phase 3+4 ausprobieren:**
+- Als `sven.r` → **Checklisten** → „HACCP Kühlräume morgens“ starten und bei Kühlraum 1 z. B. `7` eintragen: Abweichung, Maßnahme nötig.
+- Als `tobias.k` → **Wissen** → „Kühlkette“: „Gelesen und verstanden“. Als `sven.r` eine neue Version schreiben – die Bestätigung wird zurückgesetzt.
+- Oben im Suchfeld z. B. `Defibrillator` – oder unten auf der Suchseite **„Frag das WIR“**. Als `jana.m` findest du die Küchen-SOP nicht, als `sven.r` schon.
+- Als `jana.m` die anonyme Umfrage beantworten; als `lena.k` die Ergebnisse ansehen.
 
 **Alles zurücksetzen:** im Terminal des Codespace `npm run reset-demo`.
 
@@ -84,5 +90,5 @@ npm run dev                                # → http://localhost:3000
 - `docs/ARCHITECTURE_DECISIONS.md` – Entscheidungen und offene Punkte (ADR)
 - `docs/RBAC.md` – Rollen und Rechte
 - `docs/ER_MODEL.md` – Datenmodell
-- `docs/STATUS_PHASE1.md`, `docs/STATUS_PHASE2.md` – Statusberichte (Tests, Sicherheit, Barrierefreiheit)
+- `docs/STATUS_PHASE1.md`, `docs/STATUS_PHASE2.md`, `docs/STATUS_PHASE3_4.md` – Statusberichte (Tests, Sicherheit, Barrierefreiheit)
 - `docs/MASTER_SPEC.md` – fachliche Spezifikation

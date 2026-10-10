@@ -4,6 +4,15 @@ import { config } from '../common/config';
 import { PolicyService } from '../policy/policy.service';
 import { can } from '../policy/engine';
 import { SessionService } from './session.service';
+import { PrismaService } from '../common/prisma.service';
+import { enabledModules } from '../me/branding';
+import type { AppModule } from '@wir/db';
+
+/** Rechte-Präfix → Modul: ausgeschaltete Module sperrt auch die API, nicht nur das Menü. */
+const MODULE_OF: Record<string, AppModule> = {
+  knowledge: 'KNOWLEDGE', documents: 'DOCUMENTS', tasks: 'TASKS', checklists: 'CHECKLISTS', surveys: 'SURVEYS',
+  ideas: 'IDEAS', contacts: 'CONTACTS', handovers: 'HANDOVERS', employees: 'TEAM',
+};
 import { ALLOW_PENDING_PASSWORD, IS_PUBLIC, REQUIRED_PERMISSION, SessionUser } from './decorators';
 
 /**
@@ -12,7 +21,7 @@ import { ALLOW_PENDING_PASSWORD, IS_PUBLIC, REQUIRED_PERMISSION, SessionUser } f
  */
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector, private readonly sessions: SessionService, private readonly policy: PolicyService) {}
+  constructor(private readonly reflector: Reflector, private readonly sessions: SessionService, private readonly policy: PolicyService, private readonly prisma: PrismaService) {}
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const targets = [ctx.getHandler(), ctx.getClass()];
@@ -41,6 +50,11 @@ export class AuthGuard implements CanActivate {
       const pctx = await this.policy.loadContext(u.id);
       req.policy = pctx;
       if (!can(pctx, permission)) throw new ForbiddenException('Dafür fehlt dir die Berechtigung.');
+      const mod = MODULE_OF[permission.split('.')[0]];
+      if (mod) {
+        const companies = await this.prisma.db.company.findMany({ select: { id: true, disabledModules: true } });
+        if (!enabledModules(pctx.companyIds, companies).includes(mod)) throw new ForbiddenException('Dieser Bereich ist für deine Gesellschaft nicht freigeschaltet.');
+      }
     }
     return true;
   }

@@ -27,4 +27,17 @@ export class PeopleController {
     });
     return users.map((u) => ({ id: u.id, name: u.displayName, job: u.employeeProfile?.jobTitle ?? (u.userType === 'EXTERNAL' ? 'extern' : null), groups: u.groupMemberships.map((m) => m.group.name) }));
   }
+
+  /** Team-Verzeichnis: Kolleg:innen der eigenen Gesellschaften, nach Bereich (nur dienstliche Angaben). */
+  @RequirePermission('employees.directory')
+  @Get('directory')
+  async directory(@CurrentUser() me: SessionUser) {
+    const ctx = await this.policy.loadContext(me.id);
+    const users = await this.prisma.db.user.findMany({
+      where: { status: 'ACTIVE', userType: 'EMPLOYEE', employeeProfile: { companyAssignments: { some: { companyId: { in: ctx.companyIds } } } } },
+      include: { employeeProfile: { select: { jobTitle: true } }, groupMemberships: { include: { group: { select: { name: true } } } } },
+      orderBy: { displayName: 'asc' }, take: 1000,
+    });
+    return users.map((u) => ({ id: u.id, name: u.displayName, job: u.employeeProfile?.jobTitle ?? null, groups: u.groupMemberships.map((m) => m.group.name), lead: u.groupMemberships.some((m) => m.isLead) }));
+  }
 }

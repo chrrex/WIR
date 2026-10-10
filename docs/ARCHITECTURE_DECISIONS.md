@@ -441,6 +441,21 @@ Die untere Leiste der App ist je Person konfigurierbar (bis zu vier Bereiche plu
 8. **Bilder:** Jedes hochgeladene Foto wird serverseitig neu berechnet (WebP, max. 2000 px) – dadurch entfallen Ortsdaten und andere Metadaten. Abruf nur, wenn der zugehörige Inhalt bzw. Chat sichtbar ist. Speicher in Phase 2: lokales Verzeichnis (`STORAGE_DIR`); vor Produktivbetrieb EU-Object-Storage und Virenscan.
 9. **Benachrichtigungen** in Phase 2 nur in der App (Glocke, Zähler). Push und E-Mail mit persönlichen Zeitfenstern (ADR-014) folgen in Phase 6.
 
+## ADR-041 · Umsetzung Phase 3+4 (Wissen & Zusammenarbeit) — ENTSCHIEDEN (10.10.2026)
+
+Phase 3 und 4 wurden zusammengelegt und bewusst schlank umgesetzt: **kein neues Datenmodell, keine Migration** – alle Bereiche nutzen das vorhandene Content-Gerüst (Empfänger:innen, Sichtbarkeit, Kommentare, Likes, Benachrichtigungen).
+
+1. **Wissen:** jede Änderung ist eine neue Version, alte bleiben lesbar. „Gelesen und verstanden“ gilt je Version (nur Datum gespeichert, ADR-012); verlangen dürfen es Abteilungsleitung und Redaktion Wissen. Zahlen „x von y bestätigt“ sehen nur Berechtigte zum Bearbeiten, ohne Namen. Optional „Einfache Sprache“ als zweiter Text.
+2. **Dokumente:** PDF, Word, Excel, PowerPoint bis 20 MB, Typ per Dateikennung geprüft, unverändert gespeichert, Versionen. Kategorien mit `is_sensitive` (z. B. Personal) werden **nie** indexiert – also nie in Suche oder KI.
+3. **Suche & KI = ein Retrieval-Weg:** Volltext (Postgres, deutsch) über Wissen, Dokumente und News; Treffer nur aus Inhalten, bei denen die Person Empfänger:in ist. Der KI-Assistent bekommt ausschließlich diese Treffer als Quellen, antwortet mit Quellenangaben, Fragen werden nicht gespeichert. Ohne konfigurierten Anbieter (`AI_BASE_URL`, `AI_MODEL`, `AI_API_KEY` – OpenAI-kompatible Schnittstelle) zeigt er nur die passenden Fundstellen. **Anbieterwahl bleibt offen** (STACKIT vs. Bedrock, Test mit 30 echten SOP-Fragen). Social, Chat und Übergaben sind bewusst nicht durchsuchbar.
+4. **Aufgaben:** an sich selbst (alle mit `tasks.create`), an Personen und Teams nur mit `tasks.assign` im passenden Geltungsbereich. Ändern dürfen Zugewiesene und Ersteller:in; abbrechen nur die Ersteller:in. „Erledigt“ benachrichtigt die Ersteller:in.
+5. **Checklisten:** Vorlage → Lauf mit Momentaufnahme der Punkte. Temperatur/Zahl gegen Grenzwerte; jede Abweichung braucht eine eingetragene Maßnahme, sonst kein Abschluss. Abweichungen gehen als „wichtig“ an die Teamleitung. Wiederkehrende Läufe (RRULE), Freigabe durch Leitung und Offline-Abhaken folgen mit dem Job-System bzw. Phase 6.
+6. **Umfragen (ADR-013):** Teilnahme und Antwort getrennt; anonym = keine Personen-ID (DB-Trigger). Ergebnisse erst ab 5 Antworten, Freitexte in zufälliger Reihenfolge, Datum ohne Uhrzeit. Zielgruppen nach denselben Regeln wie News.
+7. **Ideen:** sichtbar fürs ganze Haus, Unterstützen = Like, Status mit Verlauf nur durch `ideas.manage`; Einreicher:in wird benachrichtigt.
+8. **Kontakte:** nur externe Firmen/Notdienste (ADR-024), Notdienstnummer als großer Anruf-Button. Pflege mit `contacts.manage` (neu bei Abteilungsleitung); `contacts.view_emergency` neu für alle Mitarbeitenden.
+9. **Team:** Verzeichnis der eigenen Gesellschaft(en) – Name, Tätigkeit, Bereich, Leitung. Keine privaten Daten.
+10. **Ausgeschaltete Module sperren jetzt auch die API** (nicht nur das Menü), z. B. Checklisten und Übergaben für die Stiftung → 403.
+
 ## Nächste Schritte
 
 1. Anbieterauswahl (ADR-022) bestätigen und Gastromatic-Prüfauftrag (ADR-021) stellen.

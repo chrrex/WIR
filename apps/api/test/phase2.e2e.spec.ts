@@ -168,8 +168,8 @@ describe('Phase 2 (e2e)', () => {
       await (await as('tobias.k')).get(`/api/v1/handovers/${res.body.id}`).expect(200);
       await (await as('sven.r')).get(`/api/v1/handovers/${res.body.id}`).expect(404);
       await jana.post('/api/v1/handovers').send({ groupId: await groupId('Küche'), shiftLabel: 'Früh', subject: 'xx test', text: 'x' }).expect(400);
-      // Stiftung: Modul ausgeblendet (ADR-039); serverseitig gibt es für sie schlicht keine Übergaben
-      expect((await (await as('nora.s')).get('/api/v1/handovers').expect(200)).body).toEqual([]);
+      // Stiftung: Modul ausgeschaltet (ADR-039) – seit Phase 3+4 sperrt das auch die API
+      await (await as('nora.s')).get('/api/v1/handovers').expect(403);
     });
   });
 

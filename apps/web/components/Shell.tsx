@@ -68,11 +68,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <Logo branding={me.branding} variant="head" />
             <Wordmark compact />
           </div>
-          <div className="search" role="search">
+          <form className="search" role="search" onSubmit={(e) => { e.preventDefault(); const q = new FormData(e.currentTarget).get('q'); router.push(`/suche?q=${encodeURIComponent(String(q ?? ''))}`); }}>
             <Icon name="search" />
             <label htmlFor="q" className="sr">Suchen</label>
-            <input id="q" placeholder="Suche und KI-Assistent kommen in Phase 3" disabled />
-          </div>
+            <input id="q" name="q" type="search" placeholder="Suchen oder das WIR fragen …" />
+          </form>
           <Bell />
           <Link className="avatar" href="/einstellungen" aria-label={`Einstellungen von ${me.user.displayName}`}>{initials}</Link>
           <button className="iconbtn" onClick={logout} aria-label="Abmelden" title="Abmelden"><Icon name="logout" /></button>

@@ -11,7 +11,8 @@ const ReportBody = z.object({ reason: z.string().min(3).max(500) });
 
 /** Pfad in der App für einen Inhalt (für Benachrichtigungen). */
 export function linkFor(item: { id: string; type: string; post?: { kind: string } | null }) {
-  if (item.type === 'HANDOVER') return `/uebergaben/${item.id}`;
+  const paths: Record<string, string> = { HANDOVER: 'uebergaben', KNOWLEDGE_ARTICLE: 'wissen', DOCUMENT: 'dokumente', SURVEY: 'umfragen', TASK: 'aufgaben', CHECKLIST_RUN: 'checklisten', IDEA: 'ideen' };
+  if (paths[item.type]) return `/${paths[item.type]}/${item.id}`;
   return item.post?.kind === 'SOCIAL' ? `/social/${item.id}` : `/news/${item.id}`;
 }
 

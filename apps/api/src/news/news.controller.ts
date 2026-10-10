@@ -1,3 +1,4 @@
+import { indexContent } from '@wir/db';
 import { BadRequestException, Body, Controller, Delete, ForbiddenException, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { z } from 'zod';
 import { ZodPipe } from '../common/zod.pipe';
@@ -104,6 +105,7 @@ export class NewsController {
       });
     }
     await this.audit.log({ actorId: me.id, companyId, action: 'news.published', entityType: 'content_item', entityId: item.id, metadata: { recipients: recipientIds.length, important: body.important } });
+    await indexContent(this.prisma.db, item.id, 1, body.title, body.text);
     return { id: item.id, recipients: recipientIds.length };
   }
 
