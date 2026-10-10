@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '@/lib/api';
 import { useMe } from '@/lib/me';
@@ -10,7 +11,7 @@ interface AdminUser {
   personnelNumber: string | null; jobTitle: string | null; company: string | null; groups: string[];
   lastLoginAt: string | null; validUntil: string | null;
 }
-interface Issued { code: string; expiresAt: string; username: string; displayName: string }
+interface Issued { code: string; expiresAt: string; username: string; displayName: string; userId?: string }
 interface Report { id: string; kind: string; reason: string; createdAt: string; link: string | null; title: string; excerpt: string; author: string }
 interface AuditRow { id: string; at: string; actor: string; action: string; target: string | null }
 
@@ -47,7 +48,7 @@ export default function AdminPage() {
     setError(null);
     try {
       const res = await api<Issued | { ok: true }>(path, { method: 'POST' });
-      if ('code' in res) setIssued(res);
+      if ('code' in res) setIssued({ ...res, userId: u.id });
       setConfirm(null);
       await load();
     } catch (e) { setError(e instanceof ApiError ? e.message : `Das hat bei ${u.displayName} nicht geklappt.`); }
@@ -76,7 +77,10 @@ export default function AdminPage() {
           <div className="eyebrow">Einmal-Code für {issued.displayName} ({issued.username})</div>
           <div className="bigcode">{issued.code}</div>
           <p className="muted small">Gültig bis {new Date(issued.expiresAt).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })} · bitte persönlich übergeben. Der Code wird nur jetzt angezeigt und nirgends im Klartext gespeichert.</p>
-          <button className="btn" onClick={() => setIssued(null)}>Erledigt</button>
+          <div className="row wrap">
+            <button className="btn" onClick={() => setIssued(null)}>Erledigt</button>
+            {can('lifecycle.start') && issued.userId && <Link className="btn pri" href={`/einarbeitung/neu?person=${issued.userId}`}>Einarbeitung starten</Link>}
+          </div>
         </section>
       )}
 

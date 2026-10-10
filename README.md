@@ -43,6 +43,12 @@ Passwort für alle oben: **`Wir-Demo-2026`**
 
 **Lesestatus ausprobieren:** Als `lena.k` die Umfrage oder ein Dokument öffnen – unten steht, wer gelesen bzw. teilgenommen hat und wer noch nicht. In der Demo ist der Lesestatus eingeschaltet; im Echtbetrieb erst nach der Betriebsvereinbarung (ADR-042).
 
+**Neue Funktionen ausprobieren:**
+- **Push:** Einstellungen → „Benachrichtigungen aufs Handy“ einschalten, Ruhezeit festlegen. (Auf dem iPhone erst „Teilen → Zum Home-Bildschirm“.)
+- **Einarbeitung:** Als `lena.k` → Verwaltung → jemanden freischalten → „Einarbeitung starten“ – oder Menü **Einarbeitung** → „Plan starten“.
+- **Freigabe:** Als `tobias.k` die Checkliste „Bankett Aufbau Schlosssaal“ abschließen, als `maren.h` freigeben oder zurückweisen.
+- **Automatisch:** „HACCP Kühlräume morgens“ startet täglich um 6:00 von selbst; nach 4 Stunden ohne Abschluss erfährt es die Küchenleitung.
+
 **Alles zurücksetzen:** im Terminal des Codespace `npm run reset-demo`.
 
 ---

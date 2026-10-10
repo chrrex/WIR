@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
+import { PushService } from './push.service';
 
 export interface NotifyInput {
   recipientIds: string[];
@@ -14,13 +15,10 @@ export interface NotifyInput {
   dedupeKey?: string;
 }
 
-/**
- * In-App-Benachrichtigungen. Push und E-Mail (mit persönlichen Zeitfenstern, ADR-014)
- * folgen in Phase 6 über notification_deliveries – die App zeigt immer sofort alles.
- */
+/** In-App-Benachrichtigung plus Push aufs Handy (außerhalb der Ruhezeit, ADR-043). */
 @Injectable()
 export class NotificationService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly push: PushService) {}
 
   async notify(n: NotifyInput) {
     const ids = [...new Set(n.recipientIds)].filter((id) => id && id !== n.actorId);
@@ -39,6 +37,11 @@ export class NotificationService {
       })),
       skipDuplicates: true,
     });
+    // Push nur für neu angelegte (nicht doppelte) Hinweise; Fehler blockieren nie den Ablauf
+    if (res.count) {
+      const fresh = n.dedupeKey ? (await this.prisma.db.notification.findMany({ where: { recipientId: { in: ids }, dedupeKey: n.dedupeKey, createdAt: { gte: new Date(Date.now() - 60_000) } }, select: { recipientId: true } })).map((r) => r.recipientId) : ids;
+      void this.push.send(fresh, { title: n.title, body: n.body, url: n.linkPath }).catch(() => null);
+    }
     return res.count;
   }
 }

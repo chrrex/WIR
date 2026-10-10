@@ -22,7 +22,7 @@ async function main() {
     TRUNCATE audit_logs, sessions, credential_resets, user_roles, user_groups, employee_company_assignments,
       employee_profiles, user_settings, dashboard_preferences, users, role_permissions, permissions, roles,
       groups, company_brandings, companies, system_settings, knowledge_categories, document_categories,
-      contact_categories, idea_categories, file_objects CASCADE`);
+      contact_categories, idea_categories, file_objects, lifecycle_templates CASCADE`);
 
   // ---- Rechte & Rollen ------------------------------------------------------
   for (const [module, keys] of Object.entries(PERMISSIONS)) {

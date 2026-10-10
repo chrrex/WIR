@@ -1,10 +1,33 @@
-import { Controller, Get, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
+import { z } from 'zod';
+import { ZodPipe } from '../common/zod.pipe';
+import { PushService } from './push.service';
 import { PrismaService } from '../common/prisma.service';
 import { CurrentUser, SessionUser } from '../auth/decorators';
 
+const Sub = z.object({ endpoint: z.url().max(1000), keys: z.object({ p256dh: z.string().max(200), auth: z.string().max(100) }) });
+
 @Controller('notifications')
 export class NotificationsController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly push: PushService) {}
+
+  /** Push aufs Handy: öffentlicher Schlüssel, Gerät an- und abmelden (ADR-043). */
+  @Get('push/key')
+  key() { return { publicKey: this.push.publicKey }; }
+
+  @Post('push/subscriptions')
+  @HttpCode(200)
+  async subscribe(@CurrentUser() me: SessionUser, @Body(new ZodPipe(Sub)) b: z.infer<typeof Sub>) {
+    const data = { userId: me.id, endpoint: b.endpoint, p256dh: b.keys.p256dh, auth: b.keys.auth };
+    await this.prisma.db.pushSubscription.upsert({ where: { endpoint: b.endpoint }, create: data, update: data });
+    return { ok: true };
+  }
+
+  @Delete('push/subscriptions')
+  async unsubscribe(@CurrentUser() me: SessionUser, @Body(new ZodPipe(Sub.pick({ endpoint: true }))) b: { endpoint: string }) {
+    await this.prisma.db.pushSubscription.deleteMany({ where: { userId: me.id, endpoint: b.endpoint } });
+    return { ok: true };
+  }
 
   @Get()
   async list(@CurrentUser() me: SessionUser) {

@@ -9,7 +9,7 @@ import { Back, ErrorNote, State, dayTime, upload, useLoad, useSubmit } from '@/c
 import { RUN_STATUS } from '@/lib/labels';
 
 interface Item { id: string; title: string; type: string; required: boolean; min: number | null; max: number | null; unit: string | null; done: boolean; value: string | null; outOfRange: boolean | null; note: string | null; photoFileId: string | null; by: string | null; at: string | null }
-interface Run { id: string; title: string; status: string; completedAt: string | null; completedBy: string | null; items: Item[] }
+interface Run { id: string; title: string; status: string; completedAt: string | null; completedBy: string | null; dueAt: string | null; approval: string; approvedBy: string | null; approvedAt: string | null; canApprove: boolean; items: Item[] }
 
 function Row({ it, locked, save }: { it: Item; locked: boolean; save: (body: object) => Promise<unknown> }) {
   const [v, setV] = useState(it.value ?? '');
@@ -45,6 +45,20 @@ function Row({ it, locked, save }: { it: Item; locked: boolean; save: (body: obj
   );
 }
 
+function Approve({ id, onDone }: { id: string; onDone: (r: Run) => void }) {
+  const [note, setNote] = useState('');
+  const { busy, error, run } = useSubmit();
+  const send = (approve: boolean) => run(() => api<Run>(`/checklists/runs/${id}/approve`, { method: 'POST', json: { approve, note: note || null } })).then((r) => r && onDone(r));
+  return (
+    <section className="card stack">
+      <h2>Freigabe</h2>
+      <input className="input" aria-label="Hinweis (bei Zurückweisen empfohlen)" placeholder="Hinweis (bei Zurückweisen empfohlen)" value={note} onChange={(e) => setNote(e.target.value)} />
+      <div className="row"><button className="btn pri" disabled={busy} onClick={() => send(true)}>Freigeben</button><button className="btn warn" disabled={busy} onClick={() => send(false)}>Zurück zum Nacharbeiten</button></div>
+      <ErrorNote error={error} />
+    </section>
+  );
+}
+
 export default function RunPage() {
   const { id } = useParams<{ id: string }>();
   const { data: r, error, setData } = useLoad<Run>(`/checklists/runs/${id}`);
@@ -58,6 +72,10 @@ export default function RunPage() {
       <Back href="/checklisten" label="Checklisten" />
       <h1>{r.title}</h1>
       <p className="muted">{RUN_STATUS[r.status]} · {done} von {r.items.length} erledigt{r.completedBy && ` · abgeschlossen von ${r.completedBy}, ${dayTime(r.completedAt)}`}</p>
+      {r.dueAt && !locked && <p className={r.status === 'OVERDUE' ? 'warn-ink' : 'small muted'}>{r.status === 'OVERDUE' ? 'Überfällig seit' : 'Fällig bis'} {dayTime(r.dueAt)}</p>}
+      {r.approval === 'PENDING' && <div className="note info">Wartet auf Freigabe durch die Teamleitung.</div>}
+      {r.approval === 'APPROVED' && <div className="note ok">Freigegeben von {r.approvedBy}, {dayTime(r.approvedAt)}.</div>}
+      {r.canApprove && <Approve id={id} onDone={setData} />}
       <progress max={r.items.length} value={done} aria-label="Fortschritt" style={{ width: '100%' }} />
       <ol className="plain stack">{r.items.map((it) => <Row key={it.id + String(it.done) + String(it.outOfRange)} it={it} locked={locked} save={save(it.id)} />)}</ol>
       <ErrorNote error={err} />

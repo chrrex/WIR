@@ -7,8 +7,8 @@ import { Icon } from '@/components/Icon';
 import { ErrorNote, State, dayTime, useLoad, useSubmit } from '@/components/work';
 import { CHECK_KIND, RUN_STATUS } from '@/lib/labels';
 
-interface Data { canManage: boolean; templates: Array<{ id: string; title: string; kind: string; group: string; items: number }>;
-  runs: Array<{ id: string; title: string; status: string; done: number; total: number; deviations: number; completedBy: string | null; completedAt: string | null; startedAt: string | null }> }
+interface Data { canManage: boolean; templates: Array<{ id: string; title: string; kind: string; group: string; items: number; repeat: string | null; approval: boolean }>;
+  runs: Array<{ id: string; title: string; status: string; approval: string; done: number; total: number; deviations: number; completedBy: string | null; completedAt: string | null; startedAt: string | null }> }
 
 export default function Checklists() {
   const router = useRouter();
@@ -20,9 +20,9 @@ export default function Checklists() {
   const done = data.runs.filter((r) => r.status === 'COMPLETED');
   const Run = ({ r }: { r: Data['runs'][number] }) => (
     <Link href={`/checklisten/${r.id}`} className="card listitem">
-      <span className={`udot ${r.deviations ? 'warn' : r.status === 'COMPLETED' ? 'off' : ''}`} aria-label={r.deviations ? `${r.deviations} Abweichung(en)` : undefined} />
+      <span className={`udot ${r.deviations || r.status === 'OVERDUE' ? 'warn' : r.status === 'COMPLETED' ? 'off' : ''}`} aria-label={r.deviations ? `${r.deviations} Abweichung(en)` : undefined} />
       <span className="grow"><strong className="title">{r.title}</strong>
-        <span className="block muted small">{RUN_STATUS[r.status]} · {r.done}/{r.total} erledigt{r.deviations > 0 && ` · ${r.deviations} Abweichung${r.deviations > 1 ? 'en' : ''}`}{r.completedBy && ` · ${r.completedBy}, ${dayTime(r.completedAt)}`}</span></span>
+        <span className="block muted small">{RUN_STATUS[r.status]}{r.approval === 'PENDING' && ' · wartet auf Freigabe'}{r.approval === 'APPROVED' && ' · freigegeben'} · {r.done}/{r.total} erledigt{r.deviations > 0 && ` · ${r.deviations} Abweichung${r.deviations > 1 ? 'en' : ''}`}{r.completedBy && ` · ${r.completedBy}, ${dayTime(r.completedAt)}`}</span></span>
     </Link>
   );
   return (
@@ -35,7 +35,7 @@ export default function Checklists() {
           <div className="grid">
             {data.templates.map((t) => (
               <div key={t.id} className="card stack-s">
-                <span className="chips"><span className="chip info">{CHECK_KIND[t.kind]}</span><span className="chip">{t.group}</span></span>
+                <span className="chips"><span className="chip info">{CHECK_KIND[t.kind]}</span><span className="chip">{t.group}</span>{t.repeat && <span className="chip">{t.repeat}</span>}{t.approval && <span className="chip">mit Freigabe</span>}</span>
                 <strong>{t.title}</strong><span className="small muted">{t.items} Punkte</span>
                 <div><button className="btn pri" disabled={busy} onClick={() => start(t.id)}>Jetzt starten</button></div>
               </div>

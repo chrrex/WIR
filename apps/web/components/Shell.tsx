@@ -24,7 +24,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     return <div className="loading" role="status">WIR wird geladen …</div>;
   }
 
-  const items = NAV.filter((n) => !n.module || me.modules.includes(n.module));
+  const items = NAV.filter((n) => (!n.module || me.modules.includes(n.module)) && (!n.anyOf || n.anyOf.some((p) => me.permissions.includes(p))));
   const isAdmin = can('users.read') || can('audit.read') || can('social.moderate');
   const badgeOf = (href: string) => (href === '/news' ? badges.news : href === '/uebergaben' ? badges.handovers : href === '/chat' ? badges.chat : 0);
   const active = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));

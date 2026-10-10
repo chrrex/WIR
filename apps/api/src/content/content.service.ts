@@ -22,7 +22,8 @@ export function toBody(text: string) {
 export interface CreateContentInput {
   type: ContentType;
   companyId: string | null;
-  authorId: string;
+  /** null = vom System angelegt (z. B. wiederkehrende Checkliste) */
+  authorId: string | null;
   importance?: 'NORMAL' | 'IMPORTANT';
   commentsEnabled?: boolean;
   requiresAcknowledgement?: boolean;
@@ -96,7 +97,7 @@ export class ContentService {
         })),
       });
       await tx.contentRecipient.createMany({
-        data: [...new Set([...recipientIds, input.authorId])].map((userId) => ({ contentItemId: ci.id, userId })),
+        data: [...new Set([...recipientIds, ...(input.authorId ? [input.authorId] : [])])].map((userId) => ({ contentItemId: ci.id, userId })),
         skipDuplicates: true,
       });
       if (files.length) {
