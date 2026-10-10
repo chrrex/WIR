@@ -8,6 +8,7 @@
  */
 import 'dotenv/config';
 import { hash } from '@node-rs/argon2';
+import { seedWork } from './seed-work';
 import { createPrismaClient, PERMISSIONS, ROLES, SENSITIVE_PERMISSIONS, hashOneTimeCode } from '../src';
 
 const prisma = createPrismaClient();
@@ -20,7 +21,8 @@ async function main() {
   await prisma.$executeRawUnsafe(`
     TRUNCATE audit_logs, sessions, credential_resets, user_roles, user_groups, employee_company_assignments,
       employee_profiles, user_settings, dashboard_preferences, users, role_permissions, permissions, roles,
-      groups, company_brandings, companies, system_settings CASCADE`);
+      groups, company_brandings, companies, system_settings, knowledge_categories, document_categories,
+      contact_categories, idea_categories, file_objects CASCADE`);
 
   // ---- Rechte & Rollen ------------------------------------------------------
   for (const [module, keys] of Object.entries(PERMISSIONS)) {
@@ -257,6 +259,9 @@ async function main() {
   await chat('DIRECT', [jana.id, T('piotr.n')], [[T('piotr.n'), 'Hast du die Namensschilder für die Tagung gesehen?', 3]]);
   await chat('DIRECT', [jana.id, maren.id], [[maren.id, 'Kannst du mir bis morgen die Größen der Rezeption schicken?', 26], [jana.id, 'Mache ich, sammle gerade noch.', 25]]);
   void tom;
+
+  // ---- Inhalte für Phase 3+4 -------------------------------------------------
+  await seedWork(prisma, { sgl: sgl.id, stiftung: stiftung.id, groups, T, jana: jana.id, maren: maren.id, lena: lena.id, nora: nora.id, sglPeople, employees, membersOf });
 
   // ---- Systemeinstellungen --------------------------------------------------
   await prisma.systemSetting.createMany({

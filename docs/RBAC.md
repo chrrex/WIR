@@ -64,10 +64,10 @@ Die Spec-Begriffe *read/create/update/delete/deactivate/download* bilden sich 1:
 
 | Rolle | Typischer Scope | Kernrechte |
 |---|---|---|
-| `employee` | Global | dashboard.view, news.read, news.create/publish (ADR-037), social.read, social.post, handovers.read/create, comments.create, reactions.create, chat.use, knowledge.read, documents.read/download, search.use, ai.use, tasks.read, checklists.execute, surveys.respond, ideas.read/create, contacts.read, employees.directory |
+| `employee` | Global | dashboard.view, news.read, news.create/publish (ADR-037), social.read, social.post, handovers.read/create, comments.create, reactions.create, chat.use, knowledge.read, documents.read/download, search.use, ai.use, tasks.read, checklists.execute, surveys.respond, ideas.read/create, contacts.read, contacts.view_emergency (ADR-041), employees.directory |
 | `external` | Gesellschaft/Gruppe | news.read, knowledge.read (nur freigegebene Kategorien), chat.use, checklists.execute – **kein** employees.directory, kein ai.use (ADR-006) |
 | `team_lead` | Gruppe | + chat.create_group, news.mark_important, news.require_read (Zielgruppe ⊆ eigene Gruppe), handovers.update_any, read_status.view_summary/details, reminders.send_manual, tasks.create/assign, checklists.approve, absences.view_team, lifecycle.view_progress, surveys.create/view_results |
-| `department_head` | Gesellschaft | wie team_lead für die Gesellschaft + news.publish_wide, knowledge.publish, documents.*, checklists.manage_templates, lifecycle.start, ideas.manage |
+| `department_head` | Gesellschaft | wie team_lead für die Gesellschaft + news.publish_wide, knowledge.publish, documents.*, checklists.manage_templates, lifecycle.start, ideas.manage, knowledge.require_acknowledgement, contacts.manage (ADR-041) |
 | `editor_knowledge` | Global | knowledge.*, documents.create/update, knowledge.require_acknowledgement |
 | `hr` | Gesellschaft | users.read, lifecycle.*, absences.manage, Zugriff auf sensible HR-Kategorien nur per ACL |
 | `management` | Global | dashboard.view_cross_company, read_status.view_summary, surveys.view_results, audit.read (lesend) |
@@ -131,3 +131,8 @@ Testpflicht: Die Policy-Engine bekommt eine tabellengetriebene Testsuite (Rolle 
 - **Rollenvergabe:** Niemand kann Rechte vergeben, die er selbst nicht hat; `roles.manage` darf sich nicht selbst zuweisen.
 - **Deaktivierte User:** Sessions sofort widerrufen, aus allen künftigen Verteilern raus, Inhalte bleiben mit Autorname erhalten.
 - **Service-Accounts** (Integrationen): nur `integrations.*`-nahe Rechte, kein interaktiver Login.
+
+
+## Module sperren auch die API (ADR-041)
+
+Ist ein Modul für alle Gesellschaften einer Person ausgeschaltet (`companies.disabled_modules`), lehnt der Guard Rechte dieses Moduls mit 403 ab – unabhängig von der Rolle. Zuordnung über das Rechte-Präfix (`knowledge`, `documents`, `tasks`, `checklists`, `surveys`, `ideas`, `contacts`, `handovers`, `employees`).

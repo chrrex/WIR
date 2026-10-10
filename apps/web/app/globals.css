@@ -348,3 +348,10 @@ select.input { padding-right: 10px; }
   .listitem { padding: .9rem 1rem; }
   .article h1 { font-size: 1.45rem; }
 }
+
+/* ---- Phase 3+4 ---------------------------------------------------------- */
+mark { background: color-mix(in srgb, var(--brand) 22%, transparent); color: inherit; border-radius: 3px; padding: 0 2px; }
+.votes { display: inline-flex; flex-direction: column; align-items: center; min-width: 44px; color: var(--brand); }
+.card.deviation, .card.emergency { border-left: 4px solid var(--warn); }
+fieldset.plain { border: 0; padding: 0; margin: 0; }
+progress { accent-color: var(--brand); height: 10px; }

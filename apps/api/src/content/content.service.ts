@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import type { Prisma } from '@wir/db';
+import type { ContentType, Prisma } from '@wir/db';
 import { PrismaService } from '../common/prisma.service';
 import { FeatureService } from '../common/feature.service';
 import { AuditService } from '../audit/audit.service';
@@ -20,12 +20,14 @@ export function toBody(text: string) {
 }
 
 export interface CreateContentInput {
-  type: 'POST' | 'HANDOVER';
+  type: ContentType;
   companyId: string | null;
   authorId: string;
   importance?: 'NORMAL' | 'IMPORTANT';
   readTrackingEnabled?: boolean;
   commentsEnabled?: boolean;
+  requiresAcknowledgement?: boolean;
+  reactionsEnabled?: boolean;
   expiresAt?: Date | null;
   targets: AudienceTarget[];
   attachmentFileIds?: Array<{ fileId: string; altText?: string | null }>;
@@ -80,6 +82,8 @@ export class ContentService {
           importance: input.importance ?? 'NORMAL',
           readTrackingEnabled: input.readTrackingEnabled ?? false,
           commentsEnabled: input.commentsEnabled ?? true,
+          reactionsEnabled: input.reactionsEnabled ?? true,
+          requiresAcknowledgement: input.requiresAcknowledgement ?? false,
           expiresAt: input.expiresAt ?? null,
         },
       });
@@ -111,10 +115,19 @@ export class ContentService {
   async getVisible(userId: string, id: string) {
     const item = await this.prisma.db.contentItem.findFirst({
       where: { id, ...this.visibleWhere(userId) },
-      include: { post: true, handover: { include: { group: true } }, author: { select: { id: true, displayName: true, employeeProfile: { select: { jobTitle: true } } } } },
+      include: {
+        post: true, handover: { include: { group: true } }, idea: true, task: true, survey: true, document: true, checklistRun: true,
+        knowledgeArticle: { include: { versions: { where: { status: 'PUBLISHED' }, take: 1, select: { title: true } } } },
+        author: { select: { id: true, displayName: true, employeeProfile: { select: { jobTitle: true } } } } },
     });
     if (!item) throw new NotFoundException('Diesen Beitrag gibt es nicht oder er ist nicht für dich bestimmt.');
     return item;
+  }
+
+  /** Anzeigetitel eines Inhalts – egal welcher Typ. */
+  titleOf(item: Awaited<ReturnType<ContentService['getVisible']>>) {
+    return item.post?.title ?? item.handover?.subject ?? item.idea?.title ?? item.task?.title ?? item.survey?.title ?? item.document?.title
+      ?? item.checklistRun?.title ?? item.knowledgeArticle?.versions[0]?.title ?? 'Beitrag';
   }
 
   /** Neue Kolleg:innen bekommen laufende Inhalte ihrer Zielgruppen (include_late_joiners). */
@@ -226,7 +239,7 @@ export class ContentService {
         mentions: { create: allowed.map((u) => ({ mentionedUserId: u })) },
       },
     });
-    const title = item.post?.title ?? item.handover?.subject ?? 'einen Beitrag';
+    const title = this.titleOf(item);
     await this.notifications.notify({
       recipientIds: allowed, actorId, eventType: 'mention', title: `${actorName} hat dich erwähnt`, body: `in „${title}“: ${clean.slice(0, 120)}`,
       linkPath, contentItemId: id, dedupeKey: `mention:${comment.id}`,
@@ -276,7 +289,7 @@ export class ContentService {
     });
     await this.notifications.notify({
       recipientIds: moderators.map((m) => m.id), eventType: 'report.created', title: 'Neue Meldung zur Prüfung',
-      body: `Gemeldet: „${item.post?.title ?? item.handover?.subject ?? 'Beitrag'}“`, linkPath: '/verwaltung?tab=meldungen',
+      body: `Gemeldet: „${this.titleOf(item)}“`, linkPath: '/verwaltung?tab=meldungen',
     });
     void actorName;
     return { ok: true };
@@ -333,7 +346,7 @@ export class ContentService {
     }
     await this.notifications.notify({
       recipientIds: sent, actorId: userId, eventType: 'reminder', importance: item.importance,
-      title: `Erinnerung: „${item.post?.title ?? item.handover?.subject ?? 'Beitrag'}“`, body: `${actorName} bittet dich, den Beitrag zu lesen.`, linkPath, contentItemId: id,
+      title: `Erinnerung: „${this.titleOf(item)}“`, body: `${actorName} bittet dich, den Beitrag zu lesen.`, linkPath, contentItemId: id,
     });
     await this.audit.log({ actorId: userId, companyId: item.companyId, action: 'reminder.manual_sent', entityType: 'content_item', entityId: id, metadata: { count: sent.length } });
     return { reminded: sent.length, skipped: open.length - sent.length };
