@@ -34,7 +34,7 @@ Schema: `<modul>.<aktion>`. *Sensibel* = `is_sensitive`, nur an wenige Rollen, V
 | Modul | Permissions |
 |---|---|
 | dashboard | `dashboard.view`, `dashboard.view_cross_company` |
-| news | `news.read`, `news.create`, `news.publish`, `news.mark_important`, `news.require_read` (Lesestatus/Erinnerung/Pflichtlektüre), `news.update_any`, `news.delete_any`, `news.pin` |
+| news | `news.read`, `news.create`, `news.publish`, `news.mark_important`, `news.require_read` (Lesestatus/Erinnerung/Pflichtlektüre), `news.publish_wide` (Zielgruppe ganze Gesellschaft bzw. Stiftung, ADR-037), `news.update_any`, `news.delete_any`, `news.pin` |
 | social | `social.read`, `social.post`, `social.moderate` (Meldungen bearbeiten, Beiträge ausblenden) |
 | handovers | `handovers.read`, `handovers.create`, `handovers.update_any` |
 | comments | `comments.create`, `comments.moderate` |
@@ -66,8 +66,8 @@ Die Spec-Begriffe *read/create/update/delete/deactivate/download* bilden sich 1:
 |---|---|---|
 | `employee` | Global | dashboard.view, news.read, news.create/publish (ADR-037), social.read, social.post, handovers.read/create, comments.create, reactions.create, chat.use, knowledge.read, documents.read/download, search.use, ai.use, tasks.read, checklists.execute, surveys.respond, ideas.read/create, contacts.read, employees.directory |
 | `external` | Gesellschaft/Gruppe | news.read, knowledge.read (nur freigegebene Kategorien), chat.use, checklists.execute – **kein** employees.directory, kein ai.use (ADR-006) |
-| `team_lead` | Gruppe | + news.mark_important, news.require_read (Zielgruppe ⊆ eigene Gruppe), handovers.update_any, read_status.view_summary/details, reminders.send_manual, tasks.create/assign, checklists.approve, absences.view_team, lifecycle.view_progress, surveys.create/view_results |
-| `department_head` | Gesellschaft | wie team_lead für die Gesellschaft + knowledge.publish, documents.*, checklists.manage_templates, lifecycle.start, ideas.manage |
+| `team_lead` | Gruppe | + chat.create_group, news.mark_important, news.require_read (Zielgruppe ⊆ eigene Gruppe), handovers.update_any, read_status.view_summary/details, reminders.send_manual, tasks.create/assign, checklists.approve, absences.view_team, lifecycle.view_progress, surveys.create/view_results |
+| `department_head` | Gesellschaft | wie team_lead für die Gesellschaft + news.publish_wide, knowledge.publish, documents.*, checklists.manage_templates, lifecycle.start, ideas.manage |
 | `editor_knowledge` | Global | knowledge.*, documents.create/update, knowledge.require_acknowledgement |
 | `hr` | Gesellschaft | users.read, lifecycle.*, absences.manage, Zugriff auf sensible HR-Kategorien nur per ACL |
 | `management` | Global | dashboard.view_cross_company, read_status.view_summary, surveys.view_results, audit.read (lesend) |

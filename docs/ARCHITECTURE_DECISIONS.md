@@ -20,6 +20,8 @@ Am 05.10.2026 entschieden: 009 (Phasen nach §12), 011 (Benutzername + Einmal-Co
 
 Am 06.10.2026 entschieden: 006 (Aushilfen und Externe befristet), 013 (Umfrageergebnisse ab 5 Antworten), 014 (Benachrichtigungszeiten selbst einstellen), 015 (Chat, 1:1 mit Gelesen-Häkchen), 018 (Einfache Sprache redaktionell mit KI-Hilfe), 019 (Videos mit Untertiteln), 023 (Chat 12 Monate), 024 (Notdienste von Firmen), 030 (Offline-Umfang), 036 (App-Leiste konfigurierbar). 011 (private E-Mail freiwillig für Reset), 013 (Freitext mit Hinweis), 016 (keine Gästenamen), 017 (Anhänge mit gemeinsamer Ansicht), 037 (alle dürfen News veröffentlichen, Moderationsteam, KI für alle Mitarbeitenden, Pilot Rezeption + Verkauf/Veranstaltungen), 023 (Fristen: Chat 12 Monate, Lesezeiten 30 Tage, HACCP 2 Jahre, Social ohne Automatik, Accounts manuell löschen). Leserliste für alle: als Einstellung je Gesellschaft, aktiv erst nach Betriebsvereinbarung (ADR-012).
 
+Am 10.10.2026 entschieden: 040 (Umsetzungsregeln Phase 2).
+
 Am 09.10.2026 entschieden: 038 (Name „WIR“ – Das Mitarbeiterportal), 039 (Auftritt der DKB STIFTUNG: Logo nur auf Weiß, eigene Sicht für Mitarbeitende der Stiftung).
 
 ### Entscheidungen, die vor späteren Phasen fallen müssen
@@ -426,6 +428,18 @@ Die untere Leiste der App ist je Person konfigurierbar (bis zu vier Bereiche plu
 **Umsetzung:** Felder `surface_color`, `logo_requires_white` in `company_brandings`, Enum `AppModule` und `companies.disabled_modules` in `schema.prisma`; Constraints in `0001_constraints_draft.sql`. In der Demo zeigt die Person „Nora S. (DKB STIFTUNG)“ diese Sicht.
 
 **Offen:** Freigabe der Stiftung zur Logo-Nutzung und offizielle Logo-Dateien als SVG (ADR-034, Frage 7).
+
+## ADR-040 · Umsetzung Phase 2 (Kommunikation) — ENTSCHIEDEN (10.10.2026)
+
+1. **Empfänger:innen werden beim Veröffentlichen festgeschrieben** (`content_recipients`). Sichtbar ist ein Beitrag für Empfänger:innen und Autor:in. Neue Kolleg:innen erhalten laufende Beiträge ihrer Zielgruppen der letzten 60 Tage bei der Freischaltung („include_late_joiners“).
+2. **Leitplanken für News (ADR-037) als Recht:** neues Recht `news.publish_wide` für Zielgruppe „ganze Gesellschaft/Stiftung“ (Abteilungsleitung, Redaktion Stiftung). Alle anderen schreiben an eigene Teams. „Wichtig“ (`news.mark_important`) und Anheften (`news.pin`) bleiben Leitungen vorbehalten. Externe erhalten nur Inhalte, die an ihre Gruppe oder sie persönlich gehen.
+3. **Gelesen-Markierung:** Damit „ungelesen“ funktioniert, wird je Person und Beitrag ein Eintrag mit **Datum ohne Uhrzeit** gespeichert. Einsehbar ist er nur über den Lesestatus – und der ist nur verfügbar, wenn der Schalter `feature.read_tracking` an ist **und** der Beitrag mit Lesestatus veröffentlicht wurde (ADR-012). Bis zur Betriebsvereinbarung ist der Schalter aus.
+4. **Erinnerungen** nur manuell, an Ungelesene, höchstens zweimal je Person und Beitrag, protokolliert. Automatische Erinnerungen folgen mit dem Job-System.
+5. **Erwähnungen** benachrichtigen nur Personen, die den Inhalt sehen dürfen. Bei Übergaben werden Erwähnte außerhalb des Teams ausdrücklich Empfänger:innen.
+6. **Social:** nie „wichtig“, ohne Lesestatus; Benachrichtigung der Autor:in bei Kommentaren nur mit Opt-in. Biete & Suche endet nach 30 Tagen. Meldungen gehen anonym an Personen mit `social.moderate`; Ausblenden ist protokolliert.
+7. **Chat:** Abfrage alle 4 Sekunden im offenen Chat (WebSocket später, ADR-001). Keine Benachrichtigung mit Nachrichteninhalt; Erwähnungen in Gruppen erzeugen einen Hinweis ohne Text. Nachrichten werden nach 365 Tagen automatisch gelöscht (ADR-023). Gruppen anlegen: `chat.create_group` (Leitungen).
+8. **Bilder:** Jedes hochgeladene Foto wird serverseitig neu berechnet (WebP, max. 2000 px) – dadurch entfallen Ortsdaten und andere Metadaten. Abruf nur, wenn der zugehörige Inhalt bzw. Chat sichtbar ist. Speicher in Phase 2: lokales Verzeichnis (`STORAGE_DIR`); vor Produktivbetrieb EU-Object-Storage und Virenscan.
+9. **Benachrichtigungen** in Phase 2 nur in der App (Glocke, Zähler). Push und E-Mail mit persönlichen Zeitfenstern (ADR-014) folgen in Phase 6.
 
 ## Nächste Schritte
 

@@ -7,3 +7,4 @@ dist/
 packages/db/src/generated/
 coverage/
 .DS_Store
+.data/

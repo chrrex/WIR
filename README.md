@@ -2,7 +2,7 @@
 
 Das interne Portal für Kommunikation, Wissen und Zusammenarbeit von **Schloss & Gut Liebenberg** und – in Ausbaustufe 2 – der ganzen Gruppe der **DKB STIFTUNG**.
 
-> **Stand: Phase 1** – Fundament: Anmeldung, Rollen und Rechte, Gesellschaften mit eigenem Auftritt, Freischaltung neuer Kolleg:innen, Startseite, Einstellungen. Die Fachbereiche (News, Übergaben, Chat …) folgen ab Phase 2.
+> **Stand: Phase 2** – Anmeldung, Rollen und Rechte, Auftritt je Gesellschaft, Verwaltung (Phase 1) sowie **News, Social, Übergaben, Kommentare, Erwähnungen, Benachrichtigungen und Chat** (Phase 2). Wissen & SOPs, Dokumente und Suche folgen in Phase 3.
 > Alle Personen und Daten im Projekt sind **erfunden**. Bitte keine echten Mitarbeiterdaten eintragen, solange das System nicht produktiv betrieben wird.
 
 ---
@@ -26,6 +26,8 @@ Du brauchst nichts zu installieren – nur einen Browser und dein GitHub-Konto.
 | `lena.k` | Personal & IT (SGL) | **Verwaltung:** Freischalten aus Gastromatic, Einmal-Codes, Protokoll |
 | `nora.s` | Kommunikation · DKB STIFTUNG | Auftritt der DKB STIFTUNG, gruppenweite Sicht ohne Hausmodule |
 | `tom.b.extern` | Externer Dienstleister | befristeter Zugang, ohne KI und Mitarbeiterverzeichnis |
+| `sven.r` | Küchenleitung | darf an das ganze Haus schreiben und „wichtig“ markieren |
+| `tobias.k`, `selin.a`, `piotr.n` … | Kolleg:innen aus Service und Rezeption | zum Ausprobieren von Chat, Erwähnungen und Übergaben |
 
 Passwort für alle oben: **`Wir-Demo-2026`**
 
@@ -82,5 +84,5 @@ npm run dev                                # → http://localhost:3000
 - `docs/ARCHITECTURE_DECISIONS.md` – Entscheidungen und offene Punkte (ADR)
 - `docs/RBAC.md` – Rollen und Rechte
 - `docs/ER_MODEL.md` – Datenmodell
-- `docs/STATUS_PHASE1.md` – Statusbericht Phase 1 (Tests, Sicherheit, Barrierefreiheit)
+- `docs/STATUS_PHASE1.md`, `docs/STATUS_PHASE2.md` – Statusberichte (Tests, Sicherheit, Barrierefreiheit)
 - `docs/MASTER_SPEC.md` – fachliche Spezifikation

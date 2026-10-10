@@ -126,16 +126,33 @@ async function main() {
     return user;
   }
 
-  await person({ username: 'jana.m', first: 'Jana', last: 'Muster', job: 'Rezeption', company: sgl.id, group: 'Rezeption',
+  const jana = await person({ username: 'jana.m', first: 'Jana', last: 'Muster', job: 'Rezeption', company: sgl.id, group: 'Rezeption',
     roles: [{ key: 'employee' }] });
-  await person({ username: 'maren.h', first: 'Maren', last: 'Hofmann', job: 'Abteilungsleitung Service', company: sgl.id, group: 'Service', lead: true,
+  const maren = await person({ username: 'maren.h', first: 'Maren', last: 'Hofmann', job: 'Abteilungsleitung Service', company: sgl.id, group: 'Service', lead: true,
     roles: [{ key: 'employee' }, { key: 'team_lead', group: 'Service' }] });
-  await person({ username: 'lena.k', first: 'Lena', last: 'Kranz', job: 'Personal & Verwaltung', company: sgl.id, group: 'Personal & Verwaltung',
-    roles: [{ key: 'employee' }, { key: 'hr', company: sgl.id }, { key: 'it_admin', company: sgl.id }] });
-  await person({ username: 'nora.s', first: 'Nora', last: 'Sommer', job: 'Kommunikation · DKB STIFTUNG', company: stiftung.id, group: kommunikation.id,
+  const lena = await person({ username: 'lena.k', first: 'Lena', last: 'Kranz', job: 'Personal & Verwaltung', company: sgl.id, group: 'Personal & Verwaltung',
+    roles: [{ key: 'employee' }, { key: 'hr', company: sgl.id }, { key: 'it_admin', company: sgl.id }, { key: 'moderator', company: sgl.id }] });
+  const nora = await person({ username: 'nora.s', first: 'Nora', last: 'Sommer', job: 'Kommunikation · DKB STIFTUNG', company: stiftung.id, group: kommunikation.id,
     roles: [{ key: 'employee' }, { key: 'foundation_editor', company: stiftung.id }] });
-  await person({ username: 'tom.b.extern', first: 'Tom', last: 'Becker', job: 'Haustechnik (extern)', company: sgl.id, group: 'Haustechnik',
+  const tom = await person({ username: 'tom.b.extern', first: 'Tom', last: 'Becker', job: 'Haustechnik (extern)', company: sgl.id, group: 'Haustechnik',
     external: true, validUntil: new Date('2027-03-31T23:59:59Z'), roles: [{ key: 'external', company: sgl.id }] });
+
+  // Weitere Kolleg:innen (aktiv), damit Team, Chat und Lesestatus lebendig wirken
+  const extra: Array<[string, string, string, string, string, string[]]> = [
+    ['selin.a', 'Selin', 'Aydin', 'Rezeption', 'Rezeption · Nachtdienst', ['employee']],
+    ['jonas.w', 'Jonas', 'Weber', 'Rezeption', 'Rezeption', ['employee']],
+    ['piotr.n', 'Piotr', 'Nowak', 'Rezeption', 'Rezeption', ['employee']],
+    ['tobias.k', 'Tobias', 'Krüger', 'Service', 'Service', ['employee']],
+    ['ana.f', 'Ana', 'Ferreira', 'Service', 'Service', ['employee']],
+    ['marta.w', 'Marta', 'Wójcik', 'Housekeeping', 'Housekeeping', ['employee']],
+    ['sven.r', 'Sven', 'Richter', 'Küche', 'Küchenleitung', ['employee', 'department_head']],
+  ];
+  const team = new Map<string, string>();
+  for (const [username, first, last, group, job, rs] of extra) {
+    const u = await person({ username, first, last, job, company: sgl.id, group, lead: rs.includes('department_head'),
+      roles: rs.map((key) => (key === 'department_head' ? { key, company: sgl.id } : { key })) });
+    team.set(username, u.id);
+  }
 
   // Erstzugang mit Einmal-Code (Pflicht-Passwortwechsel)
   const paula = await person({ username: 'paula.s', first: 'Paula', last: 'Seidel', job: 'Veranstaltungsbetreuung', company: sgl.id,
@@ -157,6 +174,89 @@ async function main() {
     await person({ username, first, last, job, company: sgl.id, group, status: 'PROVISIONED', source: 'GASTROMATIC',
       personnel: String(nr++), roles: [] });
   }
+
+  // ---- Inhalte für Phase 2 (alles erfunden) ---------------------------------
+  const live = await prisma.user.findMany({ where: { status: { in: ['ACTIVE', 'INVITED'] } }, include: { employeeProfile: true, groupMemberships: true } });
+  const employees = live.filter((u) => u.userType === 'EMPLOYEE').map((u) => u.id);
+  const sglPeople = live.filter((u) => u.userType === 'EMPLOYEE' && u.employeeProfile?.companyId === sgl.id).map((u) => u.id);
+  const membersOf = (...names: string[]) => live.filter((u) => u.groupMemberships.some((m) => names.map((n) => groups.get(n)).includes(m.groupId))).map((u) => u.id);
+  const ago = (h: number) => new Date(Date.now() - h * 3600_000);
+  const body = (t: string) => ({ type: 'text', paragraphs: t.split(/\n{2,}/) });
+
+  async function post(o: { author: string; kind: 'NEWS' | 'SOCIAL'; title: string; text: string; hoursAgo: number; recipients: string[];
+    audience: { targetType: 'ALL_USERS' | 'COMPANY' | 'GROUP'; companyId?: string; groupId?: string }[]; important?: boolean; company?: string;
+    category?: 'GREETINGS' | 'MARKETPLACE' | 'CONGRATULATIONS' | 'LEISURE' | 'OTHER'; intent?: 'OFFER' | 'SEARCH'; price?: string; readBy?: string[]; likes?: string[] }) {
+    const ci = await prisma.contentItem.create({ data: {
+      type: 'POST', companyId: o.company ?? sgl.id, authorId: o.author, status: 'PUBLISHED', publishedAt: ago(o.hoursAgo), createdAt: ago(o.hoursAgo),
+      importance: o.important ? 'IMPORTANT' : 'NORMAL', expiresAt: o.category === 'MARKETPLACE' ? new Date(Date.now() + 25 * 864e5) : null,
+      post: { create: { title: o.title, body: body(o.text), bodyText: o.text, kind: o.kind, socialCategory: o.category ?? null,
+        marketplaceIntent: o.category === 'MARKETPLACE' ? o.intent ?? 'OFFER' : null, priceLabel: o.category === 'MARKETPLACE' ? o.price ?? null : null } },
+      audiences: { create: o.audience },
+    } });
+    await prisma.contentRecipient.createMany({ data: [...new Set([...o.recipients, o.author])].map((userId) => ({ contentItemId: ci.id, userId })), skipDuplicates: true });
+    const day = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()));
+    if (o.readBy?.length) await prisma.readReceipt.createMany({ data: o.readBy.map((userId) => ({ contentItemId: ci.id, userId, firstSeenAt: day, openedAt: day })) });
+    if (o.likes?.length) await prisma.reaction.createMany({ data: o.likes.map((userId) => ({ contentItemId: ci.id, userId })) });
+    return ci;
+  }
+  const T = (u: string) => team.get(u)!;
+
+  await post({ author: T('sven.r'), kind: 'NEWS', important: true, hoursAgo: 3, title: 'HACCP: Neue Regel zur Kühlkette bei Anlieferungen',
+    text: 'Ab sofort messen wir bei jeder Tiefkühl-Lieferung die Kerntemperatur – nicht mehr nur stichprobenartig.\n\nDie Arbeitsanweisung „Kühlkette bei der Warenannahme“ wird gerade überarbeitet. Bitte sprecht mich bei Fragen direkt an.',
+    recipients: sglPeople, audience: [{ targetType: 'COMPANY', companyId: sgl.id }], readBy: [T('tobias.k'), T('ana.f')], likes: [T('tobias.k')] });
+  const dienst = await post({ author: maren.id, kind: 'NEWS', hoursAgo: 5, title: 'Neue Dienstkleidung für Service und Rezeption ab November',
+    text: 'Ab dem 2. November tragen Service und Rezeption die neue Dienstkleidung. Die Anprobe findet am 14. und 15. Oktober jeweils von 14 bis 16 Uhr im Personalraum statt.\n\nBitte trag dich bis Freitag in die Größentabelle ein. Fragen gern an mich oder @Tobias K.',
+    recipients: membersOf('Service', 'Rezeption'), audience: [{ targetType: 'GROUP', groupId: groups.get('Service') }, { targetType: 'GROUP', groupId: groups.get('Rezeption') }],
+    readBy: [T('selin.a'), T('jonas.w'), T('tobias.k')], likes: [T('selin.a'), T('ana.f'), T('jonas.w')] });
+  await prisma.comment.create({ data: { contentItemId: dienst.id, authorId: T('piotr.n'), body: body('Gibt es die Hose auch in kurzer Länge?'), bodyText: 'Gibt es die Hose auch in kurzer Länge?', createdAt: ago(4.5) } });
+  await prisma.comment.create({ data: { contentItemId: dienst.id, authorId: maren.id, body: body('Ja, in drei Längen – steht in der Tabelle.'), bodyText: 'Ja, in drei Längen – steht in der Tabelle.', createdAt: ago(4.2) } });
+  await post({ author: nora.id, kind: 'NEWS', hoursAgo: 8, company: stiftung.id, title: 'Gruppenweit: Das WIR kommt Schritt für Schritt in alle Gesellschaften',
+    text: 'Liebenberg macht den Anfang. Danach folgen nach und nach die weiteren Gesellschaften der Stiftungsgruppe – jede in ihren eigenen Farben und mit eigenem Logo, auf einer gemeinsamen Basis.\n\nGruppenweite Mitteilungen wie diese erreichen alle Kolleg:innen der Gruppe. Was nur ein Haus betrifft, bleibt in diesem Haus.',
+    recipients: employees, audience: [{ targetType: 'ALL_USERS' }], likes: [jana.id, maren.id] });
+  await post({ author: lena.id, kind: 'NEWS', hoursAgo: 50, title: 'Willkommen im Team: drei neue Azubis in Küche und Service',
+    text: 'Wir freuen uns über drei neue Auszubildende: zwei in der Küche, eine im Service. Sie haben in dieser Woche ihre erste Station begonnen.\n\nSprecht sie gern an und zeigt ihnen, wo es den besten Kaffee gibt.',
+    recipients: sglPeople, audience: [{ targetType: 'COMPANY', companyId: sgl.id }], readBy: sglPeople.filter((u) => u !== jana.id), likes: [maren.id, T('selin.a'), T('sven.r')] });
+
+  await post({ author: T('marta.w'), kind: 'SOCIAL', category: 'GREETINGS', hoursAgo: 20, title: 'Grüße von der Ostsee', text: 'Sonne, Wind und Fischbrötchen – ich denk an euch! Bis nächste Woche.',
+    recipients: employees, audience: [{ targetType: 'ALL_USERS' }], likes: [jana.id, maren.id, T('ana.f')] });
+  await post({ author: T('tobias.k'), kind: 'SOCIAL', category: 'MARKETPLACE', intent: 'OFFER', price: '80 €', hoursAgo: 30, title: 'Trekkingrad abzugeben',
+    text: '28 Zoll, 21 Gänge, frisch gewartet. Ideal für den Weg zum Bahnhof. Bei Interesse einfach im Chat melden.',
+    recipients: employees, audience: [{ targetType: 'ALL_USERS' }] });
+  await post({ author: T('piotr.n'), kind: 'SOCIAL', category: 'LEISURE', hoursAgo: 70, title: 'Laufgruppe am Donnerstag?', text: 'Wer hat Lust, nach der Frühschicht eine Runde um den See zu laufen? Ganz entspannt, 5–7 km.',
+    recipients: employees, audience: [{ targetType: 'ALL_USERS' }], likes: [jana.id] });
+
+  async function handover(o: { author: string; group: string; shift: string; hoursAgo: number; subject: string; text: string; readBy?: string[] }) {
+    const ci = await prisma.contentItem.create({ data: {
+      type: 'HANDOVER', companyId: sgl.id, authorId: o.author, status: 'PUBLISHED', publishedAt: ago(o.hoursAgo), createdAt: ago(o.hoursAgo),
+      handover: { create: { groupId: groups.get(o.group), subject: o.subject, body: body(o.text), bodyText: o.text, shiftLabel: o.shift, shiftDate: ago(o.hoursAgo) } },
+      audiences: { create: [{ targetType: 'GROUP', groupId: groups.get(o.group) }] },
+    } });
+    await prisma.contentRecipient.createMany({ data: [...new Set([...membersOf(o.group), o.author])].map((userId) => ({ contentItemId: ci.id, userId })), skipDuplicates: true });
+    if (o.readBy?.length) { const d = new Date(); d.setUTCHours(0, 0, 0, 0); await prisma.readReceipt.createMany({ data: o.readBy.map((userId) => ({ contentItemId: ci.id, userId, firstSeenAt: d, openedAt: d })) }); }
+  }
+  await handover({ author: T('selin.a'), group: 'Rezeption', shift: 'Nacht', hoursAgo: 2, subject: 'Zwei offene Punkte für die Frühschicht',
+    text: 'Zimmer 214: Gast hat um Weckruf 6:30 gebeten – erledigt, bitte um 7 Uhr kurz nachfragen, ob Taxi gebraucht wird.\n\nFundsache: schwarzer Schal aus dem Kaminzimmer liegt im Fundbuch, Nr. 31.\n\nKasse ist abgerechnet, Differenz 0,00 €.' });
+  await handover({ author: jana.id, group: 'Rezeption', shift: 'Früh', hoursAgo: 22, subject: 'Tagungsgruppe Strategieworkshop', text: 'Die Gruppe im Schlosssaal hat die Kaffeepause auf 10:30 verschoben. Technik ist informiert.', readBy: [T('selin.a'), T('jonas.w')] });
+  await handover({ author: T('tobias.k'), group: 'Service', shift: 'Spät', hoursAgo: 14, subject: 'Hochzeit Samstag: Allergien notiert', text: 'Drei vegane Gäste und eine Nussallergie – Küche weiß Bescheid, Tischkarten sind markiert.' });
+
+  // Chats (nur Beispiele; Inhalte sieht niemand außer den Beteiligten)
+  async function chat(type: 'DIRECT' | 'GROUP', members: string[], msgs: Array<[string, string, number]>, title?: string) {
+    const c = await prisma.chatConversation.create({ data: {
+      type, title, directKey: type === 'DIRECT' ? [...members].sort().join(':') : null, createdById: members[0], createdAt: ago(100),
+      participants: { create: members.map((userId, i) => ({ userId, role: type === 'GROUP' && i === 0 ? 'ADMIN' : 'MEMBER', joinedAt: ago(100) })) },
+    } });
+    let last: { id: string; createdAt: Date } | null = null;
+    for (const [sender, text, h] of msgs) last = await prisma.chatMessage.create({ data: { conversationId: c.id, senderId: sender, body: text, createdAt: ago(h) } });
+    if (last) await prisma.chatConversation.update({ where: { id: c.id }, data: { lastMessageAt: last.createdAt } });
+    return c;
+  }
+  await chat('GROUP', [jana.id, T('selin.a'), T('jonas.w'), T('piotr.n')], [
+    [T('jonas.w'), 'Neuer Sitzplan für den Schlosssaal liegt im Backoffice.', 6],
+    [T('selin.a'), 'Danke! Ich drucke ihn für die Nacht aus.', 5.5],
+  ], 'Team Rezeption');
+  await chat('DIRECT', [jana.id, T('piotr.n')], [[T('piotr.n'), 'Hast du die Namensschilder für die Tagung gesehen?', 3]]);
+  await chat('DIRECT', [jana.id, maren.id], [[maren.id, 'Kannst du mir bis morgen die Größen der Rezeption schicken?', 26], [jana.id, 'Mache ich, sammle gerade noch.', 25]]);
+  void tom;
 
   // ---- Systemeinstellungen --------------------------------------------------
   await prisma.systemSetting.createMany({

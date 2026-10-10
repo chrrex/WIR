@@ -5,10 +5,16 @@ import { AuditService } from '../audit/audit.service';
 import { PolicyService } from '../policy/policy.service';
 import { can, companiesWith, PolicyContext } from '../policy/engine';
 import { config } from '../common/config';
+import { ContentService } from '../content/content.service';
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly prisma: PrismaService, private readonly audit: AuditService, private readonly policy: PolicyService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+    private readonly policy: PolicyService,
+    private readonly content: ContentService,
+  ) {}
 
   private async target(userId: string) {
     const u = await this.prisma.db.user.findUnique({
@@ -79,6 +85,8 @@ export class AdminService {
       this.prisma.db.userRole.create({ data: { userId, roleId: employee.id, grantedById: actorId } }),
     ]);
     const issued = await this.issueCode(actorId, userId);
+    // laufende News/Übergaben der eigenen Teams nachliefern
+    await this.content.addLateJoiner(userId);
     await this.audit.log({ actorId, companyId, action: 'user.activated', entityType: 'user', entityId: userId, metadata: { role: 'employee' } });
     await this.audit.log({ actorId, companyId, action: 'user.one_time_code_issued', entityType: 'user', entityId: userId, metadata: { channel: 'IN_PERSON' } });
     return { ...issued, username: u.username, displayName: u.displayName };

@@ -6,7 +6,7 @@
 
 export const PERMISSIONS = {
   dashboard: ['dashboard.view', 'dashboard.view_cross_company'],
-  news: ['news.read', 'news.create', 'news.publish', 'news.mark_important', 'news.require_read', 'news.update_any', 'news.delete_any', 'news.pin'],
+  news: ['news.read', 'news.create', 'news.publish', 'news.mark_important', 'news.require_read', 'news.publish_wide', 'news.update_any', 'news.delete_any', 'news.pin'],
   social: ['social.read', 'social.post', 'social.moderate'],
   handovers: ['handovers.read', 'handovers.create', 'handovers.update_any'],
   comments: ['comments.create', 'comments.moderate'],
@@ -48,7 +48,7 @@ const EMPLOYEE: PermissionKey[] = [
 ];
 
 const TEAM_LEAD: PermissionKey[] = [
-  ...EMPLOYEE, 'news.mark_important', 'news.require_read', 'handovers.update_any',
+  ...EMPLOYEE, 'chat.create_group', 'news.mark_important', 'news.require_read', 'handovers.update_any',
   'read_status.view_summary', 'read_status.view_details', 'reminders.send_manual',
   'tasks.create', 'tasks.assign', 'checklists.approve', 'absences.view_team',
   'lifecycle.view_progress', 'surveys.create', 'surveys.view_results',
@@ -71,7 +71,7 @@ export const ROLES: RoleDefinition[] = [
   {
     key: 'department_head', name: 'Abteilungsleitung', description: 'Wie Teamleitung für die Gesellschaft, zusätzlich Wissen und Vorlagen.',
     permissions: [...TEAM_LEAD, 'knowledge.publish', 'knowledge.create', 'knowledge.update', 'documents.create', 'documents.update',
-      'documents.deactivate', 'checklists.manage_templates', 'checklists.view_reports', 'lifecycle.start', 'ideas.manage', 'news.pin'],
+      'documents.deactivate', 'checklists.manage_templates', 'checklists.view_reports', 'lifecycle.start', 'ideas.manage', 'news.pin', 'news.publish_wide'],
   },
   {
     key: 'editor_knowledge', name: 'Redaktion Wissen', description: 'Pflegt Wissen & SOPs.',
@@ -99,6 +99,6 @@ export const ROLES: RoleDefinition[] = [
   { key: 'role_admin', name: 'Rechteverwaltung', description: 'Vergibt Rollen (getrennt von IT-Administration, Vier-Augen).', permissions: ['roles.manage'] },
   {
     key: 'foundation_editor', name: 'Redaktion Stiftung', description: 'Gruppenweite Mitteilungen im Scope der DKB STIFTUNG.',
-    permissions: ['news.create', 'news.publish', 'news.mark_important', 'news.pin', 'surveys.create', 'surveys.view_results', 'dashboard.view_cross_company'],
+    permissions: ['news.create', 'news.publish', 'news.mark_important', 'news.publish_wide', 'news.pin', 'chat.create_group', 'surveys.create', 'surveys.view_results', 'dashboard.view_cross_company'],
   },
 ];
