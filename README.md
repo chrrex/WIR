@@ -46,6 +46,7 @@ apps/
 packages/
   db/      Prisma-7-Schema, Migrationen, Seed (Testdaten), Rechtekatalog
 docs/      Architektur, Entscheidungen (ADR), Rechte, Datenmodell, Spezifikation
+index.html Klick-Demo (eine Datei, für GitHub Pages) – unabhängig von der echten App
 ```
 
 - **Sicherheit:** Passwörter mit Argon2id, Einmal-Codes nur als HMAC gespeichert, Sessions serverseitig (Cookie nur mit Zufalls-Token), Sperre nach 5 Fehlversuchen, Begrenzung der Anmeldeversuche, Default Deny auf allen Routen, Audit-Protokoll.
