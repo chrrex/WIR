@@ -15,7 +15,7 @@ import { ReadStatus } from '@/components/content/ReadStatus';
 import { ReportButton } from '@/components/content/ReportButton';
 import { Icon } from '@/components/Icon';
 
-interface News { id: string; title: string; text: string; important: boolean; pinned: boolean; publishedAt: string; author: { name: string; job: string | null }; audiences: string[]; commentsEnabled: boolean; mine: boolean; canDelete: boolean; reactions: Reaction[]; images: ImageRef[] }
+interface News { id: string; title: string; text: string; important: boolean; pinned: boolean; publishedAt: string; author: { id: string | null; name: string; job: string | null }; audiences: string[]; commentsEnabled: boolean; mine: boolean; canDelete: boolean; reactions: Reaction[]; images: ImageRef[] }
 
 export default function NewsDetail() {
   const { id } = useParams<{ id: string }>();
@@ -40,7 +40,7 @@ export default function NewsDetail() {
             {n.audiences.map((a) => <span key={a} className="chip">an: {a}</span>)}
           </div>
           <h1>{n.title}</h1>
-          <div className="row"><Avatar name={n.author.name} size="s" /><span className="small muted"><strong className="fg">{n.author.name}</strong>{n.author.job ? ` · ${n.author.job}` : ''} · {when(n.publishedAt)}</span></div>
+          <div className="row"><Avatar name={n.author.name} id={n.author.id} size="s" /><span className="small muted"><strong className="fg">{n.author.name}</strong>{n.author.job ? ` · ${n.author.job}` : ''} · {when(n.publishedAt)}</span></div>
           <div className="prose"><RichText text={n.text} /></div>
           <Images images={n.images} />
           <div className="row wrap actions-bar">

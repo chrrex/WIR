@@ -512,7 +512,7 @@ Für Vorführungen und Tests: Auf der Anmeldeseite eine Personenauswahl, in der 
 
 - Freiwillig in „Einstellungen › Mein Profil“: hochladen, ändern, entfernen. Das Foto wird serverseitig neu berechnet (256 × 256 px, Ausschnitt per Motiverkennung, WebP, ohne Metadaten) und in `employee_profiles.avatar_file_id` gespeichert; das alte Foto wird gelöscht markiert.
 - Abruf über `GET /files/avatar/:userId` für alle Angemeldeten (5 Min. Cache); ohne Foto 404 ohne Cache – die Oberfläche zeigt dann wie bisher Initialen. So brauchen die Listen-Antworten kein zusätzliches Feld, nur die Personen-ID.
-- Angezeigt in Kopfzeile, Team, Teamprofil, Chatliste, Social und Kommentaren.
+- Angezeigt überall, wo bisher Initialen standen: Kopfzeile, Team, Teamprofil, Chatliste, Social, Kommentare, News- und Übergabe-Verfasser:innen, Verwaltung.
 
 ## Nächste Schritte
 
