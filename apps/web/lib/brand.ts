@@ -7,6 +7,7 @@ export function applyBranding(b: Branding | null) {
   root.style.setProperty('--brand', b.primaryColor);
   root.style.setProperty('--nav-bg', b.surfaceColor);
   root.dataset.brand = b.logoKey;
+  root.dataset.logo = b.logoRequiresWhite ? 'white' : 'any';
   root.dataset.surface = contrastWithWhite(b.surfaceColor) < 4.5 ? 'low-contrast' : 'ok';
 }
 

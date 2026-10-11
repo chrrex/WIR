@@ -537,6 +537,12 @@ Für Vorführungen und Tests: Auf der Anmeldeseite eine Personenauswahl, in der 
 - **Danke-Album**: eigene Karten als Druckansicht („Als PDF speichern“) – nur für die Person selbst.
 - Migration `20261011030000_danke_karten_plus`.
 
+## ADR-053 · Leichteres Menü, DKB-Logo auf großer Weißfläche — ENTSCHIEDEN (11.10.2026)
+
+- Seitenleiste hell (Fläche wie der Inhalt) mit normaler Schriftstärke; aktive Seite in der Markenfarbe als zarte Fläche mit schmalem Balken. Die Markenfarbe steht nur noch in der Markenfläche oben (Logo + WIR).
+- Damit entfällt „groß und fett“ für Flächen mit wenig Kontrast (ADR-039) im Menü – die Schrift steht nicht mehr auf der Markenfarbe.
+- DKB STIFTUNG (`logoRequiresWhite`): Markenfläche oben, mobile Kopfzeile und Banner sind weiß, das Logo steht frei mit viel Luft statt auf einem kleinen weißen Schild. Auf der Anmeldeseite ein weißes Band über die ganze Breite. Gilt auch im Dunkelmodus (`data-logo="white"`).
+
 ## Nächste Schritte
 
 1. Anbieterauswahl (ADR-022) bestätigen und Gastromatic-Prüfauftrag (ADR-021) stellen.
