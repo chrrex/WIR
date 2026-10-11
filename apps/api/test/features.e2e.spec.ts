@@ -171,4 +171,20 @@ describe('Neue Funktionen (e2e)', () => {
     await a.post('/api/v1/auth/demo/login').send({ userId: sven.id }).expect(404);
     config.demoMode = true;
   });
+
+  test('Chat-Reaktionen: 👍 👎 ❤️ 🎉 umschalten, nur für Teilnehmende (ADR-048)', async () => {
+    const jana = await as('jana.m');
+    const conv = (await jana.get('/api/v1/chat').expect(200)).body.find((c: { title: string }) => c.title === 'Team Rezeption');
+    const msg = (await jana.get(`/api/v1/chat/${conv.id}`).expect(200)).body.messages[0];
+    await jana.post(`/api/v1/chat/messages/${msg.id}/reactions`).send({ type: 'CELEBRATE' }).expect(200);
+    await (await as('selin.a')).post(`/api/v1/chat/messages/${msg.id}/reactions`).send({ type: 'CELEBRATE' }).expect(200);
+    await jana.post(`/api/v1/chat/messages/${msg.id}/reactions`).send({ type: 'HEART' }).expect(200);
+    let m = (await jana.get(`/api/v1/chat/${conv.id}`).expect(200)).body.messages.find((x: { id: string }) => x.id === msg.id);
+    expect(m.reactions).toEqual([{ type: 'HEART', count: 1, mine: true, names: ['Jana M.'] }, { type: 'CELEBRATE', count: 2, mine: true, names: expect.arrayContaining(['Jana M.', 'Selin A.']) }]);
+    await jana.post(`/api/v1/chat/messages/${msg.id}/reactions`).send({ type: 'HEART' }).expect(200); // wieder aus
+    m = (await jana.get(`/api/v1/chat/${conv.id}`).expect(200)).body.messages.find((x: { id: string }) => x.id === msg.id);
+    expect(m.reactions.map((r: { type: string }) => r.type)).toEqual(['CELEBRATE']);
+    await jana.post(`/api/v1/chat/messages/${msg.id}/reactions`).send({ type: 'LIKE' }).expect(400);
+    await (await as('sven.r')).post(`/api/v1/chat/messages/${msg.id}/reactions`).send({ type: 'HEART' }).expect((r) => expect([403, 404]).toContain(r.status));
+  });
 });

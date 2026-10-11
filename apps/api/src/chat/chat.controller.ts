@@ -17,6 +17,8 @@ const GroupBody = z.object({ title: z.string().trim().min(2).max(80), memberIds:
 const DirectBody = z.object({ userId: z.uuid() });
 const ReadBody = z.object({ messageId: z.uuid() });
 
+/** Reaktionen im Chat (ADR-048) */
+export const REACTIONS = ['THUMBS_UP', 'THUMBS_DOWN', 'HEART', 'CELEBRATE'] as const;
 const RETENTION_DAYS = 365; // ADR-023: Chat 12 Monate
 
 /** Löscht Chatnachrichten nach 12 Monaten (einmal täglich). */
@@ -145,7 +147,7 @@ export class ChatController {
       where: { conversationId: id, ...(before ? { createdAt: { lt: new Date(before) } } : {}) },
       orderBy: { createdAt: 'desc' },
       take: 60,
-      include: { sender: { select: { id: true, displayName: true } }, attachments: { select: { fileObjectId: true } } },
+      include: { sender: { select: { id: true, displayName: true } }, attachments: { select: { fileObjectId: true } }, reactions: { select: { type: true, userId: true, user: { select: { displayName: true } } } } },
     });
     let otherReadAt: Date | null = null;
     if (c.type === 'DIRECT') {
@@ -165,10 +167,26 @@ export class ChatController {
         id: m.id, text: m.deletedAt ? null : m.body, deleted: !!m.deletedAt, at: m.createdAt, mine: m.senderId === me.id,
         sender: m.sender ? { id: m.sender.id, name: m.sender.displayName } : null,
         image: m.attachments[0]?.fileObjectId ?? null,
+        reactions: REACTIONS.map((type) => { const r = m.reactions.filter((x) => x.type === type); return { type, count: r.length, mine: r.some((x) => x.userId === me.id), names: r.map((x) => x.user.displayName) }; }).filter((r) => r.count),
         // ✓✓ nur im 1:1-Chat (ADR-015)
         readByOther: c.type === 'DIRECT' && m.senderId === me.id && !!otherReadAt && otherReadAt >= m.createdAt,
       })),
     };
+  }
+
+  /** Reaktion 👍 👎 ❤️ 🎉 an-/ausschalten (je Person und Art einmal). Nur für Teilnehmende. */
+  @RequirePermission('chat.use')
+  @Post('messages/:messageId/reactions')
+  @HttpCode(200)
+  async react(@CurrentUser() me: SessionUser, @Param('messageId', ParseUUIDPipe) messageId: string, @Body(new ZodPipe(z.object({ type: z.enum(REACTIONS) }))) b: { type: (typeof REACTIONS)[number] }) {
+    const db = this.prisma.db;
+    const m = await db.chatMessage.findUnique({ where: { id: messageId } });
+    if (!m || m.deletedAt) throw new NotFoundException();
+    await this.membership(me.id, m.conversationId);
+    const existing = await db.reaction.findFirst({ where: { chatMessageId: messageId, userId: me.id, type: b.type } });
+    if (existing) await db.reaction.delete({ where: { id: existing.id } });
+    else await db.reaction.create({ data: { chatMessageId: messageId, userId: me.id, type: b.type } });
+    return { ok: true, on: !existing };
   }
 
   @RequirePermission('chat.use')

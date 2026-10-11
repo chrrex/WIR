@@ -229,6 +229,10 @@ enum ReportStatus {
 
 enum ReactionType {
   LIKE
+  THUMBS_UP
+  THUMBS_DOWN
+  HEART
+  CELEBRATE
 }
 
 enum AttachmentKind {
@@ -1038,16 +1042,19 @@ model Reaction {
   id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   contentItemId String?      @map("content_item_id") @db.Uuid
   commentId     String?      @map("comment_id") @db.Uuid
+  chatMessageId String?      @map("chat_message_id") @db.Uuid
   userId        String       @map("user_id") @db.Uuid
   type          ReactionType @default(LIKE)
   createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
 
   contentItem ContentItem? @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
   comment     Comment?     @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  chatMessage ChatMessage? @relation(fields: [chatMessageId], references: [id], onDelete: Cascade)
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([contentItemId])
   @@index([commentId])
+  @@index([chatMessageId])
   @@map("reactions")
 }
 
@@ -1242,6 +1249,7 @@ model ChatMessage {
   lastReadBy   ChatParticipant[] @relation("ParticipantLastRead")
   mentions     Mention[]
   attachments  Attachment[]
+  reactions    Reaction[]
 
   @@index([conversationId, createdAt])
   @@map("chat_messages")

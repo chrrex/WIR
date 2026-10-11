@@ -369,3 +369,11 @@ button.folder { text-align: left; width: 100%; font: inherit; color: inherit; cu
 .demo-user { text-align: left; font: inherit; color: #1E2318; background: #fff; border: 1px solid #E8D27A; border-radius: 10px; padding: 8px 10px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
 .demo-user:hover, .demo-user:focus-visible { border-color: #8A6D00; }
 .demo-user .xs { color: #5B4A00; }
+
+/* ---- Chat-Reaktionen (ADR-048) ---- */
+.reacts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+.msg.me .reacts { justify-content: flex-end; }
+.react { font: inherit; font-size: 13px; line-height: 1; padding: 4px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); cursor: pointer; min-height: 28px; }
+.react.on { border-color: var(--brand); background: var(--brand-tint); }
+.react.add { color: var(--muted); }
+.react-pick { display: inline-flex; gap: 4px; }

@@ -502,6 +502,11 @@ Ohne Datenbank-Migration – alle Tabellen waren vorbereitet.
 
 Für Vorführungen und Tests: Auf der Anmeldeseite eine Personenauswahl, in der App eine gelbe Leiste „Demo-Modus“ mit Wechsel per Auswahlliste. **Doppelt abgesichert:** nur mit Umgebungsvariable `DEMO_MODE=true` (im Codespace gesetzt) **und** nur, wenn die Datenbank den Testdaten-Marker `demo.seeded` trägt, den ausschließlich der Seed setzt. Fehlt eines davon, gibt es die Routen nicht (404). Beim Start warnt die API deutlich. Jeder Wechsel steht im Audit-Protokoll. Nur aktive Personen; die bisherige Sitzung wird beendet.
 
+## ADR-048 · Chat: ein Start für Einzel- und Gruppenchat; Reaktionen — ENTSCHIEDEN (11.10.2026)
+
+- Ein Knopf „Neuer Chat“: eine Person gewählt → Einzelchat, mehrere → Gruppe (Name nötig; anlegen weiterhin nur mit `chat.create_group`). Einzel- und Gruppenchats stehen gemeinsam in einer Liste neben dem Verlauf.
+- Reaktionen auf Nachrichten: 👍 👎 ❤️ 🎉 – je Person und Art einmal, per Klick an/aus; wer reagiert hat, sehen nur die Teilnehmenden (wie den Chat selbst). Keine Benachrichtigung für Reaktionen. Migration `20261011010000_chat_reaktionen` (Enum-Werte, `reactions.chat_message_id`).
+
 ## Nächste Schritte
 
 1. Anbieterauswahl (ADR-022) bestätigen und Gastromatic-Prüfauftrag (ADR-021) stellen.
