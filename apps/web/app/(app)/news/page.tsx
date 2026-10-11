@@ -1,5 +1,6 @@
 'use client';
 
+import { Tx, TxExcerpt } from '@/lib/translate';
 import { Reaction, reactionSummary } from '@/components/content/Reactions';
 import { scheduledText } from '@/components/content/Extras';
 import Link from 'next/link';
@@ -43,10 +44,10 @@ export default function NewsList() {
                   {n.pinned && <span className="chip"><Icon name="pin" size={12} /> angeheftet</span>}
                   {n.scheduledFor && <span className="chip info">{scheduledText(n.scheduledFor)}</span>}
                   {n.hasPoll && <span className="chip"><Icon name="poll" size={12} /> Abstimmung</span>}
-                  <strong className="title">{n.title}</strong>
+                  <strong className="title"><Tx e="CONTENT_ITEM" id={n.id} text={n.title} /></strong>
                 </span>
                 <span className="block muted small">{n.author}{n.publishedAt && ` · ${when(n.publishedAt)}`} <ReadChip c={counts[n.id]} /></span>
-                <span className="block excerpt">{n.excerpt}</span>
+                <span className="block excerpt"><TxExcerpt id={n.id} text={n.excerpt} /></span>
                 <span className="block xs muted">{reactionSummary(n.reactions)}{n.reactions.length > 0 && n.comments > 0 && ' · '}{n.comments > 0 && `${n.comments} Kommentar${n.comments === 1 ? '' : 'e'}`}{n.images.length > 0 && ` · ${n.images.length} Foto${n.images.length === 1 ? '' : 's'}`}</span>
               </span>
             </Link>

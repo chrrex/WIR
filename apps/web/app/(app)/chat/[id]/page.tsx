@@ -1,6 +1,7 @@
 'use client';
 /* eslint-disable @next/next/no-img-element */
 
+import { useTx } from '@/lib/translate';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -91,7 +92,7 @@ export default function ChatThread() {
                     {m.deleted ? <em className="muted">Nachricht gelöscht</em> : (
                       <>
                         {m.image && <a href={`/api/v1/files/${m.image}`} target="_blank" rel="noreferrer"><img src={`/api/v1/files/${m.image}`} alt="Foto im Chat" className="chatimg" /></a>}
-                        {m.text && <span className="pre">{m.text}</span>}
+                        {m.text && <MsgText id={m.id} text={m.text} />}
                       </>
                     )}
                     <span className="meta">{when(m.at)}{m.mine && c.type === 'DIRECT' && <span className={m.readByOther ? 'ticks read' : 'ticks'} aria-label={m.readByOther ? 'gelesen' : 'zugestellt'}>{m.readByOther ? ' ✓✓' : ' ✓'}</span>}</span>
@@ -116,4 +117,9 @@ export default function ChatThread() {
       </div>
     </div>
   );
+}
+
+function MsgText({ id, text }: { id: string; text: string }) {
+  const t = useTx('CHAT_MESSAGE', id, 'body', text);
+  return <span className="pre" lang={t.lang}>{t.text}{t.translated && <span className="xs muted"> · übersetzt</span>}</span>;
 }

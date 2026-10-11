@@ -427,3 +427,6 @@ button.folder { text-align: left; width: 100%; font: inherit; color: inherit; cu
   .album { gap: 8mm; } .album-card { box-shadow: none; }
 }
 .kcard ~ .btn { justify-self: start; }
+/* Übersetzung (ADR-054) */
+.txbar { display: flex; gap: .75rem; align-items: center; padding: .45rem 1rem; background: var(--info-tint); color: var(--info-ink); font-size: .88rem; }
+.prose[data-plain] p { white-space: pre-line; font-size: 1.08em; }

@@ -1,5 +1,6 @@
 'use client';
 
+import { Body, Tx } from '@/lib/translate';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -8,7 +9,6 @@ import { useBadges } from '@/lib/badges';
 import { when } from '@/lib/time';
 import { Avatar } from '@/components/content/Avatar';
 import { Images, ImageRef } from '@/components/content/Images';
-import { RichText } from '@/components/content/MentionText';
 import { ContentReactions, Reaction } from '@/components/content/Reactions';
 import { Comments } from '@/components/content/Comments';
 import { ReadStatus } from '@/components/content/ReadStatus';
@@ -40,10 +40,10 @@ export default function NewsDetail() {
             {n.important && <span className="chip warn">Wichtig</span>}
             {n.audiences.map((a) => <span key={a} className="chip">an: {a}</span>)}
           </div>
-          <h1>{n.title}</h1>
+          <h1><Tx e="CONTENT_ITEM" id={n.id} text={n.title} /></h1>
           <div className="row"><Avatar name={n.author.name} id={n.author.id} size="s" /><span className="small muted"><strong className="fg">{n.author.name}</strong>{n.author.job ? ` · ${n.author.job}` : ''} · {n.scheduledFor ? scheduledText(n.scheduledFor) : when(n.publishedAt)}</span></div>
           {n.scheduledFor && <div className="note info small">Noch nicht veröffentlicht – nur du siehst diese Mitteilung bis {scheduledText(n.scheduledFor).replace('geplant für ', '')}.</div>}
-          <div className="prose"><RichText text={n.text} /></div>
+          <Body id={n.id} text={n.text} />
           <Images images={n.images} />
           {n.poll && <PollView contentId={n.id} initial={n.poll} />}
           <div className="row wrap actions-bar">

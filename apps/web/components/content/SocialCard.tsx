@@ -1,5 +1,6 @@
 'use client';
 
+import { Tx, useTx } from '@/lib/translate';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -15,6 +16,7 @@ import { Icon } from '../Icon';
 
 export function SocialCard({ p, full = false, onChange, autoOpen = false }: { p: SocialPost; full?: boolean; onChange?: () => void; autoOpen?: boolean }) {
   const router = useRouter();
+  const text = useTx('CONTENT_ITEM', p.id, 'body', p.text);
   async function ask() {
     if (!p.author.id) return;
     const r = await api<{ id: string }>('/chat/direct', { method: 'POST', json: { userId: p.author.id } });
@@ -27,8 +29,8 @@ export function SocialCard({ p, full = false, onChange, autoOpen = false }: { p:
         <span className="grow"><strong>{p.author.name}</strong><span className="block small muted">{when(p.publishedAt)}</span></span>
         <span className="chip">{CATEGORIES[p.category] ?? p.category}</span>
       </div>
-      {full ? <h1 className="h-social">{p.title}</h1> : <Link href={`/social/${p.id}`} className="title-link"><strong className="title">{p.title}</strong></Link>}
-      {p.kudos && <KudosCard k={p.kudos} text={p.text} author={p.author.name} id={p.id} autoOpen={autoOpen} />}
+      {full ? <h1 className="h-social"><Tx e="CONTENT_ITEM" id={p.id} text={p.title} /></h1> : <Link href={`/social/${p.id}`} className="title-link"><strong className="title"><Tx e="CONTENT_ITEM" id={p.id} text={p.title} /></strong></Link>}
+      {p.kudos && <KudosCard k={p.kudos} text={text.text} author={p.author.name} id={p.id} autoOpen={autoOpen} />}
       {p.category === 'MARKETPLACE' && (
         <div className="row wrap gap-s">
           <span className={`chip ${p.intent === 'SEARCH' ? 'info' : 'ok'}`}>{p.intent === 'SEARCH' ? 'Suche' : 'Biete'}</span>
@@ -36,7 +38,7 @@ export function SocialCard({ p, full = false, onChange, autoOpen = false }: { p:
           {p.closed && <span className="chip">erledigt</span>}
         </div>
       )}
-      {p.text && !p.kudos && (full ? <div className="prose"><RichText text={p.text} /></div> : <p className="excerpt">{p.text.length > 240 ? `${p.text.slice(0, 240)} …` : p.text}</p>)}
+      {p.text && !p.kudos && (full ? <div className="prose" lang={text.lang}><RichText text={text.text} /></div> : <p className="excerpt" lang={text.lang}>{text.text.length > 240 ? `${text.text.slice(0, 240)} …` : text.text}</p>)}
       <Images images={p.images} />
       <div className="row wrap actions-bar">
         <ContentReactions key={p.id} contentId={p.id} initial={p.reactions} />

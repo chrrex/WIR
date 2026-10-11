@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Avatar } from './content/Avatar';
+import { TranslateBar } from './TranslateBar';
 import { api } from '@/lib/api';
 import { useMe } from '@/lib/me';
 import { NAV } from '@/lib/nav';
@@ -81,6 +82,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <Link className="avatar" href="/einstellungen" aria-label={`Einstellungen von ${me.user.displayName}`}><Avatar name={me.user.displayName} id={me.user.id} v={v} /></Link>
           <button className="iconbtn" onClick={logout} aria-label="Abmelden" title="Abmelden"><Icon name="logout" /></button>
         </header>
+        <TranslateBar />
         <main className="content" id="inhalt">{children}</main>
       </div>
 

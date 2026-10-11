@@ -537,6 +537,15 @@ Für Vorführungen und Tests: Auf der Anmeldeseite eine Personenauswahl, in der 
 - **Danke-Album**: eigene Karten als Druckansicht („Als PDF speichern“) – nur für die Person selbst.
 - Migration `20261011030000_danke_karten_plus`.
 
+## ADR-054 · Automatische Übersetzung und Leichte Sprache — ENTSCHIEDEN (11.10.2026, Anbieter offen → ADR-022)
+
+- In den Einstellungen: eigene Sprache (de, en, pl, uk, ro, bg, hu, tr, es, id), „automatisch übersetzen“ und „Leichte Sprache“ (`user_settings.locale/auto_translate/plain_language`, schon im Modell vorhanden – keine Migration).
+- Übersetzt werden News, Übergaben, Social (inkl. Danke-Karten), Wissen, Kommentare und Chat – Titel und Text. Die Oberfläche (Menü, Knöpfe) bleibt vorerst deutsch.
+- Das Original wird nie verändert. Ein Hinweis oben zeigt, dass übersetzt wird, mit „Original anzeigen“ (gilt für die Sitzung). Übersetzte Texte tragen das passende `lang`-Attribut (Screenreader).
+- Server lädt das Original selbst und nur, was die Person sehen darf (gleiche Sichtbarkeit wie der Inhalt). Ergebnis im Zwischenspeicher `content_translations` (Schlüssel inkl. Hash des Originals – bei Änderung wird neu übersetzt).
+- Quellsprache = Sprache der Autor:in beim Schreiben; gleiche Sprache wird nicht übersetzt. Redaktionell gepflegte „Einfache Sprache“ im Wissen hat Vorrang vor der Maschine.
+- Anbieter austauschbar über Umgebungsvariablen: DeepL (Übersetzung), OpenAI-kompatibles KI-Modell (Leichte Sprache, ersatzweise Übersetzung). Ohne Anbieter: nur bereits vorhandene Übersetzungen (Demo: hinterlegte Beispiele für Polnisch und Leichte Sprache).
+
 ## Nächste Schritte
 
 1. Anbieterauswahl (ADR-022) bestätigen und Gastromatic-Prüfauftrag (ADR-021) stellen.

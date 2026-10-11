@@ -14,6 +14,7 @@ import { PrismaService } from '../src/common/prisma.service';
 import { PushService, inQuietHours } from '../src/notifications/push.service';
 import { JobsService } from '../src/work/jobs.service';
 import { ContentService } from '../src/content/content.service';
+import { TranslateService } from '../src/translate/translate.service';
 import { nextOccurrence } from '../src/work/recurrence';
 import { config } from '../src/common/config';
 
@@ -313,5 +314,36 @@ describe('Neue Funktionen (e2e)', () => {
     expect(n.title).toBe('„Bankett Probe“ ist vorbei – magst du Team Küche danken?');
     expect(n.linkPath).toContain('/social/danke?anlass=Bankett+Probe&group=');
     expect((await sven.get('/api/v1/social/thanks/reminders').expect(200)).body).toHaveLength(0);
+  });
+
+  test('Übersetzung: eigene Sprache, Leichte Sprache, Zwischenspeicher, nur Sichtbares (ADR-054)', async () => {
+    const calls: string[] = [];
+    app.get(TranslateService).provider = {
+      translate: { name: 'test', run: async (t, target) => { calls.push(...t); return t.map((x) => `[${target}] ${x}`); } },
+      plain: { name: 'test-plain', run: async (t) => t.map((x) => `[leicht] ${x}`) },
+    };
+    const ana = await as('ana.f');
+    expect((await ana.get('/api/v1/translations/languages').expect(200)).body.languages.pl).toBe('Polski');
+    await ana.patch('/api/v1/me/settings').send({ locale: 'xx' }).expect(400);
+    await ana.patch('/api/v1/me/settings').send({ locale: 'pl', autoTranslate: true }).expect(200);
+    const news = (await ana.get('/api/v1/news').expect(200)).body[0];
+    const items = [{ entity: 'CONTENT_ITEM', id: news.id, field: 'title' }, { entity: 'CONTENT_ITEM', id: news.id, field: 'body' }];
+    const r1 = (await ana.post('/api/v1/translations').send({ items }).expect(200)).body;
+    expect(r1.items[0]).toMatchObject({ text: `[pl] ${news.title}`, from: 'de' });
+    expect(calls).toHaveLength(2);
+    await ana.post('/api/v1/translations').send({ items }).expect(200);
+    expect(calls).toHaveLength(2); // aus dem Zwischenspeicher
+    expect((await ana.post('/api/v1/translations').send({ items, plain: true }).expect(200)).body.items[0].text).toBe(`[leicht] ${news.title}`);
+    // Was jemand nicht sehen darf, wird auch nicht übersetzt
+    const hidden = (await prisma.db.contentItem.findFirstOrThrow({ where: { type: 'HANDOVER', recipients: { none: { userId: await uid('ana.f') } } } })).id;
+    expect((await ana.post('/api/v1/translations').send({ items: [{ entity: 'CONTENT_ITEM', id: hidden, field: 'title' }] }).expect(200)).body.items[0].text).toBeNull();
+    // Wer auf Polnisch schreibt, bekommt sein Original zurück; Deutschsprachige die Übersetzung
+    const conv = (await ana.post('/api/v1/chat/direct').send({ userId: await uid('jana.m') }).expect(201)).body;
+    const m = (await ana.post(`/api/v1/chat/${conv.id}/messages`).send({ text: 'Dzień dobry!' }).expect(201)).body;
+    const mid = m.id ?? (await prisma.db.chatMessage.findFirstOrThrow({ where: { body: 'Dzień dobry!' } })).id;
+    expect((await ana.post('/api/v1/translations').send({ items: [{ entity: 'CHAT_MESSAGE', id: mid, field: 'body' }] }).expect(200)).body.items[0]).toMatchObject({ text: 'Dzień dobry!', from: null });
+    await (await as('jana.m')).patch('/api/v1/me/settings').send({ locale: 'de' }).expect(200);
+    expect((await (await as('jana.m')).post('/api/v1/translations').send({ items: [{ entity: 'CHAT_MESSAGE', id: mid, field: 'body' }] }).expect(200)).body.items[0]).toMatchObject({ text: '[de] Dzień dobry!', from: 'pl' });
+    await ana.patch('/api/v1/me/settings').send({ locale: 'de', autoTranslate: false }).expect(200);
   });
 });
