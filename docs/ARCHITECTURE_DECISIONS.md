@@ -475,11 +475,14 @@ Ohne Datenbank-Migration – alle Tabellen waren vorbereitet.
 3. **Freigabe (Vier-Augen-Prinzip)** je Vorlage: nach Abschluss „wartet auf Freigabe“ an die Teamleitung; wer abgeschlossen hat, kann nicht selbst freigeben; Zurückweisen öffnet die Liste wieder und benachrichtigt mit Hinweis.
 4. **Ein- und Austritt:** Vorlagen (Personal) mit Schritten „Tag x“, zuständig die Person selbst oder ihre Teamleitung (sonst wer startet), optional Pflichtlektüre. Start (Abteilungsleitung, Personal) erzeugt je Schritt eine Aufgabe und gibt verlinkte Artikel/Dokumente der Person frei. Fortschritt sehen Person, Startende und `lifecycle.view_progress`. Plan schließt sich, wenn alle Schritte erledigt sind. Nach dem Freischalten in der Verwaltung direkt „Einarbeitung starten“.
 
-## ADR-044 · Freie Empfänger für Übergaben und News; Lesestatus in Listen — ENTSCHIEDEN (11.10.2026)
+## ADR-044 · Freie Empfänger, Teamleitungen an alle, Dokument-Kategorien, Lesestatus in Listen — ENTSCHIEDEN (11.10.2026)
 
 1. **Übergaben** haben kein festes Team mehr: Empfänger:innen frei kombinierbar aus Gruppen der eigenen Gesellschaft(en) und einzelnen Personen; mit @ Erwähnte kommen dazu. „Ganze Gesellschaft“ bzw. „alle“ nur mit `news.publish_wide` (wie News, ADR-037). Das Team einer Übergabe (Filter) ist die erste gewählte Gruppe, sonst das eigene Team.
 2. **News, Wissen, Dokumente, Umfragen:** Gruppen *und/oder* Gesellschaften in einer Auswahl, gegliedert nach „Alle & Gesellschaften“ und „Gruppen“. Leitplanke 2 aus ADR-037 präzisiert: **jede Gruppe der eigenen Gesellschaft** ist für alle erlaubt (vorher nur das eigene Team); ganze Gesellschaft/Stiftung weiterhin nur Leitungen.
-3. **Lesestatus in allen Listen** („8/12 gelesen“, bei Umfragen „teilgenommen“) für Autor:in und Leitungen – dieselben Regeln wie auf der Detailseite; Teamleitungen sehen ihn bei allem, was an ihr Team ging.
+3. **„Alle Mitarbeitenden der Gesellschaft“** (News, Übergaben) dürfen jetzt auch **Teamleitungen** – für die Gesellschaft ihres Teams (`news.publish_wide` über die eigene Gruppe). „Alle Gesellschaften der Stiftungsgruppe“ bleibt der Redaktion Stiftung vorbehalten. (Entscheidung Hoteldirektion 11.10.2026)
+4. **Dokument-Kategorien als Baum:** Unterkategorien beliebig tief, Ordneransicht mit Pfad, Suche über alle Dokumente; anlegen, umbenennen, ausblenden mit `documents.manage_categories` (Abteilungsleitung, Personal). „Vertraulich“ vererbt sich auf Unterkategorien; beim Verschieben in eine vertrauliche Kategorie verschwindet das Dokument aus Suche und KI. Kategorien mit Dokumenten lassen sich nicht ausblenden.
+5. **Startseite:** Social-Beiträge mit Foto bekommen ein kleines Kamera-Symbol.
+6. **Lesestatus in allen Listen** („8/12 gelesen“, bei Umfragen „teilgenommen“) für Autor:in und Leitungen – dieselben Regeln wie auf der Detailseite; Teamleitungen sehen ihn bei allem, was an ihr Team ging.
 
 ## Nächste Schritte
 

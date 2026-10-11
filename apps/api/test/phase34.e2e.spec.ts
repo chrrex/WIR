@@ -191,4 +191,21 @@ describe('Phase 3+4 (e2e)', () => {
     const janaOwn = (await prisma.db.contentItem.findMany({ where: { author: { username: 'jana.m' }, id: { in: ids } }, select: { id: true } })).map((i) => i.id);
     expect(Object.keys(jana).every((id) => janaOwn.includes(id))).toBe(true);
   });
+
+  test('Dokument-Kategorien: anlegen, vertraulich vererbt, verschieben, nicht leer ausblenden', async () => {
+    const sven = await as('sven.r');
+    await (await as('jana.m')).post('/api/v1/documents/categories').send({ name: 'Test' }).expect(403);
+    const hr = (await prisma.db.documentCategory.findFirstOrThrow({ where: { name: 'Personal (vertraulich)' } })).id;
+    const sub = (await (await as('lena.k')).post('/api/v1/documents/categories').send({ name: 'Zeugnisse', parentId: hr }).expect(201)).body.id;
+    const list = (await sven.get('/api/v1/documents').expect(200)).body;
+    expect(list.canManage).toBe(true);
+    expect(list.categories.find((c: { name: string }) => c.name === 'Urlaub & Abwesenheit').path).toBe('Vorlagen & Formulare › Urlaub & Abwesenheit');
+    // Dokument in vertrauliche Unterkategorie verschieben → aus der Suche
+    const doc = (await prisma.db.document.findFirstOrThrow({ where: { title: 'Temperaturliste Kühlräume' } })).id;
+    expect((await sven.get('/api/v1/search?q=Temperaturliste').expect(200)).body.results.length).toBe(1);
+    await sven.patch(`/api/v1/documents/${doc}`).send({ categoryId: sub }).expect(200);
+    expect((await sven.get('/api/v1/search?q=Temperaturliste').expect(200)).body.results.length).toBe(0);
+    expect((await sven.get('/api/v1/documents').expect(200)).body.categories.find((c: { id: string }) => c.id === sub).sensitive).toBe(true);
+    await sven.patch(`/api/v1/documents/categories/${sub}`).send({ isActive: false }).expect(400); // nicht leer
+  });
 });

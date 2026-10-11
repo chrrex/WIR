@@ -48,7 +48,7 @@ const EMPLOYEE: PermissionKey[] = [
 ];
 
 const TEAM_LEAD: PermissionKey[] = [
-  ...EMPLOYEE, 'chat.create_group', 'news.mark_important', 'handovers.update_any',
+  ...EMPLOYEE, 'chat.create_group', 'news.mark_important', 'news.publish_wide', 'handovers.update_any',
   'read_status.view_summary', 'read_status.view_details', 'reminders.send_manual',
   'tasks.create', 'tasks.assign', 'checklists.approve', 'absences.view_team',
   'lifecycle.view_progress', 'surveys.create', 'surveys.view_results',
@@ -71,7 +71,7 @@ export const ROLES: RoleDefinition[] = [
   {
     key: 'department_head', name: 'Abteilungsleitung', description: 'Wie Teamleitung für die Gesellschaft, zusätzlich Wissen und Vorlagen.',
     permissions: [...TEAM_LEAD, 'knowledge.publish', 'knowledge.create', 'knowledge.update', 'knowledge.require_acknowledgement', 'documents.create', 'documents.update',
-      'documents.deactivate', 'checklists.manage_templates', 'checklists.view_reports', 'lifecycle.start', 'ideas.manage', 'news.pin', 'news.publish_wide', 'contacts.manage'],
+      'documents.deactivate', 'checklists.manage_templates', 'checklists.view_reports', 'lifecycle.start', 'ideas.manage', 'news.pin', 'contacts.manage', 'documents.manage_categories'],
   },
   {
     key: 'editor_knowledge', name: 'Redaktion Wissen', description: 'Pflegt Wissen & SOPs.',
@@ -80,7 +80,7 @@ export const ROLES: RoleDefinition[] = [
   },
   {
     key: 'hr', name: 'Personal', description: 'Personalthemen der Gesellschaft; Freischaltung neuer Kolleg:innen.',
-    permissions: ['users.read', 'users.manage', 'users.reset_password', 'lifecycle.start', 'lifecycle.view_progress', 'lifecycle.manage_templates', 'absences.manage'],
+    permissions: ['users.read', 'users.manage', 'users.reset_password', 'documents.manage_categories', 'lifecycle.start', 'lifecycle.view_progress', 'lifecycle.manage_templates', 'absences.manage'],
   },
   {
     key: 'management', name: 'Geschäftsleitung', description: 'Gesellschaftsübergreifende Sicht, lesend.',

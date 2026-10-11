@@ -63,7 +63,7 @@ export class AudienceService {
 
   /**
    * Darf die Person diese Zielgruppen für News nutzen? (ADR-037)
-   * Eigene Teams immer; ganze Gesellschaft/Stiftung nur mit news.publish_wide im passenden Scope.
+   * Gruppen der eigenen Gesellschaft immer; ganze Gesellschaft nur Teamleitungen und höher, alle Gesellschaften nur mit Recht an der Stiftung.
    */
   async assertNewsTargets(ctx: PolicyContext, targets: AudienceTarget[]) {
     if (!targets.length) throw new BadRequestException('Bitte wähle mindestens eine Zielgruppe.');
@@ -74,7 +74,7 @@ export class AudienceService {
         const root = companies.find((c) => !c.parentId);
         if (!root || !can(ctx, 'news.publish_wide', { companyId: root.id })) throw new ForbiddenException('An alle Gesellschaften darfst du nicht schreiben.');
       } else if (t.type === 'COMPANY') {
-        if (!can(ctx, 'news.publish_wide', { companyId: t.companyId })) throw new ForbiddenException('An die ganze Gesellschaft schreiben Abteilungsleitungen und Direktion.');
+        if (!(await this.wideAllowed(ctx, t.companyId))) throw new ForbiddenException('An alle Mitarbeitenden der Gesellschaft schreiben Teamleitungen, Abteilungsleitungen und Direktion.');
       } else if (t.type === 'GROUP') {
         const g = groups.find((x) => x.id === t.groupId);
         if (!g) throw new BadRequestException('Diese Gruppe gibt es nicht.');
@@ -83,6 +83,16 @@ export class AudienceService {
         throw new BadRequestException('News gehen an Gruppen oder Gesellschaften, nicht an einzelne Personen.');
       }
     }
+  }
+
+  /**
+   * „Alle Mitarbeitenden“ einer Gesellschaft (ADR-045): mit news.publish_wide für die Gesellschaft –
+   * oder als Teamleitung (Recht über die eigene Gruppe) für die Gesellschaft dieser Gruppe.
+   */
+  private async wideAllowed(ctx: PolicyContext, companyId: string) {
+    if (can(ctx, 'news.publish_wide', { companyId })) return true;
+    const groups = await this.prisma.db.group.findMany({ where: { id: { in: ctx.groupIds }, companyId }, select: { id: true } });
+    return groups.some((g) => can(ctx, 'news.publish_wide', { groupId: g.id, companyId }));
   }
 
   /** Gruppe gehört zu einer der eigenen Gesellschaften (oder darunter, z. B. Stiftung → SGL). */
@@ -116,7 +126,7 @@ export class AudienceService {
     const options: Array<{ key: string; label: string; company?: string; target: AudienceTarget; wide: boolean }> = [];
     if (root && can(ctx, 'news.publish_wide', { companyId: root.id })) options.push({ key: 'ALL', label: 'Alle Gesellschaften der Stiftungsgruppe', target: { type: 'ALL' }, wide: true });
     for (const c of companies) {
-      if (c.kind !== 'FOUNDATION' && can(ctx, 'news.publish_wide', { companyId: c.id })) {
+      if (c.kind !== 'FOUNDATION' && (await this.wideAllowed(ctx, c.id))) {
         options.push({ key: `C:${c.id}`, label: `Alle Mitarbeitenden · ${c.name}`, target: { type: 'COMPANY', companyId: c.id }, wide: true });
       }
     }

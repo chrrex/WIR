@@ -5,6 +5,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import sharp from 'sharp';
 import type { PrismaClient } from '../src/generated/client';
 import { indexContent } from '../src/search';
 
@@ -100,6 +101,9 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
   const dForms = (await prisma.documentCategory.create({ data: { name: 'Vorlagen & Formulare', sortOrder: 1 } })).id;
   const dKitchen = (await prisma.documentCategory.create({ data: { name: 'Küche & HACCP', sortOrder: 2 } })).id;
   const dHr = (await prisma.documentCategory.create({ data: { name: 'Personal (vertraulich)', sortOrder: 3, isSensitive: true } })).id;
+  const dLeave = (await prisma.documentCategory.create({ data: { name: 'Urlaub & Abwesenheit', parentId: dForms, sortOrder: 1 } })).id;
+  await prisma.documentCategory.create({ data: { name: 'Reinigungspläne', parentId: dKitchen, sortOrder: 1 } });
+  await prisma.documentCategory.create({ data: { name: 'Verträge', parentId: dHr, sortOrder: 1 } });
   async function doc(o: { author: string; category: string; title: string; description: string; audience: Parameters<typeof item>[3]; recipients: string[]; sensitive?: boolean; versions: string[] }) {
     const id = await item('DOCUMENT', o.author, 300, o.audience, o.recipients, { commentsEnabled: false, reactionsEnabled: false, currentVersion: o.versions.length });
     await prisma.document.create({ data: { id, categoryId: o.category, title: o.title, description: o.description } });
@@ -108,7 +112,7 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
     }
     if (!o.sensitive) await indexContent(prisma, id, o.versions.length, o.title, o.description);
   }
-  await doc({ author: lena, category: dForms, title: 'Urlaubsantrag', description: 'Formular für Urlaub und Freizeitausgleich. Bitte ausgefüllt bei deiner Leitung abgeben.', audience: house, recipients: c.sglPeople, versions: ['Erste Fassung', 'Neues Feld für Resturlaub'] });
+  await doc({ author: lena, category: dLeave, title: 'Urlaubsantrag', description: 'Formular für Urlaub und Freizeitausgleich. Bitte ausgefüllt bei deiner Leitung abgeben.', audience: house, recipients: c.sglPeople, versions: ['Erste Fassung', 'Neues Feld für Resturlaub'] });
   await doc({ author: T('sven.r'), category: dKitchen, title: 'Temperaturliste Kühlräume', description: 'Vorlage zum Ausdrucken, falls das Tablet ausfällt. Grenzwerte für Kühlraum, Tiefkühlraum und Patisserie.', audience: [{ targetType: 'GROUP', groupId: G('Küche') }], recipients: c.membersOf('Küche'), versions: ['Erste Fassung'] });
   await doc({ author: lena, category: dHr, title: 'Checkliste Personalakte', description: 'Welche Unterlagen bei einer Einstellung in die Personalakte gehören.', audience: [{ targetType: 'GROUP', groupId: G('Personal & Verwaltung') }], recipients: c.membersOf('Personal & Verwaltung'), sensitive: true, versions: ['Erste Fassung'] });
 
@@ -212,6 +216,20 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
     { sortOrder: 2, offsetDays: 0, title: 'Schlüssel und Dienstkleidung zurückgeben', responsibleType: 'SUBJECT_EMPLOYEE' },
     { sortOrder: 3, offsetDays: 0, title: 'Abschlussgespräch und Zugang beenden', responsibleType: 'LINE_MANAGER' },
   ] } } });
+
+  // Social: Urlaubsgruß mit (generiertem) Foto – zeigt das Foto-Symbol auf der Startseite
+  const ostsee = await prisma.post.findFirst({ where: { title: 'Grüße von der Ostsee' }, include: { contentItem: true } });
+  if (ostsee) {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800"><defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9cc9e8"/><stop offset="1" stop-color="#e9f3f9"/></linearGradient></defs>
+      <rect width="1200" height="520" fill="url(#s)"/><circle cx="930" cy="170" r="70" fill="#ffd66b"/><rect y="500" width="1200" height="140" fill="#3f7fa8"/><rect y="630" width="1200" height="170" fill="#e8d6a8"/></svg>`;
+    const data = await sharp(Buffer.from(svg)).webp({ quality: 80 }).toBuffer();
+    const id = randomUUID();
+    const rel = path.join('seed', `${id}.webp`);
+    await mkdir(path.join(storage, 'seed'), { recursive: true });
+    await writeFile(path.join(storage, rel), data);
+    await prisma.fileObject.create({ data: { id, storageKey: rel, originalFilename: 'ostsee.webp', mimeType: 'image/webp', sizeBytes: BigInt(data.length), checksumSha256: createHash('sha256').update(data).digest('hex'), scanStatus: 'CLEAN', uploadedById: ostsee.contentItem.authorId } });
+    await prisma.attachment.create({ data: { fileObjectId: id, contentItemId: ostsee.id, kind: 'IMAGE', altText: 'Strand an der Ostsee mit Sonne', sortOrder: 0 } });
+  }
 
   // Bestehende News in den Suchindex
   const news = await prisma.contentItem.findMany({ where: { type: 'POST', post: { kind: 'NEWS' } }, include: { post: true } });

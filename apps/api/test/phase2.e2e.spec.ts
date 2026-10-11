@@ -176,6 +176,11 @@ describe('Phase 2 (e2e)', () => {
       await (await as('tobias.k')).get(`/api/v1/handovers/${mix.body.id}`).expect(404);
       const sgl = (await prisma.db.company.findFirstOrThrow({ where: { shortName: 'SGL' } })).id;
       await jana.post('/api/v1/handovers').send({ targets: [`C:${sgl}`], shiftLabel: 'Früh', subject: 'An alle', text: 'x' }).expect(403);
+      // Teamleitung darf an alle Mitarbeitenden der eigenen Gesellschaft (ADR-045), nicht an die ganze Stiftungsgruppe
+      const maren = await as('maren.h');
+      expect((await maren.get('/api/v1/handovers/options').expect(200)).body.audiences.map((a: { key: string }) => a.key)).toContain(`C:${sgl}`);
+      await maren.post('/api/v1/handovers').send({ targets: [`C:${sgl}`], shiftLabel: 'Tag', subject: 'Fluchtwege frei halten', text: 'Bitte an alle.' }).expect(201);
+      await maren.post('/api/v1/news').send({ title: 'An alle', text: 'x', targets: ['ALL'] }).expect(403);
       // Stiftung: Modul ausgeschaltet (ADR-039) – seit Phase 3+4 sperrt das auch die API
       await (await as('nora.s')).get('/api/v1/handovers').expect(403);
     });
