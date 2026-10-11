@@ -570,6 +570,15 @@ Für Vorführungen und Tests: Auf der Anmeldeseite eine Personenauswahl, in der 
 - **Versionen:** Bearbeiten erzeugt eine neue Version; laufende und erledigte Durchläufe behalten ihre Punkte (Nachweis, z. B. HACCP).
 - **Starten:** Wer zugewiesen ist (oder bearbeiten darf), startet für alle Zugewiesenen; sonst startet man nur für sich selbst.
 
+## ADR-057 · Startseite: „Heute im Haus“ und eigene Auswahl — ENTSCHIEDEN (11.10.2026)
+
+- **Schmale Kennzahlen-Leiste** über allen Inhalten: Auslastung, Anreisen, Abreisen (mit Gästen im Haus), Zimmer fertig, Veranstaltungen, Im Dienst, Wetter, Geburtstage, Neu & Jubiläen, „Für dich heute“ (fällige Aufgaben und Checklisten). Große Zahl, kurze Einordnung, Farbe nur bei Ausnahmen (z. B. nachmittags noch Zimmer offen, Überfälliges). Am Handy waagerecht wischbar.
+- **Ab 18 Uhr** zeigen die Hauszahlen und das Wetter den nächsten Tag („Morgen im Haus“).
+- **Quellen:** Mews Connector API (Belegung über `services/getAvailability` mit `Occupied`/`ActiveResources`/`OutOfOrderBlocks`, An-/Abreisen über `reservations/getAll`, Zimmerstatus über `resources/getAll`), Wetter über Open-Meteo (frei, ohne Schlüssel). Abruf im Hintergrund mit Zwischenspeicher (Haus 10 Min., Wetter 30 Min.); bei Ausfall bleibt der letzte Stand. Veranstaltungen (Eventtool) und Dienst (Gastromatic) folgen mit eigener Anbindung.
+- **Ohne Mews-Zugang** gibt es Hauszahlen nur im Demo-Modus – mit erfundenen, je Tag gleichbleibenden Zahlen, deutlich als „Demo-Zahlen“ markiert.
+- **Datenschutz:** nur Summen, keine Gästenamen. Geburtstage freiwillig, ohne Jahr, nur im eigenen Haus; Dienstjubiläen nur mit Zustimmung. Einstellbar unter Einstellungen → Geburtstag & Jubiläum.
+- **Eigene Auswahl:** Jede:r blendet Kacheln und Bereiche ein und aus und sortiert sie („Anpassen“); gespeichert in `dashboard_preferences`, nur für die eigene Person.
+
 ## Nächste Schritte
 
 1. Anbieterauswahl (ADR-022) bestätigen und Gastromatic-Prüfauftrag (ADR-021) stellen.

@@ -10,6 +10,7 @@ import { PushSettings } from '@/components/PushSettings';
 import { ProfileSettings } from '@/components/ProfileSettings';
 import { MyThanks } from '@/components/MyThanks';
 import { LanguageSettings } from '@/components/LanguageSettings';
+import { CelebrateSettings } from '@/components/CelebrateSettings';
 
 export default function SettingsPage() {
   const { me, refresh } = useMe();
@@ -48,6 +49,7 @@ export default function SettingsPage() {
       {error && <div className="note warn" role="alert">{error}</div>}
 
       <LanguageSettings save={save} />
+      <CelebrateSettings save={save} />
       <section className="card stack">
         <h2>Darstellung & Barrierefreiheit</h2>
         <div className="field">

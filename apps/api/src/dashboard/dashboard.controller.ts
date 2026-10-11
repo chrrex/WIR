@@ -1,10 +1,15 @@
-import { Controller, Get, Req } from '@nestjs/common';
+import { Body, Controller, Get, Put, Req } from '@nestjs/common';
+import { z } from 'zod';
+import { ZodPipe } from '../common/zod.pipe';
+import { berlinMidnight, houseData, weatherText } from './house';
 import type { AppModule } from '@wir/db';
 import { PrismaService } from '../common/prisma.service';
 import { CurrentUser, RequirePermission, SessionUser } from '../auth/decorators';
 import { can, PolicyContext } from '../policy/engine';
 import { MODULE_PERMISSION, enabledModules } from '../me/branding';
 import { ContentService } from '../content/content.service';
+
+const Prefs = z.object({ items: z.array(z.object({ key: z.string().regex(/^(kpi|w):[a-z]{2,20}$/), visible: z.boolean() })).max(40) });
 
 interface Widget {
   key: string;
@@ -27,7 +32,6 @@ const WIDGETS: Array<Omit<Widget, 'state'> & { readyInPhase: number }> = [
   { key: 'checklists', title: 'Checklisten heute', module: 'CHECKLISTS', readyInPhase: 4, text: 'HACCP- und Schichtchecklisten, die heute fällig sind.' },
   { key: 'events', title: 'Veranstaltungen & Räume heute', module: 'EVENTS', readyInPhase: 5, text: 'Aus dem Eventtool – sobald die Anbindung steht.' },
   { key: 'shift', title: 'Mein Dienstplan', module: 'SHIFTS', readyInPhase: 5, text: 'Aus Gastromatic – sobald die Anbindung geprüft ist.' },
-  { key: 'occupancy', title: 'Haus heute', module: 'OCCUPANCY', readyInPhase: 5, text: 'Belegung in %, An- und Abreisen aus Flexkeeping.' },
   { key: 'surveys', title: 'Offene Umfrage', module: 'SURVEYS', readyInPhase: 4, text: 'Kurze, auf Wunsch anonyme Umfragen.' },
 ];
 
@@ -94,6 +98,104 @@ export class DashboardController {
       ? companies.filter((c) => c.kind !== 'FOUNDATION').map((c) => ({ id: c.id, name: c.name, active: c.isActive }))
       : null;
 
-    return { widgets, companyOverview, isFoundation, important };
+    return { widgets, companyOverview, isFoundation, important, prefs: await this.prefs(me.id) };
+  }
+
+  private prefs(userId: string) {
+    return this.prisma.db.dashboardPreference.findMany({ where: { userId }, orderBy: { sortOrder: 'asc' }, select: { widgetKey: true, isVisible: true } })
+      .then((r) => r.map((p) => ({ key: p.widgetKey, visible: p.isVisible })));
+  }
+
+  /** Eigene Auswahl und Reihenfolge von Kacheln (kpi:…) und Widgets (w:…) speichern (ADR-057). */
+  @RequirePermission('dashboard.view')
+  @Put('prefs')
+  async savePrefs(@CurrentUser() me: SessionUser, @Body(new ZodPipe(Prefs)) body: z.infer<typeof Prefs>) {
+    const db = this.prisma.db;
+    await db.$transaction([
+      db.dashboardPreference.deleteMany({ where: { userId: me.id } }),
+      db.dashboardPreference.createMany({ data: body.items.map((i, n) => ({ userId: me.id, widgetKey: i.key, isVisible: i.visible, sortOrder: n })) }),
+    ]);
+    return this.prefs(me.id);
+  }
+
+  /** Leiste „Heute im Haus“ (ADR-057): Hauszahlen (Mews oder Demo), Wetter und Persönliches. Ab 18 Uhr zeigen die Hauszahlen morgen. */
+  @RequirePermission('dashboard.view')
+  @Get('today')
+  async today(@CurrentUser() me: SessionUser, @Req() req: { policy: PolicyContext }) {
+    const ctx = req.policy;
+    const db = this.prisma.db;
+    const companies = await db.company.findMany({ include: { branding: true } });
+    const modules = enabledModules(ctx.companyIds, companies).filter((m) => can(ctx, MODULE_PERMISSION[m]));
+    const now = new Date();
+    const evening = Number(new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hourCycle: 'h23', timeZone: 'Europe/Berlin' }).format(now)) >= 18;
+    const md = (d: Date) => new Intl.DateTimeFormat('en-CA', { month: '2-digit', day: '2-digit', timeZone: 'Europe/Berlin' }).format(d).replace('/', '-');
+    const weekday = (d: Date) => new Intl.DateTimeFormat('de-DE', { weekday: 'short', timeZone: 'Europe/Berlin' }).format(d);
+    const n = (x: number) => x.toLocaleString('de-DE');
+    const tiles: Tile[] = [];
+
+    // ---- Haus (Mews bzw. Demo) – nur Summen
+    const house = await houseData();
+    if (house.days && modules.some((m) => m === 'OCCUPANCY' || m === 'EVENTS' || m === 'SHIFTS')) {
+      const d = evening ? house.days.tomorrow : house.days.today;
+      const demo = house.demo;
+      if (modules.includes('OCCUPANCY')) {
+        tiles.push(
+          { key: 'occupancy', label: 'Auslastung', value: `${d.occupancy} %`, sub: d.occupancy >= 98 ? 'Volles Haus 🎉' : evening ? `heute ${house.days.today.occupancy} %` : `morgen ${house.days.tomorrow.occupancy} %`, tone: d.occupancy >= 95 ? 'good' : undefined, demo },
+          { key: 'arrivals', label: 'Anreisen', value: n(d.arrivals), sub: d.arrivalGroups ? `davon ${d.arrivalGroups} ${d.arrivalGroups === 1 ? 'Gruppe' : 'Gruppen'}` : 'keine Gruppe', demo },
+          { key: 'departures', label: 'Abreisen', value: n(d.departures), sub: `${n(d.guests)} Gäste im Haus`, demo },
+        );
+        if (!evening) {
+          const open = d.roomsToClean - d.roomsReady;
+          tiles.push({ key: 'rooms', label: 'Zimmer fertig', value: `${d.roomsReady} / ${d.roomsToClean}`, sub: open > 0 ? `noch ${open} offen` : 'alle fertig ✓', tone: open > 0 && now.getTime() > berlinMidnight(0).getTime() + 14 * 36e5 ? 'warn' : undefined, demo });
+        }
+      }
+      if (modules.includes('EVENTS') && (d.events || demo)) tiles.push({ key: 'events', label: 'Veranstaltungen', value: n(d.events), sub: d.events ? `${n(d.eventGuests)} Personen` : 'keine', demo });
+      if (modules.includes('SHIFTS') && (d.onDuty || demo)) tiles.push({ key: 'duty', label: 'Im Dienst', value: n(d.onDuty), sub: d.onDutyTeams, demo });
+    }
+    if (house.weather) {
+      const w = evening ? house.weather.tomorrow : house.weather.today;
+      const [txt, ico] = weatherText(w.code);
+      tiles.push({ key: 'weather', label: evening ? 'Wetter morgen' : 'Wetter', value: `${ico} ${w.temp}°`, sub: `${txt}${w.rain >= 30 ? ` · Regen ${w.rain} %` : ''}${evening ? '' : ` · bis ${w.max}°`}`, demo: house.weather.demo });
+    }
+
+    // ---- Menschen: Geburtstage (freiwillig, ohne Jahr) und Neu & Jubiläen – nur im eigenen Haus
+    const days = Array.from({ length: 7 }, (_, i) => new Date(now.getTime() + i * 864e5));
+    const inHouse = { deactivatedAt: null, employeeProfile: { companyId: { in: ctx.companyIds } } };
+    let celebrate: string | null = null;
+    const mine = await db.user.findUnique({ where: { id: me.id }, include: { settings: true, employeeProfile: true } });
+    if (mine?.settings?.birthdayMonthDay === md(now)) celebrate = `Alles Gute zum Geburtstag, ${mine.employeeProfile?.firstName ?? mine.displayName}! 🎂`;
+    if (modules.includes('SOCIAL')) {
+      const bdays = await db.user.findMany({ where: { ...inHouse, settings: { showBirthday: true, birthdayMonthDay: { in: days.map(md) } } }, select: { displayName: true, settings: { select: { birthdayMonthDay: true } }, employeeProfile: { select: { firstName: true } } } });
+      const first = (u: (typeof bdays)[number]) => u.employeeProfile?.firstName ?? u.displayName;
+      const today = bdays.filter((u) => u.settings!.birthdayMonthDay === md(now));
+      const next = days.slice(1).map((d) => ({ d, u: bdays.find((u) => u.settings!.birthdayMonthDay === md(d)) })).find((x) => x.u);
+      tiles.push({ key: 'birthdays', label: today.length === 1 ? 'Geburtstag' : 'Geburtstage', value: today.length ? `🎂 ${today.length}` : '–', sub: today.length ? today.map(first).join(', ') : next ? `nächster: ${first(next.u!)} (${weekday(next.d)})` : 'diese Woche keiner', href: today.length ? '/social' : undefined });
+    }
+    if (modules.includes('TEAM')) {
+      const since = new Date(now.getTime() - 14 * 864e5);
+      const profiles = await db.employeeProfile.findMany({ where: { companyId: { in: ctx.companyIds }, entryDate: { not: null, lte: now }, user: { deactivatedAt: null } }, select: { firstName: true, entryDate: true, user: { select: { settings: { select: { showWorkAnniversary: true } } } } } });
+      const fresh = profiles.filter((p) => p.entryDate! >= since);
+      const jubilee = profiles.filter((p) => p.user.settings?.showWorkAnniversary && md(p.entryDate!) === md(now) && p.entryDate!.getUTCFullYear() < now.getFullYear());
+      const own = mine?.employeeProfile?.entryDate;
+      if (own && md(own) === md(now) && own.getUTCFullYear() < now.getFullYear()) celebrate ??= `Heute vor ${now.getFullYear() - own.getUTCFullYear()} Jahren hast du bei uns angefangen – danke, dass du dabei bist! 🎉`;
+      const parts = [fresh.length ? `neu: ${fresh.map((p) => p.firstName).join(', ')}` : '', ...jubilee.map((p) => `${now.getFullYear() - p.entryDate!.getUTCFullYear()} J.: ${p.firstName}`)].filter(Boolean);
+      tiles.push({ key: 'team', label: 'Neu & Jubiläen', value: n(fresh.length + jubilee.length), sub: parts.join(' · ') || 'gerade niemand', href: '/team' });
+    }
+
+    // ---- Für dich heute: Aufgaben und Checklisten, die bis heute Abend fällig sind
+    if (modules.includes('TASKS') || modules.includes('CHECKLISTS')) {
+      const end = berlinMidnight(1);
+      const visible = this.content.visibleWhere(me.id);
+      const [tasks, overdue, runs] = await Promise.all([
+        db.contentItem.count({ where: { type: 'TASK', ...visible, task: { dueAt: { lt: end }, status: { notIn: ['DONE', 'CANCELLED'] }, assignees: { some: { OR: [{ userId: me.id }, { groupId: { in: ctx.groupIds } }] } } } } }),
+        db.contentItem.count({ where: { type: 'TASK', ...visible, task: { dueAt: { lt: now }, status: { notIn: ['DONE', 'CANCELLED'] }, assignees: { some: { OR: [{ userId: me.id }, { groupId: { in: ctx.groupIds } }] } } } } }),
+        db.contentItem.count({ where: { type: 'CHECKLIST_RUN', ...visible, checklistRun: { dueAt: { lt: end }, status: { in: ['PLANNED', 'IN_PROGRESS'] }, OR: [{ assigneeUserId: null }, { assigneeUserId: me.id }] } } }),
+      ]);
+      tiles.push({ key: 'mine', label: 'Für dich heute', value: n(tasks + runs), sub: tasks + runs ? [tasks && `${tasks} ${tasks === 1 ? 'Aufgabe' : 'Aufgaben'}`, runs && `${runs} ${runs === 1 ? 'Checkliste' : 'Checklisten'}`].filter(Boolean).join(' · ') + (overdue ? ` · ${overdue} überfällig` : '') : 'nichts fällig ✓', tone: overdue ? 'warn' : undefined, href: tasks || !runs ? '/aufgaben' : '/checklisten' });
+    }
+
+    return { evening, asOf: house.days?.asOf ?? now.toISOString(), celebrate, tiles };
   }
 }
+
+interface Tile { key: string; label: string; value: string; sub: string; href?: string; tone?: 'warn' | 'good'; demo?: boolean }

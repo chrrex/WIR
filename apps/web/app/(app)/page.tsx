@@ -15,6 +15,17 @@ interface Dashboard {
   important: { id: string; title: string } | null;
   companyOverview: Array<{ id: string; name: string; active: boolean }> | null;
   isFoundation: boolean;
+  prefs: Pref[];
+}
+interface Pref { key: string; visible: boolean }
+interface Tile { key: string; label: string; value: string; sub: string; href?: string; tone?: 'warn' | 'good'; demo?: boolean }
+interface Today { evening: boolean; asOf: string; celebrate: string | null; tiles: Tile[] }
+
+/** Eigene Reihenfolge zuerst, Neues hinten dran (sichtbar). */
+function arrange<T extends { key: string }>(items: T[], prefix: string, prefs: Pref[]) {
+  const by = new Map(items.map((i) => [`${prefix}${i.key}`, i]));
+  const keys = [...prefs.map((p) => p.key).filter((k) => by.has(k)), ...[...by.keys()].filter((k) => !prefs.some((p) => p.key === k))];
+  return keys.map((k) => ({ k, item: by.get(k)!, visible: prefs.find((p) => p.key === k)?.visible ?? true }));
 }
 
 function greeting() {
@@ -27,18 +38,84 @@ const WIDGET_HREF: Record<string, string> = { news: '/news', handovers: '/ueberg
 export default function StartPage() {
   const { me } = useMe();
   const [data, setData] = useState<Dashboard | null>(null);
-  useEffect(() => { api<Dashboard>('/dashboard').then(setData).catch(() => null); }, []);
+  const [today, setToday] = useState<Today | null>(null);
+  const [edit, setEdit] = useState(false);
+  useEffect(() => {
+    api<Dashboard>('/dashboard').then(setData).catch(() => null);
+    const load = () => api<Today>('/dashboard/today').then(setToday).catch(() => null);
+    load();
+    const t = setInterval(load, 10 * 60e3); // Hauszahlen alle 10 Minuten auffrischen
+    return () => clearInterval(t);
+  }, []);
   if (!me) return null;
-  const today = new Intl.DateTimeFormat('de-DE', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
+  const prefs = data?.prefs ?? [];
+  const tiles = arrange(today?.tiles ?? [], 'kpi:', prefs);
+  const widgets = arrange((data?.widgets ?? []).filter((w) => w.state === 'ready'), 'w:', prefs);
+  async function savePrefs(next: Pref[]) {
+    setData((d) => (d ? { ...d, prefs: next } : d));
+    await api('/dashboard/prefs', { method: 'PUT', json: { items: next } }).catch(() => null);
+  }
+  /** Ein-/Ausblenden bzw. Verschieben innerhalb einer Gruppe; speichert immer die ganze Liste. */
+  function change(list: Array<{ k: string; visible: boolean }>, k: string, op: 'toggle' | -1 | 1) {
+    const l = list.map((x) => ({ key: x.k, visible: x.visible }));
+    const i = l.findIndex((x) => x.key === k);
+    if (op === 'toggle') l[i].visible = !l[i].visible;
+    else if (l[i + op]) [l[i], l[i + op]] = [l[i + op], l[i]];
+    const other = [...tiles, ...widgets].filter((x) => !list.some((y) => y.k === x.k)).map((x) => ({ key: x.k, visible: x.visible }));
+    savePrefs([...l, ...other]);
+  }
+  const asOf = today ? new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' }).format(new Date(today.asOf)) : '';
+  const shown = tiles.filter((t) => t.visible);
+  const dateLabel = new Intl.DateTimeFormat('de-DE', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
 
   return (
     <div className="stack-lg">
       <div className="ptitle">
         <div>
-          <div className="eyebrow">{today}</div>
+          <div className="eyebrow">{dateLabel}</div>
           <h1>{greeting()}, {me.profile?.firstName ?? me.user.displayName}</h1>
         </div>
+        <button className={`btn sm ${edit ? 'on' : ''}`} aria-expanded={edit} aria-controls="dash-edit" onClick={() => setEdit(!edit)}><Icon name="settings" size={18} /> {edit ? 'Fertig' : 'Anpassen'}</button>
       </div>
+
+      {today?.celebrate && <section className="note ok celebrate" aria-label="Glückwunsch"><span aria-hidden="true">🎉</span><strong>{today.celebrate}</strong></section>}
+
+      {edit && (
+        <section id="dash-edit" className="card stack dash-edit" aria-label="Startseite anpassen">
+          <div className="chead"><h2>Startseite anpassen</h2>{prefs.length > 0 && <button className="lnk small" onClick={() => savePrefs([])}>Zurücksetzen</button>}</div>
+          <p className="small muted">Wähle, was du sehen möchtest, und bring es mit den Pfeilen in deine Reihenfolge. Das gilt nur für dich.</p>
+          {[{ title: 'Kacheln „Heute im Haus“', list: tiles.map((t) => ({ k: t.k, visible: t.visible, label: t.item.label })) },
+            { title: 'Bereiche', list: widgets.map((w) => ({ k: w.k, visible: w.visible, label: w.item.title })) }].map((g) => (
+            <fieldset key={g.title} className="stack dash-group"><legend className="strong">{g.title}</legend>
+              <ul className="plain dash-edit-list">
+                {g.list.map((x, i) => (
+                  <li key={x.k}>
+                    <label className="check grow"><input type="checkbox" checked={x.visible} onChange={() => change(g.list, x.k, 'toggle')} /> {x.label}</label>
+                    <button className="iconbtn sm" aria-label={`${x.label} nach oben`} disabled={i === 0} onClick={() => change(g.list, x.k, -1)}>↑</button>
+                    <button className="iconbtn sm" aria-label={`${x.label} nach unten`} disabled={i === g.list.length - 1} onClick={() => change(g.list, x.k, 1)}>↓</button>
+                  </li>
+                ))}
+              </ul>
+            </fieldset>
+          ))}
+          <p className="small muted">Deinen Geburtstag kannst du unter <Link href="/einstellungen">Einstellungen</Link> eintragen.</p>
+        </section>
+      )}
+
+      {shown.length > 0 && (
+        <section className="today" aria-labelledby="today-h">
+          <div className="today-head">
+            <h2 id="today-h" className="eyebrow">{today?.evening ? 'Morgen im Haus' : 'Heute im Haus'}</h2>
+            <span className="xs muted">Stand {asOf}{shown.some((t) => t.item.demo) && <> · <span className="chip xs" title="Erfundene Beispielzahlen, bis die Anbindung steht">Demo-Zahlen</span></>}</span>
+          </div>
+          <ul className="plain today-strip">
+            {shown.map(({ k, item: t }) => {
+              const body = <><span className="t-label">{t.label}</span><span className="t-value">{t.value}</span><span className="t-sub" title={t.sub}>{t.sub}</span></>;
+              return <li key={k} className={`tile ${t.tone ?? ''}`}>{t.href ? <Link href={t.href}>{body}</Link> : <div>{body}</div>}</li>;
+            })}
+          </ul>
+        </section>
+      )}
 
       {data?.important && (
         <section className="banner" aria-label="Wichtig">
@@ -68,7 +145,7 @@ export default function StartPage() {
       )}
 
       <div className="grid">
-        {(data?.widgets ?? []).filter((w) => w.state === 'ready').map((w) => (
+        {widgets.filter((x) => x.visible).map(({ item: w }) => (
           <section className="card widget" key={w.key}>
             <div className="chead">
               <h2>{w.title}{w.count ? <span className="muted"> · {w.key === 'thanks' ? `${w.count}× Danke im ${new Intl.DateTimeFormat('de-DE', { month: 'long' }).format(new Date())}` : `${w.count} ${w.key === 'tasks' ? 'offen' : 'neu'}`}</span> : null}</h2>
