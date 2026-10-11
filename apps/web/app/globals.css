@@ -448,3 +448,12 @@ button.folder { text-align: left; width: 100%; font: inherit; color: inherit; cu
 .prose[data-plain] p { white-space: pre-line; font-size: 1.08em; }
 [data-logo="white"] .brandband { background: #FFFFFF; color: #1E2318; border-bottom: 1px solid #E3E6EC; }
 [data-logo="white"] .brandband .wm { color: var(--brand); }
+/* Verwaltung (ADR-055) */
+.checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: .25rem .75rem; }
+.perm-list { margin: 0; display: grid; gap: .4rem; }
+.perm-list dt { font-weight: 600; font-size: .85rem; } .perm-list dd { margin: 0; font-size: .85rem; color: var(--muted); }
+.brand-preview { display: flex; gap: .75rem; align-items: center; padding: .75rem; border: 1px dashed var(--line); border-radius: 12px; }
+.brand-preview .bp-side { background: var(--s); color: #fff; padding: .4rem .8rem; border-radius: 8px; font-weight: 600; }
+.brand-preview .bp-btn { background: var(--p); color: #fff; padding: .4rem .8rem; border-radius: 8px; font-weight: 600; }
+.brand-preview .bp-link { color: var(--p); text-decoration: underline; font-weight: 600; }
+input[type="color"] { width: 44px; height: 44px; padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }

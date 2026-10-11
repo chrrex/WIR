@@ -134,7 +134,7 @@ async function main() {
   const maren = await person({ username: 'maren.h', first: 'Maren', last: 'Hofmann', job: 'Abteilungsleitung Service', company: sgl.id, group: 'Service', lead: true,
     roles: [{ key: 'employee' }, { key: 'team_lead', group: 'Service' }] });
   const lena = await person({ username: 'lena.k', first: 'Lena', last: 'Kranz', job: 'Personal & Verwaltung', company: sgl.id, group: 'Personal & Verwaltung',
-    roles: [{ key: 'employee' }, { key: 'hr', company: sgl.id }, { key: 'it_admin', company: sgl.id }, { key: 'moderator', company: sgl.id }] });
+    roles: [{ key: 'employee' }, { key: 'hr', company: sgl.id }, { key: 'it_admin', company: sgl.id }, { key: 'moderator', company: sgl.id }, { key: 'role_admin', company: sgl.id }] });
   const nora = await person({ username: 'nora.s', first: 'Nora', last: 'Sommer', job: 'Kommunikation · DKB STIFTUNG', company: stiftung.id, group: kommunikation.id,
     roles: [{ key: 'employee' }, { key: 'foundation_editor', company: stiftung.id }] });
   const tom = await person({ username: 'tom.b.extern', first: 'Tom', last: 'Becker', job: 'Haustechnik (extern)', company: sgl.id, group: 'Haustechnik',

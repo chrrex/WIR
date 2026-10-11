@@ -551,6 +551,15 @@ Für Vorführungen und Tests: Auf der Anmeldeseite eine Personenauswahl, in der 
 - Quellsprache = Sprache der Autor:in beim Schreiben; gleiche Sprache wird nicht übersetzt. Redaktionell gepflegte „Einfache Sprache“ im Wissen hat Vorrang vor der Maschine.
 - Anbieter austauschbar über Umgebungsvariablen: DeepL (Übersetzung), OpenAI-kompatibles KI-Modell (Leichte Sprache, ersatzweise Übersetzung). Ohne Anbieter: nur bereits vorhandene Übersetzungen (Demo: hinterlegte Beispiele für Polnisch und Leichte Sprache).
 
+## ADR-055 · Verwaltung: Personen, Teams & Gruppen, Häuser, Rollen — ENTSCHIEDEN (11.10.2026)
+
+- **Personen:** Stammdaten (Anzeigename, Tätigkeit, Ablaufdatum), Teams & Leitung, Rollen mit Geltungsbereich (Haus oder Team) und optionaler Befristung. Neue Personen außerhalb von Gastromatic (Externe mit Pflicht-Ablaufdatum, Aushilfen, Praktikant:innen) direkt anlegen – mit Einmal-Code.
+- **Teams & Gruppen:** anlegen, umbenennen, auflösen; Mitglieder und Leitungen pflegen. Eigene Gruppen quer über Teams (Art „Gruppe“, z. B. **Azubis**, Ersthelfer:innen) stehen sofort als Empfänger zur Wahl. Leitung = Mitgliedschaft mit `is_lead` **und** Rolle „Teamleitung“ für genau dieses Team (wird automatisch gesetzt/entfernt). Gesellschaftsübergreifende Gruppen nur mit globalem Recht.
+- **Häuser:** Module an/aus, Sichtbarkeit der Lesestatus-Namen, Name, Fußzeile und Farben. Die Aktionsfarbe muss mit weißer Schrift ≥ 4,5 : 1 haben (Server prüft). Logos spielt weiterhin die IT ein (Markenprüfung).
+- **Rollen & Rechte:** alle Rollen mit verständlich benannten Rechten; Standardrollen sind fest, eigene Rollen (z. B. „Azubi-Betreuung“) frei zusammenstellbar und löschbar, solange nicht vergeben.
+- **Leitplanken:** alles nur im eigenen Bereich (Gesellschaft); sensible Rechte, die man selbst nicht hat, kann man nicht vergeben; eigene Rollen ändert eine zweite Person (Vier-Augen); jede Änderung steht im Protokoll.
+- Demo: `lena.k` hat zusätzlich „Rechteverwaltung“, damit alles ausprobiert werden kann. **Im Echtbetrieb** liegen IT-Administration und Rechteverwaltung bei verschiedenen Personen.
+
 ## Nächste Schritte
 
 1. Anbieterauswahl (ADR-022) bestätigen und Gastromatic-Prüfauftrag (ADR-021) stellen.

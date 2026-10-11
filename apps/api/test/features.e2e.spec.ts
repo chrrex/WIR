@@ -346,4 +346,55 @@ describe('Neue Funktionen (e2e)', () => {
     expect((await (await as('jana.m')).post('/api/v1/translations').send({ items: [{ entity: 'CHAT_MESSAGE', id: mid, field: 'body' }] }).expect(200)).body.items[0]).toMatchObject({ text: '[de] Dzień dobry!', from: 'pl' });
     await ana.patch('/api/v1/me/settings').send({ locale: 'de', autoTranslate: false }).expect(200);
   });
+
+  test('Verwaltung: Gruppen (z. B. Azubis), Personen, Rollen, Einstellungen je Haus (ADR-055)', async () => {
+    const lena = await as('lena.k');
+    const sgl = (await prisma.db.company.findFirstOrThrow({ where: { shortName: 'SGL' } })).id;
+    const opts = (await lena.get('/api/v1/admin/options').expect(200)).body;
+    expect(opts.groupTypes).toContain('CUSTOM');
+    // Gruppe „Azubis“ quer über die Teams, mit Betreuerin als Leitung
+    const g = (await lena.post('/api/v1/admin/groups').send({ name: 'Azubis', type: 'CUSTOM', companyId: sgl, description: 'Alle Auszubildenden' }).expect(201)).body;
+    await lena.post('/api/v1/admin/groups').send({ name: 'Überall', type: 'CUSTOM' }).expect(403); // gesellschaftsübergreifend nur global
+    const jana = await uid('jana.m');
+    await lena.post(`/api/v1/admin/groups/${g.id}/members`).send({ userId: await uid('ana.f') }).expect(200);
+    await lena.post(`/api/v1/admin/groups/${g.id}/members`).send({ userId: jana, isLead: true }).expect(200);
+    let groups = (await lena.get('/api/v1/admin/groups').expect(200)).body;
+    expect(groups.find((x: { id: string }) => x.id === g.id).members).toEqual([{ id: jana, name: 'Jana M.', isLead: true }, expect.objectContaining({ name: 'Ana F.' })]);
+    expect(await prisma.db.userRole.count({ where: { userId: jana, groupId: g.id, role: { key: 'team_lead' } } })).toBe(1);
+    expect((await (await as('jana.m')).get('/api/v1/news/options').expect(200)).body.audiences.some((a: { label: string }) => a.label === 'Azubis')).toBe(true);
+    await lena.delete(`/api/v1/admin/groups/${g.id}/members/${jana}`).expect(200);
+    expect(await prisma.db.userRole.count({ where: { userId: jana, groupId: g.id } })).toBe(0);
+    await (await as('jana.m')).get('/api/v1/admin/groups').expect(403);
+    // Person bearbeiten und anlegen
+    expect((await lena.patch(`/api/v1/admin/users/${jana}`).send({ jobTitle: 'Rezeption · Schichtleitung' }).expect(200)).body.jobTitle).toBe('Rezeption · Schichtleitung');
+    await lena.post('/api/v1/admin/users').send({ firstName: 'Kai', lastName: 'Extern', username: 'kai.extern', external: true, companyId: sgl }).expect(400);
+    const ext = (await lena.post('/api/v1/admin/users').send({ firstName: 'Kai', lastName: 'Extern', username: 'kai.extern', external: true, companyId: sgl, validUntil: '2099-12-31' }).expect(201)).body;
+    expect(ext.code).toMatch(/^\d{3} \d{3}$/);
+    const neu = (await lena.post('/api/v1/admin/users').send({ firstName: 'Mia', lastName: 'Neu', username: 'mia.n', companyId: sgl, jobTitle: 'Auszubildende Hotelfach', groupIds: [g.id] }).expect(201)).body;
+    expect((await lena.get(`/api/v1/admin/users/${neu.id}`).expect(200)).body).toMatchObject({ status: 'INVITED', groups: [{ name: 'Azubis' }], roles: [{ key: 'employee' }] });
+    await lena.post('/api/v1/admin/users').send({ firstName: 'Mia', lastName: 'Neu', username: 'mia.n', companyId: sgl }).expect(400);
+    // Rollen vergeben – nicht sich selbst, nichts, was man selbst nicht hat
+    const p = (await lena.post(`/api/v1/admin/users/${jana}/roles`).send({ roleKey: 'editor_knowledge', companyId: sgl }).expect(201)).body;
+    const r = p.roles.find((x: { key: string }) => x.key === 'editor_knowledge');
+    expect(r.scope).toContain('Liebenberg');
+    await lena.delete(`/api/v1/admin/users/${jana}/roles/${r.id}`).expect(200);
+    await lena.post(`/api/v1/admin/users/${await uid('lena.k')}/roles`).send({ roleKey: 'management', companyId: sgl }).expect(400);
+    // Rollen & Rechte
+    const roles = (await lena.get('/api/v1/admin/roles').expect(200)).body;
+    expect(roles.permissions.length).toBeGreaterThan(80);
+    await lena.post('/api/v1/admin/roles').send({ name: 'Azubi-Betreuung', permissions: ['users.delete'] }).expect(403);
+    const custom = (await lena.post('/api/v1/admin/roles').send({ name: 'Azubi-Betreuung', description: 'Begleitet die Azubis', permissions: ['lifecycle.view_progress', 'tasks.create', 'tasks.assign'] }).expect(201)).body;
+    await lena.patch(`/api/v1/admin/roles/${roles.roles.find((x: { key: string }) => x.key === 'employee').id}`).send({ name: 'X', permissions: [] }).expect(400);
+    await lena.post(`/api/v1/admin/users/${jana}/roles`).send({ roleKey: 'custom_azubi_betreuung', groupId: g.id }).expect(201);
+    await lena.delete(`/api/v1/admin/roles/${custom.id}`).expect(400); // noch vergeben
+    // Einstellungen je Haus
+    const c = (await lena.get('/api/v1/admin/companies').expect(200)).body.find((x: { id: string }) => x.id === sgl);
+    expect(c.branding.primaryColor).toBe('#6B7A3E');
+    await lena.patch(`/api/v1/admin/companies/${sgl}`).send({ branding: { primaryColor: '#E9C46A' } }).expect(400);
+    expect((await lena.patch(`/api/v1/admin/companies/${sgl}`).send({ disabledModules: ['IDEAS'], branding: { footerText: 'Ein Wirkungsort der DKB STIFTUNG' } }).expect(200)).body.disabledModules).toEqual(['IDEAS']);
+    expect((await (await as('jana.m')).get('/api/v1/me').expect(200)).body.modules).not.toContain('IDEAS');
+    await lena.patch(`/api/v1/admin/companies/${sgl}`).send({ disabledModules: [] }).expect(200);
+    groups = (await lena.get('/api/v1/admin/groups').expect(200)).body;
+    expect(groups.length).toBeGreaterThan(5);
+  });
 });
