@@ -12,7 +12,7 @@
   },
   "scripts": {
     "setup": "npm run build -w @wir/db && npm run migrate -w @wir/db && npm run seed -w @wir/db",
-    "codespace": "npm run build -w @wir/db && npm run migrate -w @wir/db && concurrently -n api,web -c blue,green \"npm run dev -w @wir/api\" \"npm run dev -w @wir/web\"",
+    "codespace": "(pkill -f '[n]ext-server|[n]ext dev|[n]est start|[d]ist/main' || true) && npm run build -w @wir/db && npm run migrate -w @wir/db && concurrently -n api,web -c blue,green \"npm run dev -w @wir/api\" \"npm run dev -w @wir/web\"",
     "dev": "npm run build -w @wir/db && concurrently -n api,web -c blue,green \"npm run dev -w @wir/api\" \"npm run dev -w @wir/web\"",
     "build": "npm run build -w @wir/db && npm run build -w @wir/api && npm run build -w @wir/web",
     "test": "npm run test -w @wir/api",
