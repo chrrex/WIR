@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 /**
  * Seed für Entwicklung, Codespaces und Demo.
  * ALLE Personen, Namen und Zahlen sind erfunden – keine echten Mitarbeiterdaten.
@@ -22,7 +23,7 @@ async function main() {
     TRUNCATE audit_logs, sessions, credential_resets, user_roles, user_groups, employee_company_assignments,
       employee_profiles, user_settings, dashboard_preferences, users, role_permissions, permissions, roles,
       groups, company_brandings, companies, system_settings, knowledge_categories, document_categories,
-      contact_categories, idea_categories, file_objects, lifecycle_templates CASCADE`);
+      contact_categories, idea_categories, file_objects, lifecycle_templates, content_translations CASCADE`);
 
   // ---- Rechte & Rollen ------------------------------------------------------
   for (const [module, keys] of Object.entries(PERMISSIONS)) {
@@ -247,6 +248,31 @@ async function main() {
   await thanks(jana.id, 'HELP', [], 'Housekeeping', 'Danke für die superschnelle Zimmerfreigabe am Samstag – 14 Anreisen vor 13 Uhr, und alle Gäste waren happy!', 26, [T('selin.a'), T('jonas.w'), maren.id]);
   await thanks(T('sven.r'), 'TEAM', [T('ana.f')], null, 'Ana, du bist gestern beim Bankett spontan eingesprungen und hast den Abend gerettet. Danke!', 40, [T('tobias.k')]);
   await thanks(maren.id, 'GUEST', [], 'Service', 'Wir haben uns vom ersten Moment an willkommen gefühlt. Das Frühstücksteam war herzlich wie nie – danke für dieses wunderbare Wochenende!', 52, [], 'Gästebuch');
+
+  // Übersetzungen für den Demo-Modus (ADR-054): Marta liest auf Polnisch; Leichte Sprache für die HACCP-News
+  const TX: Array<[string, string, string]> = [
+    ['HACCP: Neue Regel zur Kühlkette bei Anlieferungen', 'HACCP: Nowa zasada dotycząca łańcucha chłodniczego przy dostawach',
+      'Od teraz przy każdej dostawie mrożonek mierzymy temperaturę wewnątrz produktu – już nie tylko wyrywkowo.\n\nInstrukcja pracy „Łańcuch chłodniczy przy przyjęciu towaru“ jest właśnie aktualizowana. W razie pytań proszę zwracać się bezpośrednio do mnie.'],
+    ['Gruppenweit: Das WIR kommt Schritt für Schritt in alle Gesellschaften', 'Cała grupa: WIR krok po kroku we wszystkich spółkach',
+      'Liebenberg jest pierwszy. Potem stopniowo dołączą kolejne spółki grupy fundacji – każda we własnych kolorach i z własnym logo, na wspólnej podstawie.\n\nKomunikaty dla całej grupy, takie jak ten, docierają do wszystkich koleżanek i kolegów w grupie. To, co dotyczy tylko jednego obiektu, zostaje w tym obiekcie.'],
+    ['Willkommen im Team: drei neue Azubis in Küche und Service', 'Witamy w zespole: troje nowych uczniów w kuchni i obsłudze',
+      'Cieszymy się z trojga nowych uczniów: dwoje w kuchni, jedna osoba w obsłudze. W tym tygodniu zaczęli swój pierwszy etap.\n\nZagadajcie do nich i pokażcie im, gdzie jest najlepsza kawa.'],
+    ['Weihnachtsfeier: Welcher Termin passt euch?', 'Wigilia firmowa: Który termin wam pasuje?', 'W tym roku świętujemy w Oranżerii. Zagłosujcie do piątku, który wieczór bardziej wam pasuje.'],
+    ['Laufgruppe am Donnerstag?', 'Grupa biegowa w czwartek?', 'Kto ma ochotę po porannej zmianie przebiec się dookoła jeziora? Na luzie, 5–7 km.'],
+  ];
+  const sha = (t: string) => createHash('sha256').update(t).digest('hex');
+  const tx = (id: string, field: string, src: string, targetLocale: string, text: string, isPlainLanguage = false) =>
+    ({ entityType: 'CONTENT_ITEM' as const, entityId: id, field, sourceLocale: 'de', targetLocale, sourceHash: sha(src), text, isPlainLanguage, provider: 'demo' });
+  for (const [title, t, b] of TX) {
+    const p = await prisma.post.findFirst({ where: { title } });
+    if (p) await prisma.contentTranslation.createMany({ data: [tx(p.id, 'title', p.title, 'pl', t), tx(p.id, 'body', p.bodyText, 'pl', b)] });
+  }
+  const haccp = await prisma.post.findFirstOrThrow({ where: { title: TX[0][0] } });
+  await prisma.contentTranslation.createMany({ data: [
+    tx(haccp.id, 'title', haccp.title, 'de', 'HACCP: Neue Regel für gefrorene Lieferungen', true),
+    tx(haccp.id, 'body', haccp.bodyText, 'de', 'Es gibt eine neue Regel.\nSie gilt ab heute.\n\nWir bekommen gefrorene Ware.\nDann messen wir jedes Mal die Temperatur.\nWir messen innen in der Ware.\nDas heißt: Kern-Temperatur.\n\nHast du Fragen?\nDann frag Sven.', true),
+  ] });
+  await prisma.userSettings.updateMany({ where: { user: { username: 'marta.w' } }, data: { locale: 'pl', autoTranslate: true } });
 
   async function handover(o: { author: string; group: string; shift: string; hoursAgo: number; subject: string; text: string; readBy?: string[] }) {
     const ci = await prisma.contentItem.create({ data: {

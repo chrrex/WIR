@@ -204,7 +204,7 @@ export class ChatController {
     const mentions = body.mentionIds.filter((m) => memberIds.includes(m) && m !== me.id);
     const msg = await db.chatMessage.create({
       data: {
-        conversationId: id, senderId: me.id, body: text,
+        conversationId: id, senderId: me.id, body: text, sourceLocale: (await db.userSettings.findUnique({ where: { userId: me.id }, select: { locale: true } }))?.locale ?? 'de',
         mentions: { create: mentions.map((u) => ({ mentionedUserId: u })) },
         ...(body.imageId ? { attachments: { create: { fileObjectId: body.imageId, kind: 'IMAGE' } } } : {}),
       },

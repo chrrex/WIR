@@ -443,5 +443,8 @@ button.folder { text-align: left; width: 100%; font: inherit; color: inherit; cu
   .album { gap: 8mm; } .album-card { box-shadow: none; }
 }
 .kcard ~ .btn { justify-self: start; }
+/* Übersetzung (ADR-054) */
+.txbar { display: flex; gap: .75rem; align-items: center; padding: .45rem 1rem; background: var(--info-tint); color: var(--info-ink); font-size: .88rem; }
+.prose[data-plain] p { white-space: pre-line; font-size: 1.08em; }
 [data-logo="white"] .brandband { background: #FFFFFF; color: #1E2318; border-bottom: 1px solid #E3E6EC; }
 [data-logo="white"] .brandband .wm { color: var(--brand); }

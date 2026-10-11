@@ -1,5 +1,6 @@
 'use client';
 
+import { useTx } from '@/lib/translate';
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '@/lib/api';
 import { when } from '@/lib/time';
@@ -50,7 +51,7 @@ export function Comments({ contentId, enabled = true, onCount }: { contentId: st
           <Avatar name={c.author?.name ?? '?'} id={c.author?.id} size="s" />
           <div className="bubble">
             <div className="small muted"><strong className="fg">{c.author?.name ?? 'Ehemalige:r Kolleg:in'}</strong> · {when(c.createdAt)}</div>
-            <RichText text={c.text} mentions={c.mentions} />
+            <CommentText c={c} />
             <div className="comment-actions">
               {c.canDelete && <button className="lnk small" onClick={() => remove(c.id)}>Löschen</button>}
               <ReportButton path={`/comments/${c.id}/report`} compact />
@@ -68,4 +69,9 @@ export function Comments({ contentId, enabled = true, onCount }: { contentId: st
       {error && <div className="note warn small" role="alert">{error}</div>}
     </section>
   );
+}
+
+function CommentText({ c }: { c: Comment }) {
+  const t = useTx('COMMENT', c.id, 'body', c.text);
+  return <span lang={t.lang}><RichText text={t.text} mentions={c.mentions} /></span>;
 }

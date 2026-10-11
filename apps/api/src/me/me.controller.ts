@@ -4,6 +4,7 @@ import type { AppModule } from '@wir/db';
 import { PrismaService } from '../common/prisma.service';
 import { PolicyService } from '../policy/policy.service';
 import { can } from '../policy/engine';
+import { LANGUAGES } from '../translate/translate.service';
 import { ZodPipe } from '../common/zod.pipe';
 import { config } from '../common/config';
 import { AllowPendingPassword, CurrentUser, Public, SessionUser } from '../auth/decorators';
@@ -18,6 +19,9 @@ const SettingsBody = z.object({
   mobileNavItems: z.array(z.string().max(30)).max(4).optional(),
   quietHoursStart: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).nullable().optional(),
   quietHoursEnd: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).nullable().optional(),
+  locale: z.enum(Object.keys(LANGUAGES) as [string, ...string[]]).optional(),
+  autoTranslate: z.boolean().optional(),
+  plainLanguage: z.boolean().optional(),
 });
 const RecoveryBody = z.object({ email: z.email().max(200).nullable() });
 
@@ -79,6 +83,7 @@ export class MeController {
             theme: user.settings.theme, fontScalePercent: user.settings.fontScalePercent, reducedMotion: user.settings.reducedMotion,
             highContrast: user.settings.highContrast, mobileNavItems: user.settings.mobileNavItems,
             quietHoursStart: user.settings.quietHoursStart, quietHoursEnd: user.settings.quietHoursEnd,
+            locale: user.settings.locale, autoTranslate: user.settings.autoTranslate, plainLanguage: user.settings.plainLanguage,
           }
         : null,
     };
@@ -106,7 +111,7 @@ export class MeController {
   @Patch('me/settings')
   async updateSettings(@CurrentUser() me: SessionUser, @Body(new ZodPipe(SettingsBody)) body: z.infer<typeof SettingsBody>) {
     const s = await this.prisma.db.userSettings.upsert({ where: { userId: me.id }, create: { userId: me.id, ...body }, update: body });
-    return { theme: s.theme, fontScalePercent: s.fontScalePercent, reducedMotion: s.reducedMotion, highContrast: s.highContrast, mobileNavItems: s.mobileNavItems, quietHoursStart: s.quietHoursStart, quietHoursEnd: s.quietHoursEnd };
+    return { theme: s.theme, fontScalePercent: s.fontScalePercent, reducedMotion: s.reducedMotion, highContrast: s.highContrast, mobileNavItems: s.mobileNavItems, quietHoursStart: s.quietHoursStart, quietHoursEnd: s.quietHoursEnd, locale: s.locale, autoTranslate: s.autoTranslate, plainLanguage: s.plainLanguage };
   }
 
   /** Freiwillige private E-Mail nur für „Passwort vergessen“ (ADR-011). Bestätigung per Link folgt in Phase 2. */

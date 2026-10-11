@@ -1,5 +1,6 @@
 'use client';
 
+import { Body, Tx } from '@/lib/translate';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -8,7 +9,6 @@ import { useBadges } from '@/lib/badges';
 import { when } from '@/lib/time';
 import { Avatar } from '@/components/content/Avatar';
 import { Images, ImageRef } from '@/components/content/Images';
-import { RichText } from '@/components/content/MentionText';
 import { Comments } from '@/components/content/Comments';
 import { ReadStatus } from '@/components/content/ReadStatus';
 import { Icon } from '@/components/Icon';
@@ -33,10 +33,10 @@ export default function HandoverDetail() {
       <article className="card article stack">
         <div className="chips"><span className="chip info">{h.shiftLabel ?? 'Schicht'}</span><span className="chip">{h.group}</span></div>
         <p className="small muted">An: {h.audience.join(', ')}</p>
-        <h1>{h.subject}</h1>
+        <h1><Tx e="CONTENT_ITEM" id={h.id} text={h.subject} /></h1>
         <div className="row"><Avatar name={h.author.name} id={h.author.id} size="s" /><span className="small muted"><strong className="fg">{h.author.name}</strong> · {h.scheduledFor ? scheduledText(h.scheduledFor) : when(h.publishedAt)}</span></div>
         {h.scheduledFor && <div className="note info small">Noch nicht veröffentlicht – bis dahin siehst nur du diese Übergabe.</div>}
-        <div className="prose"><RichText text={h.text} mentions={h.mentions} /></div>
+        <Body id={h.id} text={h.text} mentions={h.mentions} />
         <Images images={h.images} />
         {h.poll && <PollView contentId={h.id} initial={h.poll} />}
         <div className="actions-bar"><BookmarkButton contentId={h.id} /></div>

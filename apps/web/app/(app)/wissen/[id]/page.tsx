@@ -1,5 +1,6 @@
 'use client';
 
+import { Body, Tx } from '@/lib/translate';
 import { BookmarkButton } from '@/components/content/Extras';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -49,11 +50,11 @@ export default function Article() {
         <div className="chips"><span className="chip info">{TYPE_LABEL[a.type] ?? a.type}</span><span className="chip">{a.category}</span><span className="chip">Version {a.version}</span></div>
         {a.status === 'DRAFT' && <div className="note info">Noch nicht veröffentlicht – wartet auf Freigabe durch die Teamleitung.</div>}
         {a.status === 'ARCHIVED' && <div className="note warn">Nicht freigegeben{a.rejectedReason && `: „${a.rejectedReason}“`}. <Link className="lnk" href={`/wissen/neu?id=${a.id}&mode=resubmit`}>Überarbeiten und erneut einreichen</Link></div>}
-        <h1>{a.title}</h1>
+        <h1><Tx e="CONTENT_ITEM" id={a.id} text={a.title} /></h1>
         <div className="row"><BookmarkButton contentId={a.id} /></div>
         <p className="small muted">{a.author}{a.publishedAt && ` · ${day(a.publishedAt)}`} · für {a.audience.join(', ')}</p>
         {a.plainText && <div className="seg" role="group" aria-label="Sprache"><button aria-pressed={!plain} onClick={() => setPlain(false)}>Fachtext</button><button aria-pressed={plain} onClick={() => setPlain(true)}>Einfache Sprache</button></div>}
-        <div className="prose"><RichText text={plain && a.plainText ? a.plainText : a.text} /></div>
+        {plain && a.plainText ? <div className="prose"><RichText text={a.plainText} /></div> : <Body id={a.id} text={a.text} />}
         {a.requiresAck && (a.acknowledged
           ? <div className="note ok">Du hast Version {a.version} zur Kenntnis genommen.</div>
           : <div className="row wrap"><button className="btn pri big" disabled={busy} onClick={() => run(() => api(`/knowledge/${id}/ack`, { method: 'POST' })).then(reload)}>Gelesen und verstanden</button><span className="small muted">Bestätigung gilt für Version {a.version}.</span></div>)}

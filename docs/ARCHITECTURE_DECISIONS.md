@@ -542,6 +542,14 @@ Für Vorführungen und Tests: Auf der Anmeldeseite eine Personenauswahl, in der 
 - Seitenleiste hell (Fläche wie der Inhalt) mit normaler Schriftstärke; aktive Seite in der Markenfarbe als zarte Fläche mit schmalem Balken. Die Markenfarbe steht nur noch in der Markenfläche oben (Logo + WIR).
 - Damit entfällt „groß und fett“ für Flächen mit wenig Kontrast (ADR-039) im Menü – die Schrift steht nicht mehr auf der Markenfarbe.
 - DKB STIFTUNG (`logoRequiresWhite`): Markenfläche oben, mobile Kopfzeile und Banner sind weiß, das Logo steht frei mit viel Luft statt auf einem kleinen weißen Schild. Auf der Anmeldeseite ein weißes Band über die ganze Breite. Gilt auch im Dunkelmodus (`data-logo="white"`).
+## ADR-054 · Automatische Übersetzung und Leichte Sprache — ENTSCHIEDEN (11.10.2026, Anbieter offen → ADR-022)
+
+- In den Einstellungen: eigene Sprache (de, en, pl, uk, ro, bg, hu, tr, es, id), „automatisch übersetzen“ und „Leichte Sprache“ (`user_settings.locale/auto_translate/plain_language`, schon im Modell vorhanden – keine Migration).
+- Übersetzt werden News, Übergaben, Social (inkl. Danke-Karten), Wissen, Kommentare und Chat – Titel und Text. Die Oberfläche (Menü, Knöpfe) bleibt vorerst deutsch.
+- Das Original wird nie verändert. Ein Hinweis oben zeigt, dass übersetzt wird, mit „Original anzeigen“ (gilt für die Sitzung). Übersetzte Texte tragen das passende `lang`-Attribut (Screenreader).
+- Server lädt das Original selbst und nur, was die Person sehen darf (gleiche Sichtbarkeit wie der Inhalt). Ergebnis im Zwischenspeicher `content_translations` (Schlüssel inkl. Hash des Originals – bei Änderung wird neu übersetzt).
+- Quellsprache = Sprache der Autor:in beim Schreiben; gleiche Sprache wird nicht übersetzt. Redaktionell gepflegte „Einfache Sprache“ im Wissen hat Vorrang vor der Maschine.
+- Anbieter austauschbar über Umgebungsvariablen: DeepL (Übersetzung), OpenAI-kompatibles KI-Modell (Leichte Sprache, ersatzweise Übersetzung). Ohne Anbieter: nur bereits vorhandene Übersetzungen (Demo: hinterlegte Beispiele für Polnisch und Leichte Sprache).
 
 ## Nächste Schritte
 

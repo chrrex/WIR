@@ -173,7 +173,13 @@ export class ContentService {
     return { bookmarked: !had };
   }
 
+  /** Sprache, in der die Person schreibt (für die Übersetzung, ADR-054). */
+  async localeOf(userId: string | null) {
+    return userId ? (await this.prisma.db.userSettings.findUnique({ where: { userId }, select: { locale: true } }))?.locale ?? 'de' : 'de';
+  }
+
   async create(input: CreateContentInput) {
+    const sourceLocale = await this.localeOf(input.authorId);
     const recipientIds = await this.audiences.resolve(input.targets);
     const db = this.prisma.db;
     const files = input.attachmentFileIds ?? [];
@@ -189,6 +195,7 @@ export class ContentService {
           type: input.type,
           companyId: input.companyId,
           authorId: input.authorId,
+          sourceLocale,
           status: input.publishAt ? 'SCHEDULED' : input.status ?? 'PUBLISHED',
           publishAt: input.publishAt ? new Date(input.publishAt) : null,
           publishedAt: input.status === 'DRAFT' || input.publishAt ? null : new Date(),
@@ -359,7 +366,7 @@ export class ContentService {
       : [];
     const comment = await db.comment.create({
       data: {
-        contentItemId: id, authorId: actorId, body: toBody(clean), bodyText: clean,
+        contentItemId: id, authorId: actorId, body: toBody(clean), bodyText: clean, sourceLocale: await this.localeOf(actorId),
         mentions: { create: allowed.map((u) => ({ mentionedUserId: u })) },
       },
     });
