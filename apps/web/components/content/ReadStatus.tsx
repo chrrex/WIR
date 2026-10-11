@@ -56,3 +56,23 @@ export function ReadStatus({ contentId, onSeen, label = 'gelesen' }: { contentId
     </section>
   );
 }
+
+export type ReadCounts = Record<string, { read: number; total: number }>;
+
+/** Lesestatus für eine Liste laden – liefert nur Einträge, die die Person sehen darf (Autor:in, Leitung). */
+export function useReadCounts(ids: string[]) {
+  const [counts, setCounts] = useState<ReadCounts>({});
+  const key = ids.join(',');
+  useEffect(() => {
+    if (!key) return;
+    api<ReadCounts>('/content/read-summaries', { method: 'POST', json: { ids: key.split(',').slice(0, 100) } }).then(setCounts).catch(() => null);
+  }, [key]);
+  return counts;
+}
+
+/** Kleiner Hinweis „8/12 gelesen“ für Listen. */
+export function ReadChip({ c, label = 'gelesen' }: { c?: { read: number; total: number }; label?: string }) {
+  if (!c || !c.total) return null;
+  const all = c.read >= c.total;
+  return <span className={`chip ${all ? 'ok' : ''}`} title={`${c.read} von ${c.total} haben ${label}`}><span aria-hidden="true">{all ? '✓ ' : ''}</span>{c.read}/{c.total} {label}</span>;
+}

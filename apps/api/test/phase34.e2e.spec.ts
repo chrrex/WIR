@@ -178,4 +178,17 @@ describe('Phase 3+4 (e2e)', () => {
     const social = (await prisma.db.post.findFirstOrThrow({ where: { kind: 'SOCIAL' } })).id;
     expect((await lena.get(`/api/v1/content/${social}/read-status`).expect(200)).body.enabled).toBe(false);
   });
+
+  test('Lesestatus in Listen: nur für Autor:in und Leitungen, nie Social', async () => {
+    const ids = (await prisma.db.contentItem.findMany({ where: { type: { in: ['POST', 'HANDOVER', 'SURVEY'] } }, select: { id: true } })).map((i) => i.id);
+    const sven = (await (await as('sven.r')).post('/api/v1/content/read-summaries').send({ ids }).expect(200)).body;
+    const social = (await prisma.db.post.findMany({ where: { kind: 'SOCIAL' }, select: { id: true } })).map((p) => p.id);
+    expect(Object.keys(sven).length).toBeGreaterThanOrEqual(2);
+    expect(Object.keys(sven).some((id) => social.includes(id))).toBe(false);
+    const survey = (await prisma.db.survey.findFirstOrThrow({ where: { title: { startsWith: 'Wie zufrieden' } } })).id;
+    expect(sven[survey].read).toBeGreaterThanOrEqual(6); // Teilnahmen
+    const jana = (await (await as('jana.m')).post('/api/v1/content/read-summaries').send({ ids }).expect(200)).body;
+    const janaOwn = (await prisma.db.contentItem.findMany({ where: { author: { username: 'jana.m' }, id: { in: ids } }, select: { id: true } })).map((i) => i.id);
+    expect(Object.keys(jana).every((id) => janaOwn.includes(id))).toBe(true);
+  });
 });

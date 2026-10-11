@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Icon } from '@/components/Icon';
 import { Audience, AudienceOption, ErrorNote, State, day, size, upload, useLoad, useSubmit } from '@/components/work';
+import { ReadChip, useReadCounts } from '@/components/content/ReadStatus';
 
 interface DocRow { id: string; title: string; description: string | null; category: string; sensitive: boolean; current: { n: number; fileId: string; name: string; size: number; createdAt: string } }
 
@@ -38,6 +39,7 @@ export default function Documents() {
   const { data, error, reload } = useLoad<{ canCreate: boolean; documents: DocRow[] }>('/documents');
   const [adding, setAdding] = useState(false);
   const [cat, setCat] = useState('');
+  const counts = useReadCounts((data?.documents ?? []).map((d) => d.id));
   if (!data) return <State error={error} loading />;
   const cats = [...new Set(data.documents.map((d) => d.category))];
   return (
@@ -52,7 +54,7 @@ export default function Documents() {
               <Icon name="doc" />
               <span className="grow">
                 <Link href={`/dokumente/${d.id}`} className="title title-link">{d.title}</Link>
-                <span className="block muted small">{d.category}{d.sensitive && ' · vertraulich'} · Version {d.current.n} · {day(d.current.createdAt)} · {size(d.current.size)}</span>
+                <span className="block muted small">{d.category}{d.sensitive && ' · vertraulich'} · Version {d.current.n} · {day(d.current.createdAt)} · {size(d.current.size)} <ReadChip c={counts[d.id]} /></span>
                 {d.description && <span className="block excerpt">{d.description}</span>}
               </span>
               <a className="btn sm" href={`/api/v1/files/${d.current.fileId}`} target="_blank" rel="noopener" aria-label={`${d.title} öffnen`}>Öffnen</a>

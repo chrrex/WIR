@@ -66,6 +66,13 @@ export class ContentController {
     return this.content.report(me.id, await this.name(me.id), { commentId: id }, body.reason);
   }
 
+  /** Lesestatus für Listen (bis 100 Einträge auf einmal). */
+  @Post('content/read-summaries')
+  @HttpCode(200)
+  async readSummaries(@CurrentUser() me: SessionUser, @Body(new ZodPipe(z.object({ ids: z.array(z.uuid()).max(100) }))) b: { ids: string[] }) {
+    return this.content.readSummaries(await this.policy.loadContext(me.id), me.id, b.ids);
+  }
+
   @Get('content/:id/read-status')
   async readStatus(@CurrentUser() me: SessionUser, @Param('id', ParseUUIDPipe) id: string, @Query('details') details?: string) {
     return this.content.readStatus(await this.policy.loadContext(me.id), me.id, id, details === '1');

@@ -57,7 +57,8 @@ describe('Phase 2 (e2e)', () => {
       const sgl = (await prisma.db.company.findFirstOrThrow({ where: { shortName: 'SGL' } })).id;
       await jana.post('/api/v1/news').send({ title: 'Test an alle', text: 'x', targets: [`C:${sgl}`] }).expect(403);
       await jana.post('/api/v1/news').send({ title: 'Test wichtig', text: 'x', targets: [`G:${rez}`], important: true }).expect(403);
-      await jana.post('/api/v1/news').send({ title: 'Test an Küche', text: 'x', targets: [`G:${await groupId('Küche')}`] }).expect(403);
+      // Seit ADR-044: jede Gruppe der eigenen Gesellschaft ist erlaubt (Gruppen + Gesellschaften kombinierbar)
+      await jana.post('/api/v1/news').send({ title: 'Grüße an die Küche', text: 'Danke fürs Personalessen!', targets: [`G:${rez}`, `G:${await groupId('Küche')}`] }).expect(201);
       const ok = await jana.post('/api/v1/news').send({ title: 'Kaffeemaschine Backoffice repariert', text: 'Läuft wieder.', targets: [`G:${rez}`] }).expect(201);
       expect(ok.body.recipients).toBeGreaterThan(0);
       const opts = await jana.get('/api/v1/news/options').expect(200);
@@ -160,14 +161,21 @@ describe('Phase 2 (e2e)', () => {
     test('Team sieht die Übergabe, Erwähnte außerhalb des Teams auch, andere nicht', async () => {
       const jana = await as('jana.m');
       const opts = await jana.get('/api/v1/handovers/options').expect(200);
-      expect(opts.body.groups.map((g: { name: string }) => g.name)).toEqual(['Rezeption']);
+      expect(opts.body.defaults).toEqual([`G:${await groupId('Rezeption')}`]);
+      expect(opts.body.audiences.some((a: { key: string }) => a.key.startsWith('C:'))).toBe(false); // ganze Gesellschaft nur für Leitungen
       const res = await jana.post('/api/v1/handovers').send({
-        groupId: await groupId('Rezeption'), shiftLabel: 'Früh', subject: 'Blumen für Zimmer 108', text: 'Bitte bis 15 Uhr.', mentionIds: [await userId('tobias.k')],
+        targets: [`G:${await groupId('Rezeption')}`], shiftLabel: 'Früh', subject: 'Blumen für Zimmer 108', text: 'Bitte bis 15 Uhr.', mentionIds: [await userId('tobias.k')],
       }).expect(201);
       await (await as('selin.a')).get(`/api/v1/handovers/${res.body.id}`).expect(200);
       await (await as('tobias.k')).get(`/api/v1/handovers/${res.body.id}`).expect(200);
       await (await as('sven.r')).get(`/api/v1/handovers/${res.body.id}`).expect(404);
-      await jana.post('/api/v1/handovers').send({ groupId: await groupId('Küche'), shiftLabel: 'Früh', subject: 'xx test', text: 'x' }).expect(400);
+      // Freie Empfänger: Gruppe + Einzelperson; nicht die ganze Gesellschaft
+      const mix = await jana.post('/api/v1/handovers').send({ targets: [`G:${await groupId('Küche')}`, `U:${await userId('maren.h')}`], shiftLabel: 'Früh', subject: 'Allergie Zimmer 214', text: 'Gast hat Nussallergie.' }).expect(201);
+      await (await as('sven.r')).get(`/api/v1/handovers/${mix.body.id}`).expect(200);
+      await (await as('maren.h')).get(`/api/v1/handovers/${mix.body.id}`).expect(200);
+      await (await as('tobias.k')).get(`/api/v1/handovers/${mix.body.id}`).expect(404);
+      const sgl = (await prisma.db.company.findFirstOrThrow({ where: { shortName: 'SGL' } })).id;
+      await jana.post('/api/v1/handovers').send({ targets: [`C:${sgl}`], shiftLabel: 'Früh', subject: 'An alle', text: 'x' }).expect(403);
       // Stiftung: Modul ausgeschaltet (ADR-039) – seit Phase 3+4 sperrt das auch die API
       await (await as('nora.s')).get('/api/v1/handovers').expect(403);
     });

@@ -5,12 +5,14 @@ import { useState } from 'react';
 import { Icon } from '@/components/Icon';
 import { State, useLoad, day } from '@/components/work';
 import { TYPE_LABEL } from '@/lib/labels';
+import { ReadChip, useReadCounts } from '@/components/content/ReadStatus';
 
 interface Data { canCreate: boolean; categories: Array<{ id: string; name: string; articles: Array<{ id: string; title: string; type: string; version: number; updatedAt: string; requiresAck: boolean; acknowledged: boolean }> }> }
 
 export default function Knowledge() {
   const { data, error } = useLoad<Data>('/knowledge');
   const [cat, setCat] = useState('');
+  const counts = useReadCounts((data?.categories ?? []).flatMap((c) => c.articles.map((a) => a.id)));
   if (!data) return <State error={error} loading />;
   const open = data.categories.flatMap((c) => c.articles).filter((a) => a.requiresAck && !a.acknowledged).length;
   return (
@@ -33,7 +35,7 @@ export default function Knowledge() {
                 <span className={`udot ${a.requiresAck && !a.acknowledged ? 'warn' : 'off'}`} aria-label={a.requiresAck && !a.acknowledged ? 'Bestätigung offen' : undefined} />
                 <span className="grow">
                   <span className="row wrap gap-s"><span className="chip info">{TYPE_LABEL[a.type] ?? a.type}</span><strong className="title">{a.title}</strong></span>
-                  <span className="block muted small">Version {a.version} · {day(a.updatedAt)}{a.requiresAck && (a.acknowledged ? ' · bestätigt' : ' · bitte bestätigen')}</span>
+                  <span className="block muted small">Version {a.version} · {day(a.updatedAt)}{a.requiresAck && (a.acknowledged ? ' · bestätigt' : ' · bitte bestätigen')} <ReadChip c={counts[a.id]} /></span>
                 </span>
               </Link>
             ))}

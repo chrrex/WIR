@@ -475,6 +475,12 @@ Ohne Datenbank-Migration – alle Tabellen waren vorbereitet.
 3. **Freigabe (Vier-Augen-Prinzip)** je Vorlage: nach Abschluss „wartet auf Freigabe“ an die Teamleitung; wer abgeschlossen hat, kann nicht selbst freigeben; Zurückweisen öffnet die Liste wieder und benachrichtigt mit Hinweis.
 4. **Ein- und Austritt:** Vorlagen (Personal) mit Schritten „Tag x“, zuständig die Person selbst oder ihre Teamleitung (sonst wer startet), optional Pflichtlektüre. Start (Abteilungsleitung, Personal) erzeugt je Schritt eine Aufgabe und gibt verlinkte Artikel/Dokumente der Person frei. Fortschritt sehen Person, Startende und `lifecycle.view_progress`. Plan schließt sich, wenn alle Schritte erledigt sind. Nach dem Freischalten in der Verwaltung direkt „Einarbeitung starten“.
 
+## ADR-044 · Freie Empfänger für Übergaben und News; Lesestatus in Listen — ENTSCHIEDEN (11.10.2026)
+
+1. **Übergaben** haben kein festes Team mehr: Empfänger:innen frei kombinierbar aus Gruppen der eigenen Gesellschaft(en) und einzelnen Personen; mit @ Erwähnte kommen dazu. „Ganze Gesellschaft“ bzw. „alle“ nur mit `news.publish_wide` (wie News, ADR-037). Das Team einer Übergabe (Filter) ist die erste gewählte Gruppe, sonst das eigene Team.
+2. **News, Wissen, Dokumente, Umfragen:** Gruppen *und/oder* Gesellschaften in einer Auswahl, gegliedert nach „Alle & Gesellschaften“ und „Gruppen“. Leitplanke 2 aus ADR-037 präzisiert: **jede Gruppe der eigenen Gesellschaft** ist für alle erlaubt (vorher nur das eigene Team); ganze Gesellschaft/Stiftung weiterhin nur Leitungen.
+3. **Lesestatus in allen Listen** („8/12 gelesen“, bei Umfragen „teilgenommen“) für Autor:in und Leitungen – dieselben Regeln wie auf der Detailseite; Teamleitungen sehen ihn bei allem, was an ihr Team ging.
+
 ## Nächste Schritte
 
 1. Anbieterauswahl (ADR-022) bestätigen und Gastromatic-Prüfauftrag (ADR-021) stellen.

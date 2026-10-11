@@ -3,11 +3,13 @@
 import Link from 'next/link';
 import { Icon } from '@/components/Icon';
 import { State, day, useLoad } from '@/components/work';
+import { ReadChip, useReadCounts } from '@/components/content/ReadStatus';
 
 interface S { id: string; title: string; anonymous: boolean; closesAt: string | null; open: boolean; participated: boolean; mine: boolean; author: string }
 
 export default function Surveys() {
   const { data, error } = useLoad<{ canCreate: boolean; surveys: S[] }>('/surveys');
+  const counts = useReadCounts((data?.surveys ?? []).map((s) => s.id));
   if (!data) return <State error={error} loading />;
   return (
     <div className="stack-lg">
@@ -21,7 +23,7 @@ export default function Surveys() {
                 <span className={`udot ${todo ? '' : 'off'}`} aria-label={todo ? 'noch nicht teilgenommen' : undefined} />
                 <span className="grow">
                   <span className="row wrap gap-s">{s.anonymous && <span className="chip info">anonym</span>}<span className={`chip ${s.open ? 'ok' : ''}`}>{s.open ? 'offen' : 'geschlossen'}</span><strong className="title">{s.title}</strong></span>
-                  <span className="block muted small">{s.author}{s.closesAt && ` · bis ${day(s.closesAt)}`}{s.participated && ' · du hast teilgenommen'}</span>
+                  <span className="block muted small">{s.author}{s.closesAt && ` · bis ${day(s.closesAt)}`}{s.participated && ' · du hast teilgenommen'} <ReadChip c={counts[s.id]} label="teilgenommen" /></span>
                 </span>
               </Link>
             );

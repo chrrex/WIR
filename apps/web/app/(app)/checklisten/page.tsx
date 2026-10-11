@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { Icon } from '@/components/Icon';
 import { ErrorNote, State, dayTime, useLoad, useSubmit } from '@/components/work';
 import { CHECK_KIND, RUN_STATUS } from '@/lib/labels';
+import { ReadChip, useReadCounts } from '@/components/content/ReadStatus';
 
 interface Data { canManage: boolean; templates: Array<{ id: string; title: string; kind: string; group: string; items: number; repeat: string | null; approval: boolean }>;
   runs: Array<{ id: string; title: string; status: string; approval: string; done: number; total: number; deviations: number; completedBy: string | null; completedAt: string | null; startedAt: string | null }> }
@@ -14,6 +15,7 @@ export default function Checklists() {
   const router = useRouter();
   const { data, error } = useLoad<Data>('/checklists');
   const { busy, error: err, run } = useSubmit();
+  const counts = useReadCounts((data?.runs ?? []).map((r) => r.id));
   if (!data) return <State error={error} loading />;
   const start = async (id: string) => { const r = await run(() => api<{ id: string }>(`/checklists/${id}/start`, { method: 'POST' })); if (r) router.push(`/checklisten/${r.id}`); };
   const open = data.runs.filter((r) => r.status !== 'COMPLETED');
@@ -22,7 +24,7 @@ export default function Checklists() {
     <Link href={`/checklisten/${r.id}`} className="card listitem">
       <span className={`udot ${r.deviations || r.status === 'OVERDUE' ? 'warn' : r.status === 'COMPLETED' ? 'off' : ''}`} aria-label={r.deviations ? `${r.deviations} Abweichung(en)` : undefined} />
       <span className="grow"><strong className="title">{r.title}</strong>
-        <span className="block muted small">{RUN_STATUS[r.status]}{r.approval === 'PENDING' && ' · wartet auf Freigabe'}{r.approval === 'APPROVED' && ' · freigegeben'} · {r.done}/{r.total} erledigt{r.deviations > 0 && ` · ${r.deviations} Abweichung${r.deviations > 1 ? 'en' : ''}`}{r.completedBy && ` · ${r.completedBy}, ${dayTime(r.completedAt)}`}</span></span>
+        <span className="block muted small">{RUN_STATUS[r.status]}{r.approval === 'PENDING' && ' · wartet auf Freigabe'}{r.approval === 'APPROVED' && ' · freigegeben'} · {r.done}/{r.total} erledigt{r.deviations > 0 && ` · ${r.deviations} Abweichung${r.deviations > 1 ? 'en' : ''}`}{r.completedBy && ` · ${r.completedBy}, ${dayTime(r.completedAt)}`} <ReadChip c={counts[r.id]} /></span></span>
     </Link>
   );
   return (

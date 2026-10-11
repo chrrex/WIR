@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { Icon } from '@/components/Icon';
 import { ErrorNote, State, useLoad, useSubmit } from '@/components/work';
 import { when } from '@/lib/time';
+import { ReadChip, useReadCounts } from '@/components/content/ReadStatus';
 
 interface I { id: string; title: string; excerpt: string; status: string; category: string | null; author: string; publishedAt: string; likes: number; comments: number; liked: boolean }
 interface Data { canCreate: boolean; statusLabels: Record<string, string>; categories: Array<{ id: string; name: string }>; ideas: I[] }
@@ -16,6 +17,7 @@ export default function Ideas() {
   const [f, setF] = useState<{ title: string; description: string; categoryId: string } | null>(null);
   const [tab, setTab] = useState<'open' | 'done'>('open');
   const { busy, error: err, run } = useSubmit();
+  const counts = useReadCounts((data?.ideas ?? []).map((i) => i.id));
   if (!data) return <State error={error} loading />;
   const list = data.ideas.filter((i) => (tab === 'done') === DONE.includes(i.status)).sort((a, b) => b.likes - a.likes);
   return (
@@ -39,7 +41,7 @@ export default function Ideas() {
               <span className="votes" aria-label={`${i.likes} Unterstützer:innen`}><Icon name="thumb" size={18} /><strong>{i.likes}</strong></span>
               <span className="grow">
                 <span className="row wrap gap-s"><span className={`chip ${i.status === 'IMPLEMENTED' ? 'ok' : 'info'}`}>{data.statusLabels[i.status]}</span>{i.category && <span className="chip">{i.category}</span>}<strong className="title">{i.title}</strong></span>
-                <span className="block muted small">{i.author} · {when(i.publishedAt)}{i.comments > 0 && ` · ${i.comments} Kommentar${i.comments > 1 ? 'e' : ''}`}</span>
+                <span className="block muted small">{i.author} · {when(i.publishedAt)}{i.comments > 0 && ` · ${i.comments} Kommentar${i.comments > 1 ? 'e' : ''}`} <ReadChip c={counts[i.id]} /></span>
                 <span className="block excerpt">{i.excerpt}</span>
               </span>
             </Link>

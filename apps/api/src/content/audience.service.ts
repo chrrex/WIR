@@ -78,11 +78,33 @@ export class AudienceService {
       } else if (t.type === 'GROUP') {
         const g = groups.find((x) => x.id === t.groupId);
         if (!g) throw new BadRequestException('Diese Gruppe gibt es nicht.');
-        const ok = ctx.groupIds.includes(g.id) || can(ctx, 'news.publish_wide', { companyId: g.companyId }) || can(ctx, 'news.mark_important', { groupId: g.id });
-        if (!ok) throw new ForbiddenException(`An „${g.name}“ darfst du nicht schreiben.`);
+        if (!this.inOwnCompanies(ctx, g.companyId, companies)) throw new ForbiddenException(`An „${g.name}“ darfst du nicht schreiben.`);
       } else {
         throw new BadRequestException('News gehen an Gruppen oder Gesellschaften, nicht an einzelne Personen.');
       }
+    }
+  }
+
+  /** Gruppe gehört zu einer der eigenen Gesellschaften (oder darunter, z. B. Stiftung → SGL). */
+  private inOwnCompanies(ctx: PolicyContext, companyId: string | null, companies: Array<{ id: string; parentId: string | null }>) {
+    const parent = new Map(companies.map((c) => [c.id, c.parentId]));
+    return !!companyId && ctx.companyIds.some((c) => isWithin(companyId, c, parent));
+  }
+
+  /**
+   * Übergaben (ADR-044): an beliebige Gruppen und einzelne Personen der eigenen Gesellschaften;
+   * „ganze Gesellschaft“ bzw. „alle“ nur mit denselben Rechten wie bei News (ADR-037).
+   */
+  async assertHandoverTargets(ctx: PolicyContext, targets: AudienceTarget[]) {
+    if (!targets.length) throw new BadRequestException('Bitte wähle mindestens eine Person oder Gruppe.');
+    const { companies } = await this.companyTree();
+    const mine = (companyId: string | null) => this.inOwnCompanies(ctx, companyId, companies);
+    const groups = await this.prisma.db.group.findMany({ where: { id: { in: targets.filter((t) => t.type === 'GROUP').map((t) => (t as { groupId: string }).groupId) }, isActive: true } });
+    const users = await this.prisma.db.user.findMany({ where: { id: { in: targets.filter((t) => t.type === 'USER').map((t) => (t as { userId: string }).userId) }, status: { in: [...LIVE] } }, select: { id: true } });
+    for (const t of targets) {
+      if (t.type === 'GROUP' && !groups.some((g) => g.id === t.groupId && mine(g.companyId))) throw new BadRequestException('Diese Gruppe kannst du nicht auswählen.');
+      if (t.type === 'USER' && !users.some((u) => u.id === t.userId)) throw new BadRequestException('Diese Person gibt es nicht.');
+      if (t.type === 'ALL' || t.type === 'COMPANY') await this.assertNewsTargets(ctx, [t]);
     }
   }
 
@@ -91,7 +113,7 @@ export class AudienceService {
     const { companies } = await this.companyTree();
     const groups = await this.prisma.db.group.findMany({ where: { isActive: true }, include: { company: true }, orderBy: { name: 'asc' } });
     const root = companies.find((c) => !c.parentId);
-    const options: Array<{ key: string; label: string; target: AudienceTarget; wide: boolean }> = [];
+    const options: Array<{ key: string; label: string; company?: string; target: AudienceTarget; wide: boolean }> = [];
     if (root && can(ctx, 'news.publish_wide', { companyId: root.id })) options.push({ key: 'ALL', label: 'Alle Gesellschaften der Stiftungsgruppe', target: { type: 'ALL' }, wide: true });
     for (const c of companies) {
       if (c.kind !== 'FOUNDATION' && can(ctx, 'news.publish_wide', { companyId: c.id })) {
@@ -99,10 +121,11 @@ export class AudienceService {
       }
     }
     for (const g of groups) {
-      const ok = ctx.groupIds.includes(g.id) || can(ctx, 'news.publish_wide', { companyId: g.companyId }) || can(ctx, 'news.mark_important', { groupId: g.id });
-      if (ok) options.push({ key: `G:${g.id}`, label: g.company ? `${g.name} · ${g.company.name}` : g.name, target: { type: 'GROUP', groupId: g.id }, wide: false });
+      if (g.company?.isActive !== false && this.inOwnCompanies(ctx, g.companyId, companies)) options.push({ key: `G:${g.id}`, label: g.name, company: g.company?.name, target: { type: 'GROUP', groupId: g.id }, wide: false });
     }
-    return options;
+    // Gesellschaft nur nennen, wenn Gruppen aus mehreren Gesellschaften wählbar sind
+    const many = new Set(options.map((o) => o.company).filter(Boolean)).size > 1;
+    return options.map(({ company, ...o }) => ({ ...o, label: many && company ? `${o.label} · ${company}` : o.label }));
   }
 
   /** Lesbare Bezeichnung der Zielgruppen eines Inhalts. */
