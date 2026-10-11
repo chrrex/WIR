@@ -457,3 +457,12 @@ button.folder { text-align: left; width: 100%; font: inherit; color: inherit; cu
 .brand-preview .bp-btn { background: var(--p); color: #fff; padding: .4rem .8rem; border-radius: 8px; font-weight: 600; }
 .brand-preview .bp-link { color: var(--p); text-decoration: underline; font-weight: 600; }
 input[type="color"] { width: 44px; height: 44px; padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+/* Checklisten (ADR-056) */
+.progress { display: block; height: 6px; border-radius: 3px; background: var(--line-2); overflow: hidden; margin: .3rem 0; max-width: 320px; }
+.progress span { display: block; height: 100%; background: var(--brand); }
+.cl-item.heading { background: none; box-shadow: none; border: 0; padding: .5rem 0 0; }
+.cl-item.flag { border-left: 4px solid var(--warn); }
+.cl-builder .cl-row { border: 1px solid var(--line); border-radius: 12px; padding: .75rem; }
+.sigpad { width: 100%; max-width: 480px; height: 160px; border: 1px dashed var(--line); border-radius: 10px; background: #fff; touch-action: none; }
+.sig-img { max-width: 260px; background: #fff; border: 1px solid var(--line); border-radius: 8px; }
+@media print { .cl-noprint, .actions-bar, .cmts { display: none !important; } .cl-item { break-inside: avoid; box-shadow: none; } }

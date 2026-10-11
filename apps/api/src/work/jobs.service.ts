@@ -2,7 +2,8 @@ import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
 import { ContentService } from '../content/content.service';
 import { NotificationService } from '../notifications/notification.service';
-import { createRun } from './checklists.controller';
+import { createRuns } from './checklists.controller';
+import { AudienceService } from '../content/audience.service';
 import { nextOccurrence } from './recurrence';
 
 const H = 3600_000;
@@ -14,7 +15,7 @@ const H = 3600_000;
 @Injectable()
 export class JobsService implements OnModuleInit, OnModuleDestroy {
   private timer?: NodeJS.Timeout;
-  constructor(private readonly prisma: PrismaService, private readonly content: ContentService, private readonly notifications: NotificationService) {}
+  constructor(private readonly prisma: PrismaService, private readonly content: ContentService, private readonly notifications: NotificationService, private readonly audiences: AudienceService) {}
 
   onModuleInit() {
     if (process.env.JOBS === 'off' || process.env.NODE_ENV === 'test') return;
@@ -47,13 +48,12 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
   /** Wiederkehrende Checklisten starten (z. B. HACCP täglich 06:00), fällig nach 4 Stunden. */
   private async recurringChecklists(now: Date) {
     const db = this.prisma.db;
-    const due = await db.checklist.findMany({ where: { isActive: true, recurrenceRule: { not: null }, nextRunAt: { lte: now }, groupId: { not: null } }, include: { items: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } } } });
+    const due = await db.checklist.findMany({ where: { isActive: true, recurrenceRule: { not: null }, nextRunAt: { lte: now } }, include: { items: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } } } });
     for (const t of due) {
       // erst den nächsten Termin setzen – so startet ein Lauf nie doppelt, auch wenn zwei Server laufen
       const claimed = await db.checklist.updateMany({ where: { id: t.id, nextRunAt: t.nextRunAt }, data: { nextRunAt: nextOccurrence(t.recurrenceRule!, now, t.recurrenceTz) } });
       if (!claimed.count) continue;
-      const { item, recipientIds } = await createRun(this.content, t, null, new Date(now.getTime() + 4 * H));
-      await this.notifications.notify({ recipientIds, eventType: 'checklist.due', title: `Checkliste fällig: ${t.title}`, body: 'Bitte in den nächsten 4 Stunden erledigen.', linkPath: `/checklisten/${item.id}`, contentItemId: item.id, dedupeKey: `run:${item.id}` });
+      await createRuns({ content: this.content, audiences: this.audiences, notifications: this.notifications }, t, null, t.assignees, new Date(now.getTime() + (t.dueInHours ?? 4) * H));
     }
     return due.length;
   }
