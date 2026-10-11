@@ -2,10 +2,14 @@
 
 import { Avatar } from '@/components/content/Avatar';
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '@/lib/api';
 import { useMe } from '@/lib/me';
 import { Icon } from '@/components/Icon';
+import { Teams } from '@/components/admin/Teams';
+import { Houses } from '@/components/admin/Houses';
+import { Roles } from '@/components/admin/Roles';
+import { NewPerson } from '@/components/admin/NewPerson';
 
 interface AdminUser {
   id: string; username: string; displayName: string; status: string; userType: string; source: string;
@@ -20,12 +24,12 @@ const STATUS: Record<string, string> = { PROVISIONED: 'wartet auf Freischaltung'
 const ACTIONS: Record<string, string> = {
   'auth.login': 'hat sich angemeldet', 'auth.login_failed': 'Fehlversuch bei der Anmeldung', 'auth.locked_temporarily': 'vorübergehend gesperrt (Fehlversuche)',
   'auth.one_time_code_used': 'hat den Einmal-Code genutzt', 'auth.password_changed': 'hat das Passwort geändert',
-  'user.activated': 'freigeschaltet', 'user.one_time_code_issued': 'Einmal-Code ausgegeben', 'user.deactivated': 'deaktiviert', 'system.seeded': 'Demo-Daten angelegt',
+  'user.activated': 'freigeschaltet', 'user.created': 'angelegt', 'user.updated': 'Stammdaten geändert', 'role.granted': 'Rolle vergeben', 'role.revoked': 'Rolle entzogen', 'role.created': 'Rolle angelegt', 'role.updated': 'Rolle geändert', 'role.deleted': 'Rolle gelöscht', 'group.created': 'Gruppe angelegt', 'group.updated': 'Gruppe geändert', 'group.deactivated': 'Gruppe aufgelöst', 'group.member_set': 'Team-Zuordnung geändert', 'group.member_removed': 'aus Team entfernt', 'company.settings_updated': 'Haus-Einstellungen geändert', 'user.one_time_code_issued': 'Einmal-Code ausgegeben', 'user.deactivated': 'deaktiviert', 'system.seeded': 'Demo-Daten angelegt',
 };
 
 export default function AdminPage() {
   const { can } = useMe();
-  const [tab, setTab] = useState<'neu' | 'alle' | 'protokoll' | 'meldungen'>(can('users.read') ? 'neu' : 'meldungen');
+  const [tab, setTab] = useState<'neu' | 'alle' | 'teams' | 'haeuser' | 'rollen' | 'protokoll' | 'meldungen'>(can('users.read') ? 'neu' : can('groups.manage') ? 'teams' : can('roles.manage') ? 'rollen' : can('companies.manage_modules') ? 'haeuser' : can('audit.read') ? 'protokoll' : 'meldungen');
   const [reports, setReports] = useState<Report[] | null>(null);
   const [users, setUsers] = useState<AdminUser[] | null>(null);
   const [audit, setAudit] = useState<AuditRow[] | null>(null);
@@ -33,14 +37,17 @@ export default function AdminPage() {
   const [error, setError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<AdminUser | null>(null);
 
-  useEffect(() => { if (new URLSearchParams(window.location.search).get('tab') === 'meldungen' && can('social.moderate')) setTab('meldungen'); }, [can]);
+  const [adding, setAdding] = useState(false);
+  useEffect(() => { const t = new URLSearchParams(window.location.search).get('tab'); if (t === 'meldungen' && can('social.moderate')) setTab('meldungen'); if (t === 'alle' && can('users.read')) setTab('alle'); }, [can]);
 
+  const current = useRef(tab);
+  current.current = tab;
   const load = useCallback(async () => {
     setError(null);
     try {
       if (tab === 'protokoll') setAudit(await api<AuditRow[]>('/admin/audit?limit=60'));
       else if (tab === 'meldungen') setReports(await api<Report[]>('/moderation/reports'));
-      else setUsers(await api<AdminUser[]>(`/admin/users${tab === 'neu' ? '?status=PROVISIONED' : ''}`));
+      else if (tab === 'neu' || tab === 'alle') { const u = await api<AdminUser[]>(`/admin/users${tab === 'neu' ? '?status=PROVISIONED' : ''}`); if (current.current === tab) setUsers(u); }
     } catch (e) { setError(e instanceof ApiError ? e.message : 'Laden hat nicht geklappt.'); }
   }, [tab]);
   useEffect(() => { void load(); }, [load]);
@@ -55,12 +62,13 @@ export default function AdminPage() {
     } catch (e) { setError(e instanceof ApiError ? e.message : `Das hat bei ${u.displayName} nicht geklappt.`); }
   }
 
-  if (!can('users.read') && !can('audit.read') && !can('social.moderate')) {
+  if (!['users.read', 'audit.read', 'social.moderate', 'groups.manage', 'roles.manage', 'companies.manage_modules'].some((x) => can(x))) {
     return <div className="card narrow stack"><h1>Kein Zugriff</h1><p className="muted">Die Verwaltung ist nur für berechtigte Personen.</p></div>;
   }
 
   const tabs: Array<[typeof tab, string, boolean]> = [
-    ['neu', 'Neu aus Gastromatic', can('users.read')], ['alle', 'Alle Personen', can('users.read')], ['protokoll', 'Protokoll', can('audit.read')], ['meldungen', 'Meldungen', can('social.moderate')],
+    ['neu', 'Freischalten', can('users.read')], ['alle', 'Personen', can('users.read')], ['teams', 'Teams & Gruppen', can('groups.manage')],
+    ['haeuser', 'Häuser', can('companies.manage_modules')], ['rollen', 'Rollen & Rechte', can('roles.manage')], ['protokoll', 'Protokoll', can('audit.read')], ['meldungen', 'Meldungen', can('social.moderate')],
   ];
 
   return (
@@ -103,6 +111,11 @@ export default function AdminPage() {
         </section>
       )}
 
+      {tab === 'teams' && <Teams />}
+      {tab === 'haeuser' && <Houses />}
+      {tab === 'rollen' && <Roles />}
+      {tab === 'alle' && can('users.manage') && (adding ? <NewPerson onCancel={() => setAdding(false)} onDone={(i) => { setAdding(false); setIssued({ ...i, userId: i.id }); void load(); }} />
+        : <div className="row"><button className="btn pri" onClick={() => { setAdding(true); setIssued(null); }}>Person anlegen</button></div>)}
       {tab === 'alle' && (
         <section className="card table-wrap">
           <table>
@@ -110,7 +123,7 @@ export default function AdminPage() {
             <tbody>
               {users?.map((u) => (
                 <tr key={u.id}>
-                  <td><strong>{u.displayName}</strong><div className="small muted">{u.username}{u.userType === 'EXTERNAL' ? ' · extern' : ''}</div></td>
+                  <td><Link className="lnk" href={`/verwaltung/personen/${u.id}`}><strong>{u.displayName}</strong></Link><div className="small muted">{u.username}{u.userType === 'EXTERNAL' ? ' · extern' : ''}</div></td>
                   <td>{u.groups.join(', ') || '–'}</td>
                   <td><span className={`chip st-${u.status.toLowerCase()}`}>{STATUS[u.status] ?? u.status}</span></td>
                   <td>{u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString('de-DE') : '–'}</td>

@@ -30,7 +30,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   }
 
   const items = NAV.filter((n) => (!n.module || me.modules.includes(n.module)) && (!n.anyOf || n.anyOf.some((p) => me.permissions.includes(p))));
-  const isAdmin = can('users.read') || can('audit.read') || can('social.moderate');
+  const isAdmin = ['users.read', 'audit.read', 'social.moderate', 'groups.manage', 'roles.manage', 'companies.manage_modules'].some((x) => can(x));
   const badgeOf = (href: string) => (href === '/news' ? badges.news : href === '/uebergaben' ? badges.handovers : href === '/chat' ? badges.chat : 0);
   const active = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
   const preferred = me.settings?.mobileNavItems?.length ? me.settings.mobileNavItems : DEFAULT_MOBILE;

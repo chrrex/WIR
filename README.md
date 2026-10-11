@@ -36,6 +36,8 @@ Passwort für alle oben: **`Wir-Demo-2026`**
 
 **Erstzugang ausprobieren:** Auf der Anmeldeseite „Ich habe einen Einmal-Code“ wählen, Benutzername `paula.s`, Code **`482 913`** – danach vergibst du ein eigenes Passwort.
 
+**Verwaltung ausprobieren:** Als `lena.k` → **Verwaltung**: unter „Teams & Gruppen“ z. B. eine Gruppe **Azubis** anlegen und Kolleg:innen hinzufügen, unter „Personen“ jemanden anklicken und eine Rolle vergeben, unter „Häuser“ Module und Farben ändern, unter „Rollen & Rechte“ eine eigene Rolle zusammenstellen.
+
 **Freischaltung ausprobieren:** Als `lena.k` anmelden → **Verwaltung** → „Neu aus Gastromatic“ → **Freischalten**. Der angezeigte Code funktioniert sofort für die freigeschaltete Person.
 
 **Phase 3+4 ausprobieren:**
