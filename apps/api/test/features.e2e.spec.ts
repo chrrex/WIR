@@ -13,6 +13,7 @@ import { PrismaService } from '../src/common/prisma.service';
 import { PushService, inQuietHours } from '../src/notifications/push.service';
 import { JobsService } from '../src/work/jobs.service';
 import { nextOccurrence } from '../src/work/recurrence';
+import { config } from '../src/common/config';
 
 jest.setTimeout(90_000);
 const PW = 'Wir-Demo-2026';
@@ -148,5 +149,26 @@ describe('Neue Funktionen (e2e)', () => {
     const maren = await as('maren.h');
     for (const s of p.steps) await (s.forPerson ? tobias : maren).patch(`/api/v1/tasks/${s.id}`).send({ status: 'DONE' }).expect(200);
     expect((await lena.get(`/api/v1/onboarding/${plan}`).expect(200)).body.status).toBe('COMPLETED');
+  });
+
+  test('Demo-Modus: nur mit Schalter und Testdaten-Marker, wechselt ohne Passwort (ADR-047)', async () => {
+    const a = request.agent(app.getHttpServer());
+    const users = (await a.get('/api/v1/auth/demo').expect(200)).body;
+    const sven = users.find((u: { username: string }) => u.username === 'sven.r');
+    expect(sven.roles).toContain('Abteilungsleitung');
+    expect(users.some((u: { username: string }) => u.username === 'paula.s')).toBe(false); // nur aktive
+    await a.post('/api/v1/auth/demo/login').send({ userId: sven.id }).expect(200);
+    expect((await a.get('/api/v1/me').expect(200)).body.user.username).toBe('sven.r');
+    const jana = users.find((u: { username: string }) => u.username === 'jana.m');
+    await a.post('/api/v1/auth/demo/login').send({ userId: jana.id }).expect(200);
+    expect((await a.get('/api/v1/me').expect(200)).body.user.username).toBe('jana.m');
+    // ohne Testdaten-Marker (z. B. echte Datenbank) → gibt es nicht
+    await prisma.db.systemSetting.delete({ where: { key: 'demo.seeded' } });
+    await a.get('/api/v1/auth/demo').expect(404);
+    await prisma.db.systemSetting.create({ data: { key: 'demo.seeded', value: true } });
+    // ohne Schalter → gibt es nicht
+    config.demoMode = false;
+    await a.post('/api/v1/auth/demo/login').send({ userId: sven.id }).expect(404);
+    config.demoMode = true;
   });
 });

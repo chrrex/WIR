@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { DemoLogin } from '@/components/DemoSwitch';
 import { useRouter } from 'next/navigation';
 import { api, ApiError, Branding } from '@/lib/api';
 import { applyBranding } from '@/lib/brand';
@@ -83,6 +84,7 @@ export default function LoginPage() {
         <button className="lnk" type="button" onClick={() => { setMode(mode === 'password' ? 'code' : 'password'); setError(null); }}>
           {mode === 'password' ? 'Ich habe einen Einmal-Code (erster Zugang oder Passwort vergessen)' : 'Zurück zur Anmeldung mit Passwort'}
         </button>
+        <DemoLogin />
       </section>
     </div>
   );

@@ -20,6 +20,11 @@ export const config = {
   maxFailedLogins: 5,
   lockMinutes: 15,
   minPasswordLength: 10,
+  /**
+   * Demo-Modus (ADR-047): Personen per Klick wechseln, ohne Passwort. Nur mit DEMO_MODE=true UND
+   * nur in einer Datenbank mit Testdaten (Marker „demo.seeded“ aus dem Seed) – nie mit echten Daten.
+   */
+  demoMode: process.env.DEMO_MODE === 'true',
   /** Gesellschaft, deren Auftritt die Anmeldeseite zeigt. */
   defaultCompany: process.env.DEFAULT_COMPANY ?? 'SGL',
 };

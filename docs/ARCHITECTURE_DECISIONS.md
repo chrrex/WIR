@@ -498,6 +498,10 @@ Ohne Datenbank-Migration – alle Tabellen waren vorbereitet.
 - **Abwesenheit** trägt jede Person selbst ein: Urlaub, Dienstreise, Fortbildung oder „abwesend“ – **bewusst ohne Krankheit oder andere Gründe** (Art. 9 DSGVO), optional mit Hinweis wie „Vertretung: …“. Angezeigt im Team (Filter „heute abwesend“), im Profil, in der Suche, **im Chat** beim Anschreiben und **beim Schreiben einer Übergabe** für alle gewählten Empfänger:innen.
 - Migration `20261011000000_profil_abwesenheit`: `employee_profiles.phone_mobile`, `absences.note`.
 
+## ADR-047 · Demo-Modus: Personen ohne Passwort wechseln — ENTSCHIEDEN (11.10.2026)
+
+Für Vorführungen und Tests: Auf der Anmeldeseite eine Personenauswahl, in der App eine gelbe Leiste „Demo-Modus“ mit Wechsel per Auswahlliste. **Doppelt abgesichert:** nur mit Umgebungsvariable `DEMO_MODE=true` (im Codespace gesetzt) **und** nur, wenn die Datenbank den Testdaten-Marker `demo.seeded` trägt, den ausschließlich der Seed setzt. Fehlt eines davon, gibt es die Routen nicht (404). Beim Start warnt die API deutlich. Jeder Wechsel steht im Audit-Protokoll. Nur aktive Personen; die bisherige Sitzung wird beendet.
+
 ## Nächste Schritte
 
 1. Anbieterauswahl (ADR-022) bestätigen und Gastromatic-Prüfauftrag (ADR-021) stellen.
