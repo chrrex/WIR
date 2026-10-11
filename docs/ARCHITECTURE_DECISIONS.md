@@ -502,6 +502,18 @@ Ohne Datenbank-Migration – alle Tabellen waren vorbereitet.
 
 Für Vorführungen und Tests: Auf der Anmeldeseite eine Personenauswahl, in der App eine gelbe Leiste „Demo-Modus“ mit Wechsel per Auswahlliste. **Doppelt abgesichert:** nur mit Umgebungsvariable `DEMO_MODE=true` (im Codespace gesetzt) **und** nur, wenn die Datenbank den Testdaten-Marker `demo.seeded` trägt, den ausschließlich der Seed setzt. Fehlt eines davon, gibt es die Routen nicht (404). Beim Start warnt die API deutlich. Jeder Wechsel steht im Audit-Protokoll. Nur aktive Personen; die bisherige Sitzung wird beendet.
 
+## ADR-048 · Chat: ein Start für Einzel- und Gruppenchat; Reaktionen — ENTSCHIEDEN (11.10.2026)
+
+- Ein Knopf „Neuer Chat“: eine Person gewählt → Einzelchat, mehrere → Gruppe (Name nötig; anlegen weiterhin nur mit `chat.create_group`). Einzel- und Gruppenchats stehen gemeinsam in einer Liste neben dem Verlauf.
+- Reaktionen auf Nachrichten: 👍 👎 ❤️ 🎉 – je Person und Art einmal, per Klick an/aus; wer reagiert hat, sehen nur die Teilnehmenden (wie den Chat selbst). Keine Benachrichtigung für Reaktionen. Migration `20261011010000_chat_reaktionen` (Enum-Werte, `reactions.chat_message_id`).
+- Dieselben vier Reaktionen gibt es bei News und Social (`POST /content/:id/reactions`, gemeinsame Komponente `Reactions`); die Listen zeigen eine Kurzform („👍 3 ❤️ 1“). Ideen behalten „Unterstützen“ (LIKE) – daraus entsteht die Rangliste „Beste Ideen“ (Top 5, ohne abgelehnte) neben der Ideenliste.
+
+## ADR-049 · Profilfoto — ENTSCHIEDEN (11.10.2026)
+
+- Freiwillig in „Einstellungen › Mein Profil“: hochladen, ändern, entfernen. Das Foto wird serverseitig neu berechnet (256 × 256 px, Ausschnitt per Motiverkennung, WebP, ohne Metadaten) und in `employee_profiles.avatar_file_id` gespeichert; das alte Foto wird gelöscht markiert.
+- Abruf über `GET /files/avatar/:userId` für alle Angemeldeten (5 Min. Cache); ohne Foto 404 ohne Cache – die Oberfläche zeigt dann wie bisher Initialen. So brauchen die Listen-Antworten kein zusätzliches Feld, nur die Personen-ID.
+- Angezeigt überall, wo bisher Initialen standen: Kopfzeile, Team, Teamprofil, Chatliste, Social, Kommentare, News- und Übergabe-Verfasser:innen, Verwaltung.
+
 ## Nächste Schritte
 
 1. Anbieterauswahl (ADR-022) bestätigen und Gastromatic-Prüfauftrag (ADR-021) stellen.

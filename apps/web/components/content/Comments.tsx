@@ -47,7 +47,7 @@ export function Comments({ contentId, enabled = true, onCount }: { contentId: st
     <section className="comments" aria-label="Kommentare">
       {list?.map((c) => (
         <div className="comment" key={c.id}>
-          <Avatar name={c.author?.name ?? '?'} size="s" />
+          <Avatar name={c.author?.name ?? '?'} id={c.author?.id} size="s" />
           <div className="bubble">
             <div className="small muted"><strong className="fg">{c.author?.name ?? 'Ehemalige:r Kolleg:in'}</strong> · {when(c.createdAt)}</div>
             <RichText text={c.text} mentions={c.mentions} />

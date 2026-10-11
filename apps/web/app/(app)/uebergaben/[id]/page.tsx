@@ -13,7 +13,7 @@ import { Comments } from '@/components/content/Comments';
 import { ReadStatus } from '@/components/content/ReadStatus';
 import { Icon } from '@/components/Icon';
 
-interface H { id: string; subject: string; text: string; group: string; shiftLabel: string | null; publishedAt: string; author: { name: string }; mentions: Array<{ id: string; name: string }>; audience: string[]; images: ImageRef[] }
+interface H { id: string; subject: string; text: string; group: string; shiftLabel: string | null; publishedAt: string; author: { id: string | null; name: string }; mentions: Array<{ id: string; name: string }>; audience: string[]; images: ImageRef[] }
 
 export default function HandoverDetail() {
   const { id } = useParams<{ id: string }>();
@@ -33,7 +33,7 @@ export default function HandoverDetail() {
         <div className="chips"><span className="chip info">{h.shiftLabel ?? 'Schicht'}</span><span className="chip">{h.group}</span></div>
         <p className="small muted">An: {h.audience.join(', ')}</p>
         <h1>{h.subject}</h1>
-        <div className="row"><Avatar name={h.author.name} size="s" /><span className="small muted"><strong className="fg">{h.author.name}</strong> · {when(h.publishedAt)}</span></div>
+        <div className="row"><Avatar name={h.author.name} id={h.author.id} size="s" /><span className="small muted"><strong className="fg">{h.author.name}</strong> · {when(h.publishedAt)}</span></div>
         <div className="prose"><RichText text={h.text} mentions={h.mentions} /></div>
         <Images images={h.images} />
         <h2 className="h-sub">Rückfragen & Erledigt</h2>

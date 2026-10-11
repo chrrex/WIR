@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Avatar } from './content/Avatar';
 import { api } from '@/lib/api';
 import { useMe } from '@/lib/me';
 import { NAV } from '@/lib/nav';
@@ -19,6 +20,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [more, setMore] = useState(false);
+  const [v, setV] = useState(0);
+  useEffect(() => { const f = () => setV(Date.now()); window.addEventListener('wir-avatar', f); return () => window.removeEventListener('wir-avatar', f); }, []);
   const { badges } = useBadges();
 
   if (!me) {
@@ -31,7 +34,6 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const active = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
   const preferred = me.settings?.mobileNavItems?.length ? me.settings.mobileNavItems : DEFAULT_MOBILE;
   const mobileItems = preferred.map((h) => items.find((i) => i.href === h)).filter(Boolean).slice(0, 4) as typeof items;
-  const initials = (me.profile ? me.profile.firstName[0] + me.profile.lastName[0] : me.user.displayName.slice(0, 2)).toUpperCase();
 
   async function logout() {
     await api('/auth/logout', { method: 'POST' }).catch(() => null);
@@ -76,7 +78,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <input id="q" name="q" type="search" placeholder="Suchen oder das WIR fragen …" />
           </form>
           <Bell />
-          <Link className="avatar" href="/einstellungen" aria-label={`Einstellungen von ${me.user.displayName}`}>{initials}</Link>
+          <Link className="avatar" href="/einstellungen" aria-label={`Einstellungen von ${me.user.displayName}`}><Avatar name={me.user.displayName} id={me.user.id} v={v} /></Link>
           <button className="iconbtn" onClick={logout} aria-label="Abmelden" title="Abmelden"><Icon name="logout" /></button>
         </header>
         <main className="content" id="inhalt">{children}</main>

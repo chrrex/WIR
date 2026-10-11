@@ -1,5 +1,6 @@
 'use client';
 
+import { Avatar } from '@/components/content/Avatar';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '@/lib/api';
@@ -90,7 +91,7 @@ export default function AdminPage() {
           {users?.length === 0 && <div className="card empty">Niemand wartet auf Freischaltung.</div>}
           {users?.map((u) => (
             <div className="card row wrap person" key={u.id}>
-              <span className="av">{u.displayName.slice(0, 2).toUpperCase()}</span>
+              <Avatar name={u.displayName} id={u.id} />
               <span className="grow">
                 <strong>{u.displayName}</strong> <span className="muted">· {u.username}</span>
                 <span className="small muted block">{[u.jobTitle, u.groups.join(', '), u.company, u.personnelNumber && `Pers.-Nr. ${u.personnelNumber}`].filter(Boolean).join(' · ')}</span>

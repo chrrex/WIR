@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { ErrorNote, day, useSubmit } from '@/components/work';
+import { useMe } from '@/lib/me';
+import { Avatar } from './content/Avatar';
 
-interface Profile { email: string | null; phoneWork: string | null; phoneMobile: string | null; aboutMe: string | null; hasProfile: boolean;
+interface Profile { email: string | null; phoneWork: string | null; phoneMobile: string | null; aboutMe: string | null; hasProfile: boolean; photo: boolean;
   absences: Array<{ id: string; label: string; from: string; until: string; note: string | null }> }
 const TYPES = [['VACATION', 'Urlaub'], ['BUSINESS_TRIP', 'Dienstreise'], ['TRAINING', 'Fortbildung'], ['ABSENT', 'Abwesend (ohne Grund)']];
 
@@ -15,6 +17,12 @@ export function ProfileSettings() {
   const [a, setA] = useState({ type: 'VACATION', startsOn: '', endsOn: '', note: '' });
   const [saved, setSaved] = useState(false);
   const { busy, error, run } = useSubmit();
+  const { me } = useMe();
+  const [v, setV] = useState(Date.now());
+  async function photo(file: File | null) {
+    const fd = new FormData(); if (file) fd.append('file', file);
+    if (await run(() => api('/files/avatar', file ? { method: 'POST', body: fd } : { method: 'DELETE' }))) { setP({ ...p!, photo: !!file }); setV(Date.now()); window.dispatchEvent(new Event('wir-avatar')); }
+  }
   const load = (x: Profile) => { setP(x); setF({ email: x.email ?? '', phoneWork: x.phoneWork ?? '', phoneMobile: x.phoneMobile ?? '', aboutMe: x.aboutMe ?? '' }); };
   useEffect(() => { api<Profile>('/people/me/profile').then(load).catch(() => null); }, []);
   if (!p?.hasProfile) return null;
@@ -23,6 +31,11 @@ export function ProfileSettings() {
       <section className="card stack">
         <h2>Mein Profil</h2>
         <p className="small muted">Das sehen deine Kolleg:innen unter „Team“. Alles freiwillig – bitte nur dienstliche Angaben.</p>
+        <div className="row wrap">
+          <Avatar name={me?.user.displayName ?? ''} id={p.photo ? me?.user.id : null} v={v} size="l" />
+          <label className="btn sm">{p.photo ? 'Foto ändern' : 'Profilfoto hochladen'}<input type="file" accept="image/*" className="sr" disabled={busy} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void photo(f); }} /></label>
+          {p.photo && <button type="button" className="btn sm" disabled={busy} onClick={() => photo(null)}>Foto entfernen</button>}
+        </div>
         <form className="stack-s" onSubmit={async (e) => { e.preventDefault(); const x = await run(() => api<Profile>('/people/me/profile', { method: 'PUT', json: f })); if (x) { load(x); setSaved(true); setTimeout(() => setSaved(false), 2500); } }}>
           <div className="grid">
             <div className="field"><label htmlFor="pe">E-Mail (dienstlich)</label><input id="pe" type="email" className="input" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></div>

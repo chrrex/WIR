@@ -283,6 +283,8 @@ select.input { padding-right: 10px; }
 .av { border-radius: 50%; display: inline-grid; place-items: center; font-weight: 700; flex: none; }
 .av-m { width: 40px; height: 40px; font-size: .9rem; }
 .av-s { width: 32px; height: 32px; font-size: .75rem; }
+.av-l { width: 96px; height: 96px; font-size: 2rem; }
+img.av { object-fit: cover; background: var(--line, #E5E5E0); }
 .av.t1 { background: #E9EDDD; color: #3D4722; } .av.t2 { background: #E3E8F2; color: #1E3560; } .av.t3 { background: #F6E6E9; color: #8A3443; }
 .av.t4 { background: #FBF5E8; color: #5C4415; } .av.t5 { background: #EFE9F3; color: #5E4673; }
 .donut { width: 104px; height: 104px; border-radius: 50%; display: grid; place-items: center; flex: none; }
@@ -369,3 +371,16 @@ button.folder { text-align: left; width: 100%; font: inherit; color: inherit; cu
 .demo-user { text-align: left; font: inherit; color: #1E2318; background: #fff; border: 1px solid #E8D27A; border-radius: 10px; padding: 8px 10px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
 .demo-user:hover, .demo-user:focus-visible { border-color: #8A6D00; }
 .demo-user .xs { color: #5B4A00; }
+
+/* ---- Chat-Reaktionen (ADR-048) ---- */
+.reacts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+.msg.me .reacts { justify-content: flex-end; }
+.react { font: inherit; font-size: 13px; line-height: 1; padding: 4px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); cursor: pointer; min-height: 28px; }
+.react.on { border-color: var(--brand); background: var(--brand-tint); }
+.react.add { color: var(--muted); }
+.react-pick { display: inline-flex; gap: 4px; }
+.rank { margin: 0; padding-left: 1.4rem; display: grid; gap: .5rem; }
+.rank a { color: inherit; text-decoration: none; }
+.rank .small { white-space: nowrap; }
+.rank a:hover .grow { text-decoration: underline; }
+.avatar { overflow: hidden; } .avatar .av { width: 100%; height: 100%; background: none; color: inherit; }

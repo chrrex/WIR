@@ -7,6 +7,7 @@ import { PolicyService } from '../policy/policy.service';
 import { can } from '../policy/engine';
 import { NotificationService } from '../notifications/notification.service';
 import { absencesToday } from '../people/people.controller';
+import { REACTIONS, summarizeReactions } from '../content/content.service';
 
 const SendBody = z.object({
   text: z.string().max(4000).default(''),
@@ -85,10 +86,11 @@ export class ChatController {
     });
     const unread = await this.unreadFor(me.id);
     return convs.map((c) => {
-      const other = c.type === 'DIRECT' ? c.participants.find((p) => p.userId !== me.id)?.user : null;
+      const otherP = c.type === 'DIRECT' ? c.participants.find((p) => p.userId !== me.id) : null;
+      const other = otherP?.user;
       const last = c.messages[0];
       return {
-        id: c.id, type: c.type, title: c.type === 'GROUP' ? c.title : other?.displayName ?? 'Chat', members: c.participants.length,
+        id: c.id, type: c.type, title: c.type === 'GROUP' ? c.title : other?.displayName ?? 'Chat', partnerId: otherP?.userId ?? null, members: c.participants.length,
         last: last ? { text: last.deletedAt ? '' : last.body || '📷 Foto', at: last.createdAt, mine: last.senderId === me.id, sender: last.sender?.displayName ?? null } : null,
         unread: unread.get(c.id) ?? 0,
       };
@@ -145,7 +147,7 @@ export class ChatController {
       where: { conversationId: id, ...(before ? { createdAt: { lt: new Date(before) } } : {}) },
       orderBy: { createdAt: 'desc' },
       take: 60,
-      include: { sender: { select: { id: true, displayName: true } }, attachments: { select: { fileObjectId: true } } },
+      include: { sender: { select: { id: true, displayName: true } }, attachments: { select: { fileObjectId: true } }, reactions: { select: { type: true, userId: true, user: { select: { displayName: true } } } } },
     });
     let otherReadAt: Date | null = null;
     if (c.type === 'DIRECT') {
@@ -165,10 +167,26 @@ export class ChatController {
         id: m.id, text: m.deletedAt ? null : m.body, deleted: !!m.deletedAt, at: m.createdAt, mine: m.senderId === me.id,
         sender: m.sender ? { id: m.sender.id, name: m.sender.displayName } : null,
         image: m.attachments[0]?.fileObjectId ?? null,
+        reactions: summarizeReactions(m.reactions, me.id),
         // ✓✓ nur im 1:1-Chat (ADR-015)
         readByOther: c.type === 'DIRECT' && m.senderId === me.id && !!otherReadAt && otherReadAt >= m.createdAt,
       })),
     };
+  }
+
+  /** Reaktion 👍 👎 ❤️ 🎉 an-/ausschalten (je Person und Art einmal). Nur für Teilnehmende. */
+  @RequirePermission('chat.use')
+  @Post('messages/:messageId/reactions')
+  @HttpCode(200)
+  async react(@CurrentUser() me: SessionUser, @Param('messageId', ParseUUIDPipe) messageId: string, @Body(new ZodPipe(z.object({ type: z.enum(REACTIONS) }))) b: { type: (typeof REACTIONS)[number] }) {
+    const db = this.prisma.db;
+    const m = await db.chatMessage.findUnique({ where: { id: messageId } });
+    if (!m || m.deletedAt) throw new NotFoundException();
+    await this.membership(me.id, m.conversationId);
+    const existing = await db.reaction.findFirst({ where: { chatMessageId: messageId, userId: me.id, type: b.type } });
+    if (existing) await db.reaction.delete({ where: { id: existing.id } });
+    else await db.reaction.create({ data: { chatMessageId: messageId, userId: me.id, type: b.type } });
+    return { ok: true, on: !existing };
   }
 
   @RequirePermission('chat.use')

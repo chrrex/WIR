@@ -1,4 +1,4 @@
-import { BadRequestException, Controller, Get, NotFoundException, Param, ParseUUIDPipe, Post, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Controller, Delete, Get, HttpCode, NotFoundException, Param, ParseUUIDPipe, Post, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -53,6 +53,42 @@ export class FilesController {
     const mime = ext === 'pdf' && isPdf ? 'application/pdf' : isZip ? OFFICE[ext] : undefined;
     if (!mime) throw new BadRequestException('Bitte lade eine PDF-, Word-, Excel- oder PowerPoint-Datei hoch.');
     return this.save(file.buffer, mime, ext, file.originalname, me.id);
+  }
+
+  /** Profilfoto: quadratisch auf 256 px zugeschnitten, ohne Metadaten; das alte Foto wird entfernt. */
+  @Post('avatar')
+  @HttpCode(200)
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_BYTES, files: 1 } }))
+  async uploadAvatar(@CurrentUser() me: SessionUser, @UploadedFile() file?: { buffer: Buffer; originalname: string }) {
+    if (!file) throw new BadRequestException('Keine Datei empfangen.');
+    if (!(await this.prisma.db.employeeProfile.count({ where: { userId: me.id } }))) throw new BadRequestException('Profilfotos gibt es nur für Mitarbeitende.');
+    let out: Buffer;
+    try { out = await sharp(file.buffer, { failOn: 'error', limitInputPixels: 50_000_000 }).rotate().resize(256, 256, { fit: 'cover', position: 'attention' }).webp({ quality: 82 }).toBuffer(); }
+    catch { throw new BadRequestException('Bitte lade ein Foto hoch (JPG, PNG, WebP oder HEIC).'); }
+    const { id } = await this.save(out, 'image/webp', 'webp', 'profilfoto.webp', me.id);
+    await this.removeAvatar(me);
+    await this.prisma.db.employeeProfile.update({ where: { userId: me.id }, data: { avatarFileId: id } });
+    return { id };
+  }
+
+  @Delete('avatar')
+  @HttpCode(204)
+  async removeAvatar(@CurrentUser() me: SessionUser) {
+    const p = await this.prisma.db.employeeProfile.findUnique({ where: { userId: me.id }, select: { avatarFileId: true } });
+    if (!p?.avatarFileId) return;
+    await this.prisma.db.employeeProfile.update({ where: { userId: me.id }, data: { avatarFileId: null } });
+    await this.prisma.db.fileObject.update({ where: { id: p.avatarFileId }, data: { deletedAt: new Date() } });
+  }
+
+  /** Profilfoto einer Person – für alle Angemeldeten; ohne Foto 404 (die Oberfläche zeigt dann Initialen). */
+  @Get('avatar/:userId')
+  async avatar(@Param('userId', ParseUUIDPipe) userId: string, @Res() res: Response) {
+    const p = await this.prisma.db.employeeProfile.findFirst({ where: { userId, user: { status: 'ACTIVE' }, avatarFile: { deletedAt: null } }, select: { avatarFile: { select: { storageKey: true } } } });
+    if (!p?.avatarFile) { res.setHeader('Cache-Control', 'no-store'); res.status(404).end(); return; }
+    res.setHeader('Cache-Control', 'private, max-age=300');
+    res.setHeader('Content-Type', 'image/webp');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.end(await readFile(path.join(STORAGE_DIR, p.avatarFile.storageKey)));
   }
 
   private async save(data: Buffer, mimeType: string, ext: string, name: string, userId: string) {

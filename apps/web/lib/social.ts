@@ -3,6 +3,6 @@ export const CATEGORIES: Record<string, string> = {
 };
 export interface SocialPost {
   id: string; title: string; text: string; category: string; intent: 'OFFER' | 'SEARCH' | null; price: string | null; closed: boolean; expiresAt: string | null;
-  author: { id: string | null; name: string }; publishedAt: string; mine: boolean; liked: boolean; likes: number; comments: number;
+  author: { id: string | null; name: string }; publishedAt: string; mine: boolean; reactions: import('@/components/content/Reactions').Reaction[]; comments: number;
   images: Array<{ fileId: string; altText: string | null }>; canDelete?: boolean;
 }

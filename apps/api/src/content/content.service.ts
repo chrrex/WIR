@@ -19,6 +19,15 @@ export function toBody(text: string) {
   return { type: 'text', paragraphs: text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean) };
 }
 
+/** Reaktionen 👍 👎 ❤️ 🎉 (Chat, News, Social – ADR-048) */
+export const REACTIONS = ['THUMBS_UP', 'THUMBS_DOWN', 'HEART', 'CELEBRATE'] as const;
+export type ReactionKind = (typeof REACTIONS)[number];
+
+/** Zusammenfassung je Art: Anzahl, ob selbst reagiert, wer (nur für Berechtigte des Inhalts). */
+export function summarizeReactions(rows: Array<{ type: string; userId: string; user: { displayName: string } }>, me: string) {
+  return REACTIONS.map((type) => { const r = rows.filter((x) => x.type === type); return { type, count: r.length, mine: r.some((x) => x.userId === me), names: r.map((x) => x.user.displayName) }; }).filter((r) => r.count);
+}
+
 export interface CreateContentInput {
   type: ContentType;
   companyId: string | null;
@@ -165,13 +174,13 @@ export class ContentService {
     const db = this.prisma.db;
     const [receipts, likes, myLikes, comments, attachments] = await Promise.all([
       db.readReceipt.findMany({ where: { userId, contentItemId: { in: ids } }, select: { contentItemId: true } }),
-      db.reaction.groupBy({ by: ['contentItemId'], where: { contentItemId: { in: ids } }, _count: true }),
-      db.reaction.findMany({ where: { userId, contentItemId: { in: ids } }, select: { contentItemId: true } }),
+      db.reaction.groupBy({ by: ['contentItemId'], where: { contentItemId: { in: ids }, type: 'LIKE' }, _count: true }),
+      db.reaction.findMany({ where: { contentItemId: { in: ids } }, select: { contentItemId: true, type: true, userId: true, user: { select: { displayName: true } } } }),
       db.comment.groupBy({ by: ['contentItemId'], where: { contentItemId: { in: ids }, deletedAt: null }, _count: true }),
       this.attachmentsFor(ids),
     ]);
     const read = new Set(receipts.map((r) => r.contentItemId));
-    const liked = new Set(myLikes.map((r) => r.contentItemId));
+    const liked = new Set(myLikes.filter((r) => r.userId === userId && r.type === 'LIKE').map((r) => r.contentItemId));
     const likeCount = new Map(likes.map((l) => [l.contentItemId, l._count]));
     const commentCount = new Map(comments.map((c) => [c.contentItemId, c._count]));
     return (id: string) => ({
@@ -180,6 +189,7 @@ export class ContentService {
       likes: likeCount.get(id) ?? 0,
       comments: commentCount.get(id) ?? 0,
       images: attachments.get(id) ?? [],
+      reactions: summarizeReactions(myLikes.filter((r) => r.contentItemId === id && r.type !== 'LIKE'), userId),
     });
   }
 
@@ -195,14 +205,25 @@ export class ContentService {
     return { ok: true };
   }
 
+  async toggleReaction(userId: string, id: string, type: ReactionKind) {
+    const item = await this.getVisible(userId, id);
+    if (!item.reactionsEnabled) throw new BadRequestException('Reaktionen sind hier ausgeschaltet.');
+    const db = this.prisma.db;
+    const existing = await db.reaction.findFirst({ where: { userId, contentItemId: id, type } });
+    if (existing) await db.reaction.delete({ where: { id: existing.id } });
+    else await db.reaction.create({ data: { userId, contentItemId: id, type } });
+    const rows = await db.reaction.findMany({ where: { contentItemId: id, type: { not: 'LIKE' } }, select: { type: true, userId: true, user: { select: { displayName: true } } } });
+    return { reactions: summarizeReactions(rows, userId) };
+  }
+
   async toggleLike(userId: string, id: string) {
     const item = await this.getVisible(userId, id);
     if (!item.reactionsEnabled) throw new BadRequestException('Reaktionen sind hier ausgeschaltet.');
     const db = this.prisma.db;
-    const existing = await db.reaction.findFirst({ where: { userId, contentItemId: id } });
+    const existing = await db.reaction.findFirst({ where: { userId, contentItemId: id, type: 'LIKE' } });
     if (existing) await db.reaction.delete({ where: { id: existing.id } });
     else await db.reaction.create({ data: { userId, contentItemId: id, type: 'LIKE' } });
-    const likes = await db.reaction.count({ where: { contentItemId: id } });
+    const likes = await db.reaction.count({ where: { contentItemId: id, type: 'LIKE' } });
     return { liked: !existing, likes };
   }
 

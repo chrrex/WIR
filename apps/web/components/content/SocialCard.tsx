@@ -7,7 +7,7 @@ import { when } from '@/lib/time';
 import { CATEGORIES, SocialPost } from '@/lib/social';
 import { Avatar } from './Avatar';
 import { Images } from './Images';
-import { LikeButton } from './LikeButton';
+import { ContentReactions } from './Reactions';
 import { RichText } from './MentionText';
 import { Icon } from '../Icon';
 
@@ -21,7 +21,7 @@ export function SocialCard({ p, full = false, onChange }: { p: SocialPost; full?
   return (
     <article className="card social stack-s">
       <div className="row">
-        <Avatar name={p.author.name} />
+        <Avatar name={p.author.name} id={p.author.id} />
         <span className="grow"><strong>{p.author.name}</strong><span className="block small muted">{when(p.publishedAt)}</span></span>
         <span className="chip">{CATEGORIES[p.category] ?? p.category}</span>
       </div>
@@ -36,7 +36,7 @@ export function SocialCard({ p, full = false, onChange }: { p: SocialPost; full?
       {p.text && (full ? <div className="prose"><RichText text={p.text} /></div> : <p className="excerpt">{p.text.length > 240 ? `${p.text.slice(0, 240)} …` : p.text}</p>)}
       <Images images={p.images} />
       <div className="row wrap actions-bar">
-        <LikeButton contentId={p.id} liked={p.liked} likes={p.likes} label="Herz" />
+        <ContentReactions key={p.id} contentId={p.id} initial={p.reactions} />
         {!full && <Link className="btn sm" href={`/social/${p.id}`}><Icon name="chat" size={16} />{p.comments ? `${p.comments} Kommentar${p.comments === 1 ? '' : 'e'}` : 'Kommentieren'}</Link>}
         {p.category === 'MARKETPLACE' && !p.mine && !p.closed && <button className="btn sm pri" onClick={ask}><Icon name="chat" size={16} />Im Chat fragen</button>}
         {p.category === 'MARKETPLACE' && p.mine && !p.closed && full && (

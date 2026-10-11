@@ -1,5 +1,6 @@
 'use client';
 
+import { Reaction, reactionSummary } from '@/components/content/Reactions';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -8,7 +9,7 @@ import { when } from '@/lib/time';
 import { Icon } from '@/components/Icon';
 import { ReadChip, useReadCounts } from '@/components/content/ReadStatus';
 
-interface NewsRow { id: string; title: string; excerpt: string; important: boolean; pinned: boolean; author: string; publishedAt: string; read: boolean; mine: boolean; likes: number; comments: number; images: unknown[] }
+interface NewsRow { id: string; title: string; excerpt: string; important: boolean; pinned: boolean; author: string; publishedAt: string; read: boolean; mine: boolean; reactions: Reaction[]; comments: number; images: unknown[] }
 
 export default function NewsList() {
   const { can } = useMe();
@@ -43,7 +44,7 @@ export default function NewsList() {
                 </span>
                 <span className="block muted small">{n.author} · {when(n.publishedAt)} <ReadChip c={counts[n.id]} /></span>
                 <span className="block excerpt">{n.excerpt}</span>
-                <span className="block xs muted">{n.likes > 0 && `${n.likes} gefällt das`}{n.likes > 0 && n.comments > 0 && ' · '}{n.comments > 0 && `${n.comments} Kommentar${n.comments === 1 ? '' : 'e'}`}{n.images.length > 0 && ` · ${n.images.length} Foto${n.images.length === 1 ? '' : 's'}`}</span>
+                <span className="block xs muted">{reactionSummary(n.reactions)}{n.reactions.length > 0 && n.comments > 0 && ' · '}{n.comments > 0 && `${n.comments} Kommentar${n.comments === 1 ? '' : 'e'}`}{n.images.length > 0 && ` · ${n.images.length} Foto${n.images.length === 1 ? '' : 's'}`}</span>
               </span>
             </Link>
           ))}

@@ -2,6 +2,7 @@
  * Neue Funktionen (ADR-043): Push mit Ruhezeit, Hintergrund-Erinnerungen, wiederkehrende Checklisten,
  * Freigabe im Vier-Augen-Prinzip, Ein-/Austrittspläne.
  */
+import sharp from 'sharp';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
 import { INestApplication } from '@nestjs/common';
@@ -170,5 +171,49 @@ describe('Neue Funktionen (e2e)', () => {
     config.demoMode = false;
     await a.post('/api/v1/auth/demo/login').send({ userId: sven.id }).expect(404);
     config.demoMode = true;
+  });
+
+  test('Chat-Reaktionen: 👍 👎 ❤️ 🎉 umschalten, nur für Teilnehmende (ADR-048)', async () => {
+    const jana = await as('jana.m');
+    const conv = (await jana.get('/api/v1/chat').expect(200)).body.find((c: { title: string }) => c.title === 'Team Rezeption');
+    const msg = (await jana.get(`/api/v1/chat/${conv.id}`).expect(200)).body.messages[0];
+    await jana.post(`/api/v1/chat/messages/${msg.id}/reactions`).send({ type: 'CELEBRATE' }).expect(200);
+    await (await as('selin.a')).post(`/api/v1/chat/messages/${msg.id}/reactions`).send({ type: 'CELEBRATE' }).expect(200);
+    await jana.post(`/api/v1/chat/messages/${msg.id}/reactions`).send({ type: 'HEART' }).expect(200);
+    let m = (await jana.get(`/api/v1/chat/${conv.id}`).expect(200)).body.messages.find((x: { id: string }) => x.id === msg.id);
+    expect(m.reactions).toEqual([{ type: 'HEART', count: 1, mine: true, names: ['Jana M.'] }, { type: 'CELEBRATE', count: 2, mine: true, names: expect.arrayContaining(['Jana M.', 'Selin A.']) }]);
+    await jana.post(`/api/v1/chat/messages/${msg.id}/reactions`).send({ type: 'HEART' }).expect(200); // wieder aus
+    m = (await jana.get(`/api/v1/chat/${conv.id}`).expect(200)).body.messages.find((x: { id: string }) => x.id === msg.id);
+    expect(m.reactions.map((r: { type: string }) => r.type)).toEqual(['CELEBRATE']);
+    await jana.post(`/api/v1/chat/messages/${msg.id}/reactions`).send({ type: 'LIKE' }).expect(400);
+    await (await as('sven.r')).post(`/api/v1/chat/messages/${msg.id}/reactions`).send({ type: 'HEART' }).expect((r) => expect([403, 404]).toContain(r.status));
+  });
+
+  test('Reaktionen bei News und Social (ADR-048)', async () => {
+    const jana = await as('jana.m');
+    const news = (await jana.get('/api/v1/news').expect(200)).body[0];
+    const before = news.reactions.find((r: { type: string }) => r.type === 'THUMBS_DOWN')?.count ?? 0;
+    const r1 = await jana.post(`/api/v1/content/${news.id}/reactions`).send({ type: 'THUMBS_DOWN' }).expect(200);
+    expect(r1.body.reactions.find((r: { type: string }) => r.type === 'THUMBS_DOWN')).toMatchObject({ count: before + 1, mine: true });
+    const detail = (await jana.get(`/api/v1/news/${news.id}`).expect(200)).body;
+    expect(detail.reactions.find((r: { type: string }) => r.type === 'THUMBS_DOWN').mine).toBe(true);
+    await jana.post(`/api/v1/content/${news.id}/reactions`).send({ type: 'THUMBS_DOWN' }).expect(200); // wieder aus
+    const post = (await jana.get('/api/v1/social').expect(200)).body[0];
+    const r2 = await jana.post(`/api/v1/content/${post.id}/reactions`).send({ type: 'CELEBRATE' }).expect(200);
+    expect(r2.body.reactions.some((r: { type: string; mine: boolean }) => r.type === 'CELEBRATE' && r.mine)).toBe(true);
+    await jana.post(`/api/v1/content/${post.id}/reactions`).send({ type: 'LIKE' }).expect(400);
+  });
+
+  test('Profilfoto: hochladen (256 px quadratisch), für Kolleg:innen sichtbar, entfernen', async () => {
+    const jana = await as('jana.m');
+    const me = (await jana.get('/api/v1/me').expect(200)).body.user;
+    const png = await sharp({ create: { width: 800, height: 400, channels: 3, background: '#6B7A3E' } }).png().toBuffer();
+    await jana.post('/api/v1/files/avatar').attach('file', Buffer.from('kein Bild'), 'x.png').expect(400);
+    await jana.post('/api/v1/files/avatar').attach('file', png, { filename: 'ich.png', contentType: 'image/png' }).expect(200);
+    expect((await jana.get('/api/v1/people/me/profile').expect(200)).body.photo).toBe(true);
+    const img = await (await as('sven.r')).get(`/api/v1/files/avatar/${me.id}`).buffer(true).parse((res, cb) => { const c: Buffer[] = []; res.on('data', (d: Buffer) => c.push(d)); res.on('end', () => cb(null, Buffer.concat(c))); }).expect(200);
+    expect(await sharp(img.body).metadata()).toMatchObject({ width: 256, height: 256, format: 'webp' });
+    await jana.delete('/api/v1/files/avatar').expect(204);
+    await jana.get(`/api/v1/files/avatar/${me.id}`).expect(404);
   });
 });

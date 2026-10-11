@@ -11,8 +11,9 @@ import { ChatList } from '@/components/chat/ChatList';
 import { MentionText, Person } from '@/components/content/MentionText';
 import { Absent, absentText } from '@/components/Absent';
 import { Icon } from '@/components/Icon';
+import { Reaction, Reactions } from '@/components/content/Reactions';
 
-interface Msg { id: string; text: string | null; deleted: boolean; at: string; mine: boolean; sender: { id: string; name: string } | null; image: string | null; readByOther: boolean }
+interface Msg { id: string; text: string | null; deleted: boolean; at: string; mine: boolean; sender: { id: string; name: string } | null; image: string | null; readByOther: boolean; reactions: Reaction[] }
 interface Conv { id: string; type: 'DIRECT' | 'GROUP'; title: string; members: Array<{ id: string; name: string }>; absent: Array<Absent & { id: string; name: string }>; messages: Msg[] }
 
 export default function ChatThread() {
@@ -95,6 +96,7 @@ export default function ChatThread() {
                     )}
                     <span className="meta">{when(m.at)}{m.mine && c.type === 'DIRECT' && <span className={m.readByOther ? 'ticks read' : 'ticks'} aria-label={m.readByOther ? 'gelesen' : 'zugestellt'}>{m.readByOther ? ' ✓✓' : ' ✓'}</span>}</span>
                   </div>
+                  {!m.deleted && <Reactions reactions={m.reactions} onToggle={(type) => api(`/chat/messages/${m.id}/reactions`, { method: 'POST', json: { type } }).then(load).catch(() => null)} />}
                 </div>
               );
             })}
