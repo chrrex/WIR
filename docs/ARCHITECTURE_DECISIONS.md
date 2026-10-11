@@ -508,6 +508,12 @@ Für Vorführungen und Tests: Auf der Anmeldeseite eine Personenauswahl, in der 
 - Reaktionen auf Nachrichten: 👍 👎 ❤️ 🎉 – je Person und Art einmal, per Klick an/aus; wer reagiert hat, sehen nur die Teilnehmenden (wie den Chat selbst). Keine Benachrichtigung für Reaktionen. Migration `20261011010000_chat_reaktionen` (Enum-Werte, `reactions.chat_message_id`).
 - Dieselben vier Reaktionen gibt es bei News und Social (`POST /content/:id/reactions`, gemeinsame Komponente `Reactions`); die Listen zeigen eine Kurzform („👍 3 ❤️ 1“). Ideen behalten „Unterstützen“ (LIKE) – daraus entsteht die Rangliste „Beste Ideen“ (Top 5, ohne abgelehnte) neben der Ideenliste.
 
+## ADR-049 · Profilfoto — ENTSCHIEDEN (11.10.2026)
+
+- Freiwillig in „Einstellungen › Mein Profil“: hochladen, ändern, entfernen. Das Foto wird serverseitig neu berechnet (256 × 256 px, Ausschnitt per Motiverkennung, WebP, ohne Metadaten) und in `employee_profiles.avatar_file_id` gespeichert; das alte Foto wird gelöscht markiert.
+- Abruf über `GET /files/avatar/:userId` für alle Angemeldeten (5 Min. Cache); ohne Foto 404 ohne Cache – die Oberfläche zeigt dann wie bisher Initialen. So brauchen die Listen-Antworten kein zusätzliches Feld, nur die Personen-ID.
+- Angezeigt in Kopfzeile, Team, Teamprofil, Chatliste, Social und Kommentaren.
+
 ## Nächste Schritte
 
 1. Anbieterauswahl (ADR-022) bestätigen und Gastromatic-Prüfauftrag (ADR-021) stellen.

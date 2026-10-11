@@ -31,7 +31,7 @@ export default function Team() {
           <div className="grid">
             {hit.filter((p) => (p.groups.length ? p.groups.includes(g) : g === 'Ohne Bereich')).map((p) => (
               <Link key={p.id} href={`/team/${p.id}`} className="card row listitem">
-                <Avatar name={p.name} />
+                <Avatar name={p.name} id={p.id} />
                 <span className="grow"><strong>{p.name}</strong><span className="block small muted">{p.job}{p.lead && ' · Leitung'}</span><AbsentChip a={p.absent} /></span>
               </Link>
             ))}

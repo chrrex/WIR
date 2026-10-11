@@ -10,7 +10,7 @@ import { when } from '@/lib/time';
 import { Avatar } from '../content/Avatar';
 import { Icon } from '../Icon';
 
-export interface ChatRow { id: string; type: 'DIRECT' | 'GROUP'; title: string; members: number; last: { text: string; at: string; mine: boolean; sender: string | null } | null; unread: number }
+export interface ChatRow { id: string; type: 'DIRECT' | 'GROUP'; title: string; partnerId: string | null; members: number; last: { text: string; at: string; mine: boolean; sender: string | null } | null; unread: number }
 interface Person { id: string; name: string; job: string | null; groups: string[] }
 
 export function ChatList({ activeId }: { activeId?: string }) {
@@ -60,7 +60,7 @@ export function ChatList({ activeId }: { activeId?: string }) {
         <ul className="plain">
           {people.filter((p) => !picked.some((x) => x.id === p.id)).map((p) => (
             <li key={p.id}><button className="chatrow" onClick={() => { setPicked([...picked, p]); setQ(''); }}>
-              <Avatar name={p.name} /><span className="grow"><strong>{p.name}</strong><span className="block small muted">{[p.job, p.groups.join(', ')].filter(Boolean).join(' · ')}</span></span>
+              <Avatar name={p.name} id={p.id} /><span className="grow"><strong>{p.name}</strong><span className="block small muted">{[p.job, p.groups.join(', ')].filter(Boolean).join(' · ')}</span></span>
             </button></li>
           ))}
         </ul>
@@ -78,7 +78,7 @@ export function ChatList({ activeId }: { activeId?: string }) {
           {rows.map((c) => (
             <li key={c.id}>
               <Link href={`/chat/${c.id}`} className="chatrow" aria-current={c.id === activeId ? 'page' : undefined}>
-                {c.type === 'GROUP' ? <span className="av av-m t5 group" aria-hidden="true"><Icon name="users" size={18} /></span> : <Avatar name={c.title} />}
+                {c.type === 'GROUP' ? <span className="av av-m t5 group" aria-hidden="true"><Icon name="users" size={18} /></span> : <Avatar name={c.title} id={c.partnerId} />}
                 <span className="grow">
                   <span className="row between"><strong className="ellipsis">{c.title}</strong><span className="xs muted">{c.last ? when(c.last.at) : ''}</span></span>
                   <span className="row between"><span className="small muted ellipsis">{c.last ? `${c.last.mine ? 'Du: ' : c.type === 'GROUP' && c.last.sender ? `${c.last.sender.split(' ')[0]}: ` : ''}${c.last.text}` : 'Noch keine Nachricht'}</span>

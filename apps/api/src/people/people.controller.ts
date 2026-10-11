@@ -81,7 +81,7 @@ export class PeopleController {
   async myProfile(@CurrentUser() me: SessionUser) {
     const u = await this.prisma.db.user.findUniqueOrThrow({ where: { id: me.id }, include: { employeeProfile: { include: { absences: { where: { endsOn: { gte: dateOnly() } }, orderBy: { startsOn: 'asc' } } } } } });
     const p = u.employeeProfile;
-    return { email: u.email, phoneWork: p?.phoneWork ?? null, phoneMobile: p?.phoneMobile ?? null, aboutMe: p?.aboutMe ?? null, hasProfile: !!p,
+    return { email: u.email, phoneWork: p?.phoneWork ?? null, phoneMobile: p?.phoneMobile ?? null, aboutMe: p?.aboutMe ?? null, hasProfile: !!p, photo: !!p?.avatarFileId,
       absences: (p?.absences ?? []).map((a) => ({ id: a.id, type: a.type, label: ABSENCE_LABEL[a.type], from: a.startsOn, until: a.endsOn, note: a.note })) };
   }
 

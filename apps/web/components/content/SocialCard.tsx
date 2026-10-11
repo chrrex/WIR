@@ -21,7 +21,7 @@ export function SocialCard({ p, full = false, onChange }: { p: SocialPost; full?
   return (
     <article className="card social stack-s">
       <div className="row">
-        <Avatar name={p.author.name} />
+        <Avatar name={p.author.name} id={p.author.id} />
         <span className="grow"><strong>{p.author.name}</strong><span className="block small muted">{when(p.publishedAt)}</span></span>
         <span className="chip">{CATEGORIES[p.category] ?? p.category}</span>
       </div>

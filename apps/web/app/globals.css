@@ -283,6 +283,8 @@ select.input { padding-right: 10px; }
 .av { border-radius: 50%; display: inline-grid; place-items: center; font-weight: 700; flex: none; }
 .av-m { width: 40px; height: 40px; font-size: .9rem; }
 .av-s { width: 32px; height: 32px; font-size: .75rem; }
+.av-l { width: 96px; height: 96px; font-size: 2rem; }
+img.av { object-fit: cover; background: var(--line, #E5E5E0); }
 .av.t1 { background: #E9EDDD; color: #3D4722; } .av.t2 { background: #E3E8F2; color: #1E3560; } .av.t3 { background: #F6E6E9; color: #8A3443; }
 .av.t4 { background: #FBF5E8; color: #5C4415; } .av.t5 { background: #EFE9F3; color: #5E4673; }
 .donut { width: 104px; height: 104px; border-radius: 50%; display: grid; place-items: center; flex: none; }
@@ -381,3 +383,4 @@ button.folder { text-align: left; width: 100%; font: inherit; color: inherit; cu
 .rank a { color: inherit; text-decoration: none; }
 .rank .small { white-space: nowrap; }
 .rank a:hover .grow { text-decoration: underline; }
+.avatar { overflow: hidden; } .avatar .av { width: 100%; height: 100%; background: none; color: inherit; }

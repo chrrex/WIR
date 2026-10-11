@@ -2,6 +2,7 @@
  * Neue Funktionen (ADR-043): Push mit Ruhezeit, Hintergrund-Erinnerungen, wiederkehrende Checklisten,
  * Freigabe im Vier-Augen-Prinzip, Ein-/Austrittspläne.
  */
+import sharp from 'sharp';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
 import { INestApplication } from '@nestjs/common';
@@ -201,5 +202,18 @@ describe('Neue Funktionen (e2e)', () => {
     const r2 = await jana.post(`/api/v1/content/${post.id}/reactions`).send({ type: 'CELEBRATE' }).expect(200);
     expect(r2.body.reactions.some((r: { type: string; mine: boolean }) => r.type === 'CELEBRATE' && r.mine)).toBe(true);
     await jana.post(`/api/v1/content/${post.id}/reactions`).send({ type: 'LIKE' }).expect(400);
+  });
+
+  test('Profilfoto: hochladen (256 px quadratisch), für Kolleg:innen sichtbar, entfernen', async () => {
+    const jana = await as('jana.m');
+    const me = (await jana.get('/api/v1/me').expect(200)).body.user;
+    const png = await sharp({ create: { width: 800, height: 400, channels: 3, background: '#6B7A3E' } }).png().toBuffer();
+    await jana.post('/api/v1/files/avatar').attach('file', Buffer.from('kein Bild'), 'x.png').expect(400);
+    await jana.post('/api/v1/files/avatar').attach('file', png, { filename: 'ich.png', contentType: 'image/png' }).expect(200);
+    expect((await jana.get('/api/v1/people/me/profile').expect(200)).body.photo).toBe(true);
+    const img = await (await as('sven.r')).get(`/api/v1/files/avatar/${me.id}`).buffer(true).parse((res, cb) => { const c: Buffer[] = []; res.on('data', (d: Buffer) => c.push(d)); res.on('end', () => cb(null, Buffer.concat(c))); }).expect(200);
+    expect(await sharp(img.body).metadata()).toMatchObject({ width: 256, height: 256, format: 'webp' });
+    await jana.delete('/api/v1/files/avatar').expect(204);
+    await jana.get(`/api/v1/files/avatar/${me.id}`).expect(404);
   });
 });

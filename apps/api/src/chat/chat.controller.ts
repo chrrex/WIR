@@ -86,10 +86,11 @@ export class ChatController {
     });
     const unread = await this.unreadFor(me.id);
     return convs.map((c) => {
-      const other = c.type === 'DIRECT' ? c.participants.find((p) => p.userId !== me.id)?.user : null;
+      const otherP = c.type === 'DIRECT' ? c.participants.find((p) => p.userId !== me.id) : null;
+      const other = otherP?.user;
       const last = c.messages[0];
       return {
-        id: c.id, type: c.type, title: c.type === 'GROUP' ? c.title : other?.displayName ?? 'Chat', members: c.participants.length,
+        id: c.id, type: c.type, title: c.type === 'GROUP' ? c.title : other?.displayName ?? 'Chat', partnerId: otherP?.userId ?? null, members: c.participants.length,
         last: last ? { text: last.deletedAt ? '' : last.body || '📷 Foto', at: last.createdAt, mine: last.senderId === me.id, sender: last.sender?.displayName ?? null } : null,
         unread: unread.get(c.id) ?? 0,
       };

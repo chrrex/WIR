@@ -21,7 +21,7 @@ export default function Person() {
     <div className="stack-lg narrow-col">
       <Back href="/team" label="Team" />
       <section className="card stack">
-        <div className="row"><Avatar name={p.name} /><div><h1>{p.fullName}</h1><p className="muted">{p.job ?? '–'} · {p.company}</p></div></div>
+        <div className="row"><Avatar name={p.name} id={p.id} size="l" /><div><h1>{p.fullName}</h1><p className="muted">{p.job ?? '–'} · {p.company}</p></div></div>
         {p.absent && <div className="note warn">Heute {absentText(p.absent)}</div>}
         <div className="chips">{p.groups.map((g) => <span key={g.name} className="chip">{g.name}{g.lead && ' · Leitung'}</span>)}</div>
         <dl className="facts">
