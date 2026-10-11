@@ -241,6 +241,21 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
     await prisma.attachment.create({ data: { fileObjectId: id, contentItemId: ostsee.id, kind: 'IMAGE', altText: 'Strand an der Ostsee mit Sonne', sortOrder: 0 } });
   }
 
+  // ---- Profile & Abwesenheiten (erfunden, Beispiel-Domain) --------------------
+  const contact: Array<[string, string, string, string]> = [
+    [maren, 'maren.hofmann@sgl.example', '-210', '0170 000 1210'], [T('sven.r'), 'kueche@sgl.example', '-300', '0170 000 1300'],
+    [jana, 'rezeption@sgl.example', '-100', ''], [lena, 'personal@sgl.example', '-400', ''],
+  ];
+  for (const [userId, email, ext, mobile] of contact) {
+    await prisma.user.update({ where: { id: userId }, data: { email } });
+    await prisma.employeeProfile.update({ where: { userId }, data: { phoneWork: `03300 000${ext}`, phoneMobile: mobile || null } });
+  }
+  const marenProfile = await prisma.employeeProfile.findUniqueOrThrow({ where: { userId: maren } });
+  const d = (n: number) => { const x = day(); x.setUTCDate(x.getUTCDate() + n); return x; };
+  await prisma.absence.create({ data: { employeeProfileId: marenProfile.id, type: 'VACATION', startsOn: d(-1), endsOn: d(5), note: 'Vertretung: Tobias K.' } });
+  const svenProfile = await prisma.employeeProfile.findUniqueOrThrow({ where: { userId: T('sven.r') } });
+  await prisma.absence.create({ data: { employeeProfileId: svenProfile.id, type: 'TRAINING', startsOn: d(10), endsOn: d(11) } });
+
   // Bestehende News in den Suchindex
   const news = await prisma.contentItem.findMany({ where: { type: 'POST', post: { kind: 'NEWS' } }, include: { post: true } });
   for (const n of news) await indexContent(prisma, n.id, 1, n.post!.title, n.post!.bodyText);

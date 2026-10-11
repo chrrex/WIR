@@ -232,4 +232,31 @@ describe('Phase 3+4 (e2e)', () => {
     expect((await sven.get('/api/v1/documents').expect(200)).body.categories.find((c: { id: string }) => c.id === sub).sensitive).toBe(true);
     await sven.patch(`/api/v1/documents/categories/${sub}`).send({ isActive: false }).expect(400); // nicht leer
   });
+
+  test('Team: Personen in der Suche, Profil mit Kontaktdaten, eigene Abwesenheit sichtbar in Team, Chat und Übergaben (ADR-046)', async () => {
+    const jana = await as('jana.m');
+    const maren = await prisma.db.user.findUniqueOrThrow({ where: { username: 'maren.h' } });
+    const found = (await jana.get('/api/v1/search?q=Hofmann').expect(200)).body.people;
+    expect(found[0]).toMatchObject({ name: 'Maren H.' });
+    expect(found[0].absent).toMatchObject({ label: 'im Urlaub', note: 'Vertretung: Tobias K.' });
+    const p = (await jana.get(`/api/v1/people/${maren.id}`).expect(200)).body;
+    expect(p).toMatchObject({ email: 'maren.hofmann@sgl.example', phoneMobile: '0170 000 1210' });
+    expect(p.absences).toHaveLength(1);
+    expect((await jana.get('/api/v1/people/directory').expect(200)).body.find((x: { id: string }) => x.id === maren.id).absent.label).toBe('im Urlaub');
+    await (await as('tom.b.extern')).get(`/api/v1/people/${maren.id}`).expect(403); // Externe ohne Verzeichnis
+    // Übergabe an Service → Hinweis, wer abwesend ist
+    const away = (await jana.post('/api/v1/people/absent').send({ targets: [`G:${await groupId('Service')}`] }).expect(200)).body;
+    expect(away.map((a: { name: string }) => a.name)).toEqual(['Maren H.']);
+    // Chat mit Maren zeigt die Abwesenheit
+    const chat = (await jana.post('/api/v1/chat/direct').send({ userId: maren.id }).expect(201)).body.id;
+    expect((await jana.get(`/api/v1/chat/${chat}`).expect(200)).body.absent[0]).toMatchObject({ name: 'Maren H.', label: 'im Urlaub' });
+    // eigenes Profil und eigene Abwesenheit pflegen
+    const today = new Date().toISOString().slice(0, 10);
+    const mine = (await jana.post('/api/v1/people/me/absences').send({ type: 'BUSINESS_TRIP', startsOn: today, endsOn: today, note: 'Messe' }).expect(201)).body;
+    expect(mine.absences).toHaveLength(1);
+    await jana.post('/api/v1/people/me/absences').send({ type: 'SICK', startsOn: today, endsOn: today }).expect(400); // keine Gründe wie Krankheit
+    await jana.put('/api/v1/people/me/profile').send({ phoneWork: '-101', email: 'maren.hofmann@sgl.example' }).expect(400); // E-Mail vergeben
+    expect((await jana.put('/api/v1/people/me/profile').send({ phoneWork: '-101', phoneMobile: '' }).expect(200)).body.phoneWork).toBe('-101');
+    await jana.delete(`/api/v1/people/me/absences/${mine.absences[0].id}`).expect(200);
+  });
 });

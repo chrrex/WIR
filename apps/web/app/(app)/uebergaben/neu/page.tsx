@@ -8,6 +8,7 @@ import { ImagePicker, PickedImage } from '@/components/content/ImagePicker';
 import { MentionText, Person } from '@/components/content/MentionText';
 import { Icon } from '@/components/Icon';
 import { Audience, AudienceOption } from '@/components/work';
+import { Absent, absentText } from '@/components/Absent';
 
 function defaultShift() {
   const h = new Date().getHours();
@@ -18,6 +19,8 @@ export default function NewHandover() {
   const router = useRouter();
   const [opts, setOpts] = useState<{ audiences: AudienceOption[]; defaults: string[]; shifts: string[] } | null>(null);
   const [targets, setTargets] = useState<string[]>([]);
+  const [away, setAway] = useState<Array<Absent & { id: string; name: string }>>([]);
+  useEffect(() => { if (!targets.length) { setAway([]); return; } api<typeof away>('/people/absent', { method: 'POST', json: { targets } }).then(setAway).catch(() => setAway([])); }, [targets]);
   const [shift, setShift] = useState(defaultShift());
   const [subject, setSubject] = useState('');
   const [text, setText] = useState('');
@@ -52,6 +55,7 @@ export default function NewHandover() {
       </section>
       <section className="card stack">
         {opts ? <Audience options={opts.audiences} value={targets} onChange={setTargets} persons /> : <p className="muted">Lade …</p>}
+        {away.length > 0 && <div className="note warn small" role="status"><strong>Gerade abwesend:</strong> {away.map((a) => `${a.name} (${absentText(a)})`).join(' · ')}</div>}
         <p className="small muted">Frei kombinierbar: Gruppen, einzelne Kolleg:innen oder beides. Mit @ im Text Erwähnte bekommen die Übergabe zusätzlich.</p>
       </section>
       {error && <div className="note warn" role="alert">{error}</div>}

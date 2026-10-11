@@ -484,6 +484,20 @@ Ohne Datenbank-Migration – alle Tabellen waren vorbereitet.
 5. **Startseite:** Social-Beiträge mit Foto bekommen ein kleines Kamera-Symbol.
 6. **Lesestatus in allen Listen** („8/12 gelesen“, bei Umfragen „teilgenommen“) für Autor:in und Leitungen – dieselben Regeln wie auf der Detailseite; Teamleitungen sehen ihn bei allem, was an ihr Team ging.
 
+## ADR-045 · Wissen: alle schreiben, Teamleitung gibt frei; Kategorien; stiftungsweit — ENTSCHIEDEN (11.10.2026)
+
+- **Alle Mitarbeitenden** (`knowledge.create`) schreiben Einträge. Ohne eigenes Freigaberecht landen sie als **Entwurf** bei der **Teamleitung der Autor:in** (`knowledge.publish` über die eigene Gruppe; Abteilungsleitung und Redaktion für die Gesellschaft). Diese **gibt frei**, **korrigiert und gibt frei** oder **lehnt mit Pflicht-Begründung ab**; die Autor:in überarbeitet und reicht erneut ein. Eigene Einträge gibt immer jemand anderes frei. Entwürfe sind nicht in Suche/KI und für niemanden außer Autor:in und Prüfenden sichtbar. Ablehnungen stehen im Audit-Protokoll.
+- **Stiftungsgruppenweit:** Zielgruppe „Ganze Stiftungsgruppe“ ist für Wissen frei wählbar – die Freigabe durch die Teamleitung sichert ab. Eigene Kategorie „Stiftungsgruppe“.
+- **Kategorien als Baum** (Unterkategorien), gepflegt mit `knowledge.manage_categories` (Abteilungsleitung, Redaktion Wissen); gemeinsamer Baustein mit den Dokumenten.
+- Inhaltliche Änderungen an veröffentlichten Artikeln (neue Version) weiterhin mit `knowledge.update`.
+
+## ADR-046 · Team-Profil, Personen in der Suche, Abwesenheiten — ENTSCHIEDEN (11.10.2026)
+
+- **Suche** findet Kolleg:innen (Name, Tätigkeit, Bereich) – nur mit Verzeichnisrecht, nur eigene Gesellschaften.
+- **Team → Profil:** E-Mail, Durchwahl, dienstliches Handy, Position, Bereiche, Abwesenheiten; „Nachricht schreiben“. Alle Kontaktangaben pflegt jede Person **selbst und freiwillig** (Einstellungen → Mein Profil); nur dienstliche Angaben. Externe sehen keine Profile.
+- **Abwesenheit** trägt jede Person selbst ein: Urlaub, Dienstreise, Fortbildung oder „abwesend“ – **bewusst ohne Krankheit oder andere Gründe** (Art. 9 DSGVO), optional mit Hinweis wie „Vertretung: …“. Angezeigt im Team (Filter „heute abwesend“), im Profil, in der Suche, **im Chat** beim Anschreiben und **beim Schreiben einer Übergabe** für alle gewählten Empfänger:innen.
+- Migration `20261011000000_profil_abwesenheit`: `employee_profiles.phone_mobile`, `absences.note`.
+
 ## Nächste Schritte
 
 1. Anbieterauswahl (ADR-022) bestätigen und Gastromatic-Prüfauftrag (ADR-021) stellen.

@@ -95,7 +95,7 @@ export function ErrorNote({ error }: { error: string | null }) {
 /** Eine Person suchen und auswählen (Name, Tätigkeit). */
 export function PersonPicker({ value, onChange }: { value: { id: string; name: string } | null; onChange: (p: { id: string; name: string } | null) => void }) {
   const [q, setQ] = useState('');
-  const [hits, setHits] = useState<Array<{ id: string; name: string; job: string | null }>>([]);
+  const [hits, setHits] = useState<Array<{ id: string; name: string; job: string | null; absent?: { label: string; until: string } | null }>>([]);
   useEffect(() => {
     if (q.trim().length < 2) { setHits([]); return; }
     const t = setTimeout(() => api<typeof hits>(`/people?q=${encodeURIComponent(q)}`).then(setHits).catch(() => setHits([])), 200);
@@ -106,7 +106,7 @@ export function PersonPicker({ value, onChange }: { value: { id: string; name: s
     <div className="stack-s">
       <label htmlFor="pp" className="label">Person</label>
       <input id="pp" className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name eingeben …" autoComplete="off" />
-      {hits.length > 0 && <ul className="plain chips">{hits.map((h) => <li key={h.id}><button type="button" className="fchip" onClick={() => onChange(h)}>{h.name}{h.job && <span className="xs muted"> · {h.job}</span>}</button></li>)}</ul>}
+      {hits.length > 0 && <ul className="plain chips">{hits.map((h) => <li key={h.id}><button type="button" className="fchip" onClick={() => onChange(h)}>{h.name}{h.job && <span className="xs muted"> · {h.job}</span>}{h.absent && <span className="xs warn-ink"> · {h.absent.label} bis {day(h.absent.until)}</span>}</button></li>)}</ul>}
     </div>
   );
 }

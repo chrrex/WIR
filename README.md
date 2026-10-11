@@ -49,6 +49,10 @@ Passwort für alle oben: **`Wir-Demo-2026`**
 - **Freigabe:** Als `tobias.k` die Checkliste „Bankett Aufbau Schlosssaal“ abschließen, als `maren.h` freigeben oder zurückweisen.
 - **Automatisch:** „HACCP Kühlräume morgens“ startet täglich um 6:00 von selbst; nach 4 Stunden ohne Abschluss erfährt es die Küchenleitung.
 
+**Wissen mit Freigabe:** Als `jana.m` einen Eintrag schreiben (auch für die ganze Stiftungsgruppe) – als `jonas.w` (Teamleitung Rezeption) unter **Wissen → Zur Prüfung** freigeben, korrigieren oder ablehnen.
+
+**Team & Abwesenheit:** Unter **Team** Kolleg:innen anklicken (Kontaktdaten, Abwesenheiten). Eigene Daten und Abwesenheit unter **Einstellungen → Mein Profil**. Maren ist in den Testdaten im Urlaub – das siehst du im Chat mit ihr und beim Schreiben einer Übergabe an den Service.
+
 **Alles zurücksetzen:** im Terminal des Codespace `npm run reset-demo`.
 
 ---

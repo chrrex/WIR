@@ -9,10 +9,11 @@ import { useBadges } from '@/lib/badges';
 import { when } from '@/lib/time';
 import { ChatList } from '@/components/chat/ChatList';
 import { MentionText, Person } from '@/components/content/MentionText';
+import { Absent, absentText } from '@/components/Absent';
 import { Icon } from '@/components/Icon';
 
 interface Msg { id: string; text: string | null; deleted: boolean; at: string; mine: boolean; sender: { id: string; name: string } | null; image: string | null; readByOther: boolean }
-interface Conv { id: string; type: 'DIRECT' | 'GROUP'; title: string; members: Array<{ id: string; name: string }>; messages: Msg[] }
+interface Conv { id: string; type: 'DIRECT' | 'GROUP'; title: string; members: Array<{ id: string; name: string }>; absent: Array<Absent & { id: string; name: string }>; messages: Msg[] }
 
 export default function ChatThread() {
   const { id } = useParams<{ id: string }>();
@@ -77,6 +78,7 @@ export default function ChatThread() {
             <Link href="/chat" className="iconbtn only-m" aria-label="Alle Chats"><Icon name="back" /></Link>
             <span className="grow"><strong>{c?.title ?? '…'}</strong>{c?.type === 'GROUP' && <span className="block xs muted">{c.members.map((m) => m.name).join(', ')}</span>}</span>
           </header>
+          {c?.absent?.map((a) => <div key={a.id} className="note warn small" role="status">{c.type === 'GROUP' ? `${a.name} ist ` : 'Gerade '}{absentText(a)}</div>)}
           {error && <div className="note warn small" role="alert">{error}</div>}
           <div className="msgs" ref={box} aria-live="polite">
             {c?.messages.map((m, i) => {
