@@ -26,7 +26,7 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
   onModuleDestroy() { if (this.timer) clearInterval(this.timer); }
 
   async run(now = new Date()) {
-    return { started: await this.recurringChecklists(now), overdue: await this.overdueRuns(now), tasks: await this.tasksDue(now), acks: await this.openAcks(now), surveys: await this.surveysClosing(now) };
+    return { published: await this.content.publishDue(now), started: await this.recurringChecklists(now), overdue: await this.overdueRuns(now), tasks: await this.tasksDue(now), acks: await this.openAcks(now), surveys: await this.surveysClosing(now) };
   }
 
   /** Wiederkehrende Checklisten starten (z. B. HACCP täglich 06:00), fällig nach 4 Stunden. */

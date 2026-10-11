@@ -1,5 +1,6 @@
 'use client';
 
+import { BookmarkButton } from '@/components/content/Extras';
 import { useParams } from 'next/navigation';
 import { ReadStatus } from '@/components/content/ReadStatus';
 import { api } from '@/lib/api';
@@ -25,6 +26,7 @@ export default function TaskDetail() {
       <article className="card article stack">
         <div className="chips"><span className={`chip ${t.status === 'DONE' ? 'ok' : 'info'}`}>{TASK_STATUS[t.status]}</span><span className="chip">{PRIORITY[t.priority]}</span></div>
         <h1>{t.title}</h1>
+        <div className="row"><BookmarkButton contentId={t.id} /></div>
         <p className="small muted">Für {t.assignee} · von {t.author}{t.dueAt && ` · fällig ${dayTime(t.dueAt)}`}{t.completedAt && ` · erledigt ${dayTime(t.completedAt)}`}</p>
         {t.description && <div className="prose"><RichText text={t.description} /></div>}
         {t.canChange && (

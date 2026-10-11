@@ -1,5 +1,6 @@
 'use client';
 
+import { BookmarkButton } from '@/components/content/Extras';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
@@ -49,6 +50,7 @@ export default function Article() {
         {a.status === 'DRAFT' && <div className="note info">Noch nicht veröffentlicht – wartet auf Freigabe durch die Teamleitung.</div>}
         {a.status === 'ARCHIVED' && <div className="note warn">Nicht freigegeben{a.rejectedReason && `: „${a.rejectedReason}“`}. <Link className="lnk" href={`/wissen/neu?id=${a.id}&mode=resubmit`}>Überarbeiten und erneut einreichen</Link></div>}
         <h1>{a.title}</h1>
+        <div className="row"><BookmarkButton contentId={a.id} /></div>
         <p className="small muted">{a.author}{a.publishedAt && ` · ${day(a.publishedAt)}`} · für {a.audience.join(', ')}</p>
         {a.plainText && <div className="seg" role="group" aria-label="Sprache"><button aria-pressed={!plain} onClick={() => setPlain(false)}>Fachtext</button><button aria-pressed={plain} onClick={() => setPlain(true)}>Einfache Sprache</button></div>}
         <div className="prose"><RichText text={plain && a.plainText ? a.plainText : a.text} /></div>

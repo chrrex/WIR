@@ -190,7 +190,7 @@ async function main() {
 
   async function post(o: { author: string; kind: 'NEWS' | 'SOCIAL'; title: string; text: string; hoursAgo: number; recipients: string[];
     audience: { targetType: 'ALL_USERS' | 'COMPANY' | 'GROUP'; companyId?: string; groupId?: string }[]; important?: boolean; company?: string;
-    category?: 'GREETINGS' | 'MARKETPLACE' | 'CONGRATULATIONS' | 'LEISURE' | 'OTHER'; intent?: 'OFFER' | 'SEARCH'; price?: string; readBy?: string[]; likes?: string[] }) {
+    category?: 'GREETINGS' | 'MARKETPLACE' | 'CONGRATULATIONS' | 'LEISURE' | 'OTHER' | 'THANKS'; intent?: 'OFFER' | 'SEARCH'; price?: string; readBy?: string[]; likes?: string[] }) {
     const ci = await prisma.contentItem.create({ data: {
       type: 'POST', companyId: o.company ?? sgl.id, authorId: o.author, status: 'PUBLISHED', publishedAt: ago(o.hoursAgo), createdAt: ago(o.hoursAgo),
       importance: o.important ? 'IMPORTANT' : 'NORMAL', expiresAt: o.category === 'MARKETPLACE' ? new Date(Date.now() + 25 * 864e5) : null,
@@ -229,6 +229,22 @@ async function main() {
     recipients: employees, audience: [{ targetType: 'ALL_USERS' }] });
   await post({ author: T('piotr.n'), kind: 'SOCIAL', category: 'LEISURE', hoursAgo: 70, title: 'Laufgruppe am Donnerstag?', text: 'Wer hat Lust, nach der Frühschicht eine Runde um den See zu laufen? Ganz entspannt, 5–7 km.',
     recipients: employees, audience: [{ targetType: 'ALL_USERS' }], likes: [jana.id] });
+
+  // Abstimmung in einer News (ADR-050)
+  const xmas = await post({ author: maren.id, kind: 'NEWS', hoursAgo: 6, title: 'Weihnachtsfeier: Welcher Termin passt euch?',
+    text: 'Wir feiern dieses Jahr in der Orangerie. Stimmt bitte bis Freitag ab, welcher Abend euch besser passt.', recipients: sglPeople, audience: [{ targetType: 'COMPANY', companyId: sgl.id }] });
+  const poll = await prisma.poll.create({ data: { id: xmas.id, question: 'Welcher Abend passt dir?', options: { create: [{ label: 'Freitag, 15. Januar', sortOrder: 0 }, { label: 'Samstag, 16. Januar', sortOrder: 1 }] } }, include: { options: true } });
+  await prisma.pollVote.createMany({ data: [[T('sven.r'), 0], [T('ana.f'), 0], [T('selin.a'), 1]].map(([userId, i]) => ({ userId: userId as string, optionId: poll.options[i as number].id })) });
+
+  // Danke-Karten (ADR-051)
+  async function thanks(author: string, motif: string, to: string[], group: string | null, text: string, hoursAgo: number) {
+    const names = [...live.filter((u) => to.includes(u.id)).map((u) => u.displayName), ...(group ? [`Team ${group}`] : [])];
+    const ci = await post({ author, kind: 'SOCIAL', category: 'THANKS', hoursAgo, title: `Danke, ${names.join(' und ')}!`, text, recipients: employees, audience: [{ targetType: 'ALL_USERS' }], likes: [maren.id] });
+    await prisma.post.update({ where: { id: ci.id }, data: { kudosMotif: motif, kudosGroupId: group ? groups.get(group) : null } });
+    await prisma.mention.createMany({ data: to.map((mentionedUserId) => ({ mentionedUserId, contentItemId: ci.id })) });
+  }
+  await thanks(jana.id, 'HELP', [], 'Housekeeping', 'Danke für die superschnelle Zimmerfreigabe am Samstag – 14 Anreisen vor 13 Uhr, und alle Gäste waren happy!', 26);
+  await thanks(T('sven.r'), 'TEAM', [T('ana.f')], null, 'Ana, du bist gestern beim Bankett spontan eingesprungen und hast den Abend gerettet. Danke!', 40);
 
   async function handover(o: { author: string; group: string; shift: string; hoursAgo: number; subject: string; text: string; readBy?: string[] }) {
     const ci = await prisma.contentItem.create({ data: {

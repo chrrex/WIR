@@ -1,5 +1,6 @@
 'use client';
 
+import { BookmarkButton } from '@/components/content/Extras';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ReadStatus } from '@/components/content/ReadStatus';
@@ -23,6 +24,7 @@ export default function DocumentDetail() {
       <section className="card stack">
         <div className="chips"><span className="chip">{d.category}</span>{d.sensitive && <span className="chip warn">vertraulich</span>}</div>
         <h1>{d.title}</h1>
+        <div className="row"><BookmarkButton contentId={d.id} /></div>
         {d.description && <p>{d.description}</p>}
         <p className="small muted">Für {d.audience.join(', ')}</p>
         {d.canUpdate && cats.length > 0 && (

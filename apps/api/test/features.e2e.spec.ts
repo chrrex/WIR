@@ -13,6 +13,7 @@ import { configureApp } from '../src/main';
 import { PrismaService } from '../src/common/prisma.service';
 import { PushService, inQuietHours } from '../src/notifications/push.service';
 import { JobsService } from '../src/work/jobs.service';
+import { ContentService } from '../src/content/content.service';
 import { nextOccurrence } from '../src/work/recurrence';
 import { config } from '../src/common/config';
 
@@ -215,5 +216,71 @@ describe('Neue Funktionen (e2e)', () => {
     expect(await sharp(img.body).metadata()).toMatchObject({ width: 256, height: 256, format: 'webp' });
     await jana.delete('/api/v1/files/avatar').expect(204);
     await jana.get(`/api/v1/files/avatar/${me.id}`).expect(404);
+  });
+
+  test('News geplant: erst später sichtbar, dann mit Benachrichtigung (ADR-050)', async () => {
+    const maren = await as('maren.h');
+    const sgl = (await prisma.db.company.findFirstOrThrow({ where: { name: { contains: 'Liebenberg' } } })).id;
+    const at = new Date(Date.now() + 2 * 3600_000).toISOString();
+    await maren.post('/api/v1/news').send({ title: 'Geplant: Weihnachtsfeier', text: 'Infos folgen.', targets: [`C:${sgl}`], publishAt: new Date(Date.now() - 1000).toISOString() }).expect(400);
+    const { id } = (await maren.post('/api/v1/news').send({ title: 'Geplant: Weihnachtsfeier', text: 'Infos folgen.', targets: [`C:${sgl}`], important: true, publishAt: at }).expect(201)).body;
+    expect((await maren.get('/api/v1/news').expect(200)).body.find((n: { id: string }) => n.id === id).scheduledFor).toBeTruthy();
+    const jana = await as('jana.m');
+    await jana.get(`/api/v1/news/${id}`).expect(404);
+    expect(await prisma.db.notification.count({ where: { contentItemId: id } })).toBe(0);
+    await app.get(ContentService).publishDue(new Date(Date.now() + 3 * 3600_000));
+    expect((await jana.get(`/api/v1/news/${id}`).expect(200)).body.scheduledFor).toBeNull();
+    expect(await prisma.db.notification.count({ where: { contentItemId: id, recipientId: await uid('jana.m') } })).toBe(1);
+  });
+
+  test('Abstimmung in News und Übergaben: abstimmen, ändern, eine Antwort (ADR-050)', async () => {
+    const maren = await as('maren.h');
+    const sgl = (await prisma.db.company.findFirstOrThrow({ where: { name: { contains: 'Liebenberg' } } })).id;
+    const { id } = (await maren.post('/api/v1/news').send({ title: 'Termin Weihnachtsfeier', text: 'Stimmt ab!', targets: [`C:${sgl}`], poll: { question: 'Welcher Termin?', options: ['12.12.', '19.12.'] } }).expect(201)).body;
+    const jana = await as('jana.m');
+    const poll = (await jana.get(`/api/v1/news/${id}`).expect(200)).body.poll;
+    expect(poll).toMatchObject({ question: 'Welcher Termin?', voted: false, voters: 0 });
+    await jana.post(`/api/v1/content/${id}/poll`).send({ optionIds: poll.options.map((o: { id: string }) => o.id) }).expect(400);
+    await jana.post(`/api/v1/content/${id}/poll`).send({ optionIds: [poll.options[0].id] }).expect(200);
+    const after = (await jana.post(`/api/v1/content/${id}/poll`).send({ optionIds: [poll.options[1].id] }).expect(200)).body;
+    expect(after.options.map((o: { count: number }) => o.count)).toEqual([0, 1]);
+    expect(after.options[1]).toMatchObject({ mine: true, names: ['Jana M.'] });
+    expect((await jana.get('/api/v1/news').expect(200)).body.find((n: { id: string }) => n.id === id).hasPoll).toBe(true);
+    const sven = await as('sven.r');
+    const kitchen = (await prisma.db.group.findFirstOrThrow({ where: { name: 'Küche' } })).id;
+    const h = (await sven.post('/api/v1/handovers').send({ targets: [`G:${kitchen}`], shiftLabel: 'Früh', subject: 'Wer übernimmt Samstag?', text: 'Bitte abstimmen.', poll: { question: 'Wer kann?', options: ['Ich', 'Ich nicht'], multiple: true } }).expect(201)).body;
+    expect((await sven.get(`/api/v1/handovers/${h.id}`).expect(200)).body.poll.multiple).toBe(true);
+  });
+
+  test('Lesezeichen: merken, Liste, wieder entfernen', async () => {
+    const jana = await as('jana.m');
+    const news = (await jana.get('/api/v1/news').expect(200)).body[0];
+    expect((await jana.post(`/api/v1/content/${news.id}/bookmark`).expect(200)).body.bookmarked).toBe(true);
+    expect((await jana.get(`/api/v1/content/${news.id}/bookmark`).expect(200)).body.bookmarked).toBe(true);
+    const list = (await jana.get('/api/v1/bookmarks').expect(200)).body;
+    expect(list[0]).toMatchObject({ id: news.id, type: 'NEWS', href: `/news/${news.id}`, title: news.title });
+    expect((await (await as('sven.r')).get('/api/v1/bookmarks').expect(200)).body.some((b: { id: string }) => b.id === news.id)).toBe(false);
+    await jana.post(`/api/v1/content/${news.id}/bookmark`).expect(200);
+    expect((await jana.get('/api/v1/bookmarks').expect(200)).body).toHaveLength(0);
+  });
+
+  test('Danke-Karten: öffentlich und privat, Push an Bedankte, Sammlung, Monatszahl (ADR-051)', async () => {
+    const jana = await as('jana.m');
+    const opts = (await jana.get('/api/v1/social/thanks/options').expect(200)).body;
+    expect(Object.keys(opts.motifs)).toEqual(['HOST', 'TEAM', 'HELP', 'GREEN', 'WIR']);
+    const hk = opts.groups.find((g: { name: string }) => g.name.startsWith('Housekeeping')).id;
+    await jana.post('/api/v1/social/thanks').send({ motif: 'TEAM', text: 'Danke!' }).expect(400);
+    const pub = (await jana.post('/api/v1/social/thanks').send({ userIds: [await uid('sven.r')], groupId: hk, motif: 'HELP', text: 'Danke für die schnelle Zimmerfreigabe!' }).expect(201)).body;
+    const sven = await as('sven.r');
+    expect(await count(await uid('sven.r'), 'thanks')).toBe(1);
+    const card = (await (await as('lena.k')).get(`/api/v1/social/${pub.id}`).expect(200)).body;
+    expect(card).toMatchObject({ category: 'THANKS', title: 'Danke, Sven R. und Team Housekeeping!', kudos: { motif: 'HELP', team: 'Housekeeping', private: false, to: [{ name: 'Sven R.' }] } });
+    const priv = (await jana.post('/api/v1/social/thanks').send({ userIds: [await uid('sven.r')], motif: 'HOST', text: 'Unter uns: super Abend gestern.', private: true }).expect(201)).body;
+    await (await as('lena.k')).get(`/api/v1/social/${priv.id}`).expect(404);
+    const mine = (await sven.get('/api/v1/social/thanks/mine').expect(200)).body;
+    expect(mine.map((m: { id: string }) => m.id)).toEqual(expect.arrayContaining([pub.id, priv.id]));
+    const w = (await sven.get('/api/v1/dashboard').expect(200)).body.widgets.find((x: { key: string }) => x.key === 'thanks');
+    expect(w.count).toBeGreaterThanOrEqual(2);
+    await jana.post('/api/v1/social').send({ title: 'x', category: 'THANKS', visibility: 'ALL' }).expect(400);
   });
 });

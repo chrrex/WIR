@@ -13,9 +13,10 @@ import { ContentReactions, Reaction } from '@/components/content/Reactions';
 import { Comments } from '@/components/content/Comments';
 import { ReadStatus } from '@/components/content/ReadStatus';
 import { ReportButton } from '@/components/content/ReportButton';
+import { BookmarkButton, Poll, PollView, scheduledText } from '@/components/content/Extras';
 import { Icon } from '@/components/Icon';
 
-interface News { id: string; title: string; text: string; important: boolean; pinned: boolean; publishedAt: string; author: { id: string | null; name: string; job: string | null }; audiences: string[]; commentsEnabled: boolean; mine: boolean; canDelete: boolean; reactions: Reaction[]; images: ImageRef[] }
+interface News { id: string; title: string; text: string; important: boolean; pinned: boolean; publishedAt: string; author: { id: string | null; name: string; job: string | null }; audiences: string[]; commentsEnabled: boolean; mine: boolean; canDelete: boolean; reactions: Reaction[]; images: ImageRef[]; poll: Poll | null; scheduledFor: string | null }
 
 export default function NewsDetail() {
   const { id } = useParams<{ id: string }>();
@@ -40,11 +41,14 @@ export default function NewsDetail() {
             {n.audiences.map((a) => <span key={a} className="chip">an: {a}</span>)}
           </div>
           <h1>{n.title}</h1>
-          <div className="row"><Avatar name={n.author.name} id={n.author.id} size="s" /><span className="small muted"><strong className="fg">{n.author.name}</strong>{n.author.job ? ` · ${n.author.job}` : ''} · {when(n.publishedAt)}</span></div>
+          <div className="row"><Avatar name={n.author.name} id={n.author.id} size="s" /><span className="small muted"><strong className="fg">{n.author.name}</strong>{n.author.job ? ` · ${n.author.job}` : ''} · {n.scheduledFor ? scheduledText(n.scheduledFor) : when(n.publishedAt)}</span></div>
+          {n.scheduledFor && <div className="note info small">Noch nicht veröffentlicht – nur du siehst diese Mitteilung bis {scheduledText(n.scheduledFor).replace('geplant für ', '')}.</div>}
           <div className="prose"><RichText text={n.text} /></div>
           <Images images={n.images} />
+          {n.poll && <PollView contentId={n.id} initial={n.poll} />}
           <div className="row wrap actions-bar">
             <ContentReactions contentId={n.id} initial={n.reactions} />
+            <BookmarkButton contentId={n.id} />
             {!n.mine && <ReportButton path={`/content/${n.id}/report`} />}
             {n.canDelete && <button className="btn sm warn" onClick={async () => { await api(`/news/${n.id}`, { method: 'DELETE' }); router.replace('/news'); }}><Icon name="trash" size={16} />Löschen</button>}
           </div>

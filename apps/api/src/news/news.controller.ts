@@ -8,7 +8,7 @@ import { CurrentUser, RequirePermission, SessionUser } from '../auth/decorators'
 import { PolicyService } from '../policy/policy.service';
 import { can } from '../policy/engine';
 import { AudienceService, AudienceTarget } from '../content/audience.service';
-import { ContentService, toBody } from '../content/content.service';
+import { ContentService, createPoll, PollInput, PublishAt, toBody } from '../content/content.service';
 import { NotificationService } from '../notifications/notification.service';
 
 const CreateNews = z.object({
@@ -18,6 +18,8 @@ const CreateNews = z.object({
   important: z.boolean().default(false),
   pinned: z.boolean().default(false),
   images: z.array(z.object({ fileId: z.uuid(), altText: z.string().max(200).nullish() })).max(6).default([]),
+  poll: PollInput.nullish(),
+  publishAt: PublishAt,
 });
 
 function parseTarget(key: string): AudienceTarget {
@@ -44,7 +46,7 @@ export class NewsController {
   async list(@CurrentUser() me: SessionUser, @Query('filter') filter?: string) {
     const items = await this.prisma.db.contentItem.findMany({
       where: {
-        type: 'POST', post: { kind: 'NEWS' }, ...this.content.visibleWhere(me.id),
+        type: 'POST', post: { kind: 'NEWS' }, ...this.content.visibleOrScheduled(me.id),
         ...(filter === 'important' ? { importance: 'IMPORTANT' } : {}),
         ...(filter === 'unread' ? { readReceipts: { none: { userId: me.id } }, authorId: { not: me.id } } : {}),
       },
@@ -89,16 +91,11 @@ export class NewsController {
 
     const { item, recipientIds } = await this.content.create({
       type: 'POST', companyId, authorId: me.id, importance: body.important ? 'IMPORTANT' : 'NORMAL',
-      targets, attachmentFileIds: body.images.map((i) => ({ fileId: i.fileId, altText: i.altText ?? null })),
-      createSubtype: (tx, id) => tx.post.create({ data: { id, title: body.title, body: toBody(body.text), bodyText: body.text, kind: 'NEWS', isPinned: body.pinned } }),
+      targets, attachmentFileIds: body.images.map((i) => ({ fileId: i.fileId, altText: i.altText ?? null })), publishAt: body.publishAt,
+      createSubtype: async (tx, id) => { await tx.post.create({ data: { id, title: body.title, body: toBody(body.text), bodyText: body.text, kind: 'NEWS', isPinned: body.pinned } }); await createPoll(tx, id, body.poll); },
     });
-    if (body.important) {
-      await this.notifications.notify({
-        recipientIds, actorId: me.id, eventType: 'news.important', importance: 'IMPORTANT',
-        title: `Wichtig: ${body.title}`, body: `von ${user.displayName}`, linkPath: `/news/${item.id}`, contentItemId: item.id, dedupeKey: `news:${item.id}`,
-      });
-    }
-    await this.audit.log({ actorId: me.id, companyId, action: 'news.published', entityType: 'content_item', entityId: item.id, metadata: { recipients: recipientIds.length, important: body.important } });
+    if (!body.publishAt) await this.content.announce(item.id);
+    await this.audit.log({ actorId: me.id, companyId, action: body.publishAt ? 'news.scheduled' : 'news.published', entityType: 'content_item', entityId: item.id, metadata: { recipients: recipientIds.length, important: body.important } });
     await indexContent(this.prisma.db, item.id, 1, body.title, body.text);
     return { id: item.id, recipients: recipientIds.length };
   }
@@ -116,6 +113,7 @@ export class NewsController {
       audiences: await this.audiences.describe(id), commentsEnabled: item.commentsEnabled,
       mine: item.authorId === me.id,
       canDelete: item.authorId === me.id || can(ctx, 'news.delete_any', { companyId: item.companyId }),
+      poll: await this.content.poll(me.id, id),
       ...deco,
     };
   }

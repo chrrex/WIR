@@ -1,5 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import type { ContentType, Prisma } from '@wir/db';
+import { z } from 'zod';
 import { PrismaService } from '../common/prisma.service';
 import { FeatureService } from '../common/feature.service';
 import { AuditService } from '../audit/audit.service';
@@ -28,6 +29,30 @@ export function summarizeReactions(rows: Array<{ type: string; userId: string; u
   return REACTIONS.map((type) => { const r = rows.filter((x) => x.type === type); return { type, count: r.length, mine: r.some((x) => x.userId === me), names: r.map((x) => x.user.displayName) }; }).filter((r) => r.count);
 }
 
+/** Was Detailseiten und Listen (Lesezeichen) zu einem Inhalt brauchen. */
+export const ITEM_INCLUDE = {
+  post: true, handover: { include: { group: true } }, idea: true, task: true, survey: true, document: true, checklistRun: true,
+  knowledgeArticle: { include: { versions: { where: { status: 'PUBLISHED' as const }, take: 1, select: { title: true } } } },
+  author: { select: { id: true, displayName: true, employeeProfile: { select: { jobTitle: true } } } },
+} satisfies Prisma.ContentItemInclude;
+
+/** Abstimmung in News/Übergaben (ADR-050) */
+export const PollInput = z.object({
+  question: z.string().trim().min(3).max(200),
+  options: z.array(z.string().trim().min(1).max(100)).min(2).max(10),
+  multiple: z.boolean().default(false),
+  closesAt: z.iso.datetime({ offset: true }).nullish(),
+});
+export type PollInput = z.infer<typeof PollInput>;
+export function createPoll(tx: Prisma.TransactionClient, id: string, p: PollInput | null | undefined) {
+  if (!p) return;
+  return tx.poll.create({ data: { id, question: p.question, multiple: p.multiple, closesAt: p.closesAt ? new Date(p.closesAt) : null, options: { create: p.options.map((label, sortOrder) => ({ label, sortOrder })) } } });
+}
+
+/** Veröffentlichen planen: Zeitpunkt in der Zukunft, höchstens 90 Tage (ADR-050). */
+export const PublishAt = z.iso.datetime({ offset: true }).nullish()
+  .refine((v) => !v || (new Date(v).getTime() > Date.now() && new Date(v).getTime() < Date.now() + 90 * 864e5), 'Der Zeitpunkt muss in der Zukunft liegen (höchstens 90 Tage).');
+
 export interface CreateContentInput {
   type: ContentType;
   companyId: string | null;
@@ -38,6 +63,8 @@ export interface CreateContentInput {
   requiresAcknowledgement?: boolean;
   /** DRAFT = zur Prüfung eingereicht (nur Autor:in und Prüfende sehen es) */
   status?: 'DRAFT' | 'PUBLISHED';
+  /** geplant: erst zu diesem Zeitpunkt sichtbar (Job veröffentlicht und benachrichtigt) */
+  publishAt?: string | null;
   reactionsEnabled?: boolean;
   expiresAt?: Date | null;
   targets: AudienceTarget[];
@@ -72,6 +99,80 @@ export class ContentService {
     };
   }
 
+  /** Wie visibleWhere, dazu die eigenen geplanten Beiträge (nur für Listen und Detail von News/Übergaben). */
+  visibleOrScheduled(userId: string): Prisma.ContentItemWhereInput {
+    return { OR: [this.visibleWhere(userId), { authorId: userId, status: 'SCHEDULED', deletedAt: null }] };
+  }
+
+  /** Benachrichtigungen beim Erscheinen – sofort oder später durch den Job (geplante Beiträge). */
+  async announce(id: string) {
+    const db = this.prisma.db;
+    const i = await db.contentItem.findUniqueOrThrow({ where: { id }, include: { post: true, handover: { include: { group: true } }, author: { select: { displayName: true } },
+      recipients: { where: { removedAt: null }, select: { userId: true } }, mentions: { where: { commentId: null }, select: { mentionedUserId: true } } } });
+    const to = i.recipients.map((r) => r.userId).filter((u) => u !== i.authorId);
+    const by = i.author?.displayName ?? 'WIR';
+    if (i.post?.kind === 'NEWS' && i.importance === 'IMPORTANT') {
+      await this.notifications.notify({ recipientIds: to, actorId: i.authorId ?? undefined, eventType: 'news.important', importance: 'IMPORTANT', title: `Wichtig: ${i.post.title}`, body: `von ${by}`, linkPath: `/news/${id}`, contentItemId: id, dedupeKey: `news:${id}` });
+    }
+    if (i.handover) {
+      const h = i.handover;
+      const mentioned = new Set(i.mentions.map((m) => m.mentionedUserId));
+      await this.notifications.notify({ recipientIds: to.filter((u) => !mentioned.has(u)), actorId: i.authorId ?? undefined, eventType: 'handover.new', title: `Neue Übergabe ${h.shiftLabel ?? ''}${h.group ? ` · ${h.group.name}` : ''}`, body: h.subject, linkPath: `/uebergaben/${id}`, contentItemId: id, dedupeKey: `handover:${id}` });
+      await this.notifications.notify({ recipientIds: [...mentioned], actorId: i.authorId ?? undefined, eventType: 'mention', title: `${by} hat dich in einer Übergabe erwähnt`, body: h.subject, linkPath: `/uebergaben/${id}`, contentItemId: id, dedupeKey: `handover-mention:${id}` });
+    }
+  }
+
+  /** Fällige geplante Beiträge veröffentlichen (Job, alle 5 Minuten). */
+  async publishDue(now = new Date()) {
+    const due = await this.prisma.db.contentItem.findMany({ where: { status: 'SCHEDULED', deletedAt: null, publishAt: { lte: now } }, select: { id: true } });
+    let n = 0;
+    for (const { id } of due) {
+      const claimed = await this.prisma.db.contentItem.updateMany({ where: { id, status: 'SCHEDULED' }, data: { status: 'PUBLISHED', publishedAt: now } });
+      if (claimed.count) { n++; await this.announce(id); }
+    }
+    return n;
+  }
+
+  // ---- Abstimmungen ---------------------------------------------------------
+
+  async poll(userId: string, id: string) {
+    const p = await this.prisma.db.poll.findUnique({ where: { id }, include: { options: { orderBy: { sortOrder: 'asc' }, include: { votes: { include: { user: { select: { displayName: true } } } } } } } });
+    if (!p) return null;
+    const voters = new Set(p.options.flatMap((o) => o.votes.map((v) => v.userId)));
+    return {
+      question: p.question, multiple: p.multiple, closesAt: p.closesAt, closed: !!p.closesAt && p.closesAt < new Date(), voters: voters.size, voted: voters.has(userId),
+      options: p.options.map((o) => ({ id: o.id, label: o.label, count: o.votes.length, mine: o.votes.some((v) => v.userId === userId), names: o.votes.map((v) => v.user.displayName) })),
+    };
+  }
+
+  /** Stimme abgeben oder ändern (leere Auswahl = Stimme zurückziehen). */
+  async vote(userId: string, id: string, optionIds: string[]) {
+    const item = await this.getVisible(userId, id);
+    if (item.status !== 'PUBLISHED') throw new BadRequestException('Abstimmen geht erst nach dem Veröffentlichen.');
+    const p = await this.prisma.db.poll.findUnique({ where: { id }, include: { options: { select: { id: true } } } });
+    if (!p) throw new NotFoundException('Hier gibt es keine Abstimmung.');
+    if (p.closesAt && p.closesAt < new Date()) throw new BadRequestException('Die Abstimmung ist beendet.');
+    const ids = [...new Set(optionIds)];
+    if (ids.some((o) => !p.options.some((x) => x.id === o))) throw new BadRequestException('Unbekannte Antwort.');
+    if (!p.multiple && ids.length > 1) throw new BadRequestException('Hier ist nur eine Antwort möglich.');
+    await this.prisma.db.$transaction([
+      this.prisma.db.pollVote.deleteMany({ where: { userId, option: { pollId: id } } }),
+      this.prisma.db.pollVote.createMany({ data: ids.map((optionId) => ({ optionId, userId })) }),
+    ]);
+    return this.poll(userId, id);
+  }
+
+  // ---- Lesezeichen ----------------------------------------------------------
+
+  async toggleBookmark(userId: string, id: string) {
+    await this.getVisible(userId, id);
+    const key = { userId_contentItemId: { userId, contentItemId: id } };
+    const had = await this.prisma.db.bookmark.findUnique({ where: key });
+    if (had) await this.prisma.db.bookmark.delete({ where: key });
+    else await this.prisma.db.bookmark.create({ data: { userId, contentItemId: id } });
+    return { bookmarked: !had };
+  }
+
   async create(input: CreateContentInput) {
     const recipientIds = await this.audiences.resolve(input.targets);
     const db = this.prisma.db;
@@ -88,8 +189,9 @@ export class ContentService {
           type: input.type,
           companyId: input.companyId,
           authorId: input.authorId,
-          status: input.status ?? 'PUBLISHED',
-          publishedAt: input.status === 'DRAFT' ? null : new Date(),
+          status: input.publishAt ? 'SCHEDULED' : input.status ?? 'PUBLISHED',
+          publishAt: input.publishAt ? new Date(input.publishAt) : null,
+          publishedAt: input.status === 'DRAFT' || input.publishAt ? null : new Date(),
           importance: input.importance ?? 'NORMAL',
           commentsEnabled: input.commentsEnabled ?? true,
           reactionsEnabled: input.reactionsEnabled ?? true,
@@ -123,13 +225,7 @@ export class ContentService {
 
   /** Lädt einen Inhalt, wenn die Person ihn sehen darf – sonst 404 (kein Hinweis auf Existenz). */
   async getVisible(userId: string, id: string) {
-    const item = await this.prisma.db.contentItem.findFirst({
-      where: { id, ...this.visibleWhere(userId) },
-      include: {
-        post: true, handover: { include: { group: true } }, idea: true, task: true, survey: true, document: true, checklistRun: true,
-        knowledgeArticle: { include: { versions: { where: { status: 'PUBLISHED' }, take: 1, select: { title: true } } } },
-        author: { select: { id: true, displayName: true, employeeProfile: { select: { jobTitle: true } } } } },
-    });
+    const item = await this.prisma.db.contentItem.findFirst({ where: { id, ...this.visibleOrScheduled(userId) }, include: ITEM_INCLUDE });
     if (!item) throw new NotFoundException('Diesen Beitrag gibt es nicht oder er ist nicht für dich bestimmt.');
     return item;
   }
@@ -172,13 +268,17 @@ export class ContentService {
   /** Gemeinsame Zusatzinfos für Listen: gelesen, Likes, Kommentare, Bilder. */
   async decorate(userId: string, ids: string[]) {
     const db = this.prisma.db;
-    const [receipts, likes, myLikes, comments, attachments] = await Promise.all([
+    const [receipts, likes, myLikes, comments, attachments, polls, sched] = await Promise.all([
       db.readReceipt.findMany({ where: { userId, contentItemId: { in: ids } }, select: { contentItemId: true } }),
       db.reaction.groupBy({ by: ['contentItemId'], where: { contentItemId: { in: ids }, type: 'LIKE' }, _count: true }),
       db.reaction.findMany({ where: { contentItemId: { in: ids } }, select: { contentItemId: true, type: true, userId: true, user: { select: { displayName: true } } } }),
       db.comment.groupBy({ by: ['contentItemId'], where: { contentItemId: { in: ids }, deletedAt: null }, _count: true }),
       this.attachmentsFor(ids),
+      db.poll.findMany({ where: { id: { in: ids } }, select: { id: true } }),
+      db.contentItem.findMany({ where: { id: { in: ids }, status: 'SCHEDULED' }, select: { id: true, publishAt: true } }),
     ]);
+    const pollSet = new Set(polls.map((p) => p.id));
+    const scheduled = new Map(sched.map((x) => [x.id, x.publishAt]));
     const read = new Set(receipts.map((r) => r.contentItemId));
     const liked = new Set(myLikes.filter((r) => r.userId === userId && r.type === 'LIKE').map((r) => r.contentItemId));
     const likeCount = new Map(likes.map((l) => [l.contentItemId, l._count]));
@@ -190,6 +290,8 @@ export class ContentService {
       comments: commentCount.get(id) ?? 0,
       images: attachments.get(id) ?? [],
       reactions: summarizeReactions(myLikes.filter((r) => r.contentItemId === id && r.type !== 'LIKE'), userId),
+      hasPoll: pollSet.has(id),
+      scheduledFor: scheduled.get(id) ?? null,
     });
   }
 

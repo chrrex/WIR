@@ -4,7 +4,7 @@ import { ZodPipe } from '../common/zod.pipe';
 import { PrismaService } from '../common/prisma.service';
 import { CurrentUser, RequirePermission, SessionUser } from '../auth/decorators';
 import { PolicyService } from '../policy/policy.service';
-import { ContentService, REACTIONS, ReactionKind } from './content.service';
+import { ContentService, ITEM_INCLUDE, REACTIONS, ReactionKind } from './content.service';
 
 const CommentBody = z.object({ text: z.string().min(1).max(2000), mentionIds: z.array(z.uuid()).max(20).default([]) });
 const ReportBody = z.object({ reason: z.string().min(3).max(500) });
@@ -42,6 +42,32 @@ export class ContentController {
   @HttpCode(200)
   react(@CurrentUser() me: SessionUser, @Param('id', ParseUUIDPipe) id: string, @Body(new ZodPipe(z.object({ type: z.enum(REACTIONS) }))) b: { type: ReactionKind }) {
     return this.content.toggleReaction(me.id, id, b.type);
+  }
+
+  @Post('content/:id/poll')
+  @HttpCode(200)
+  vote(@CurrentUser() me: SessionUser, @Param('id', ParseUUIDPipe) id: string, @Body(new ZodPipe(z.object({ optionIds: z.array(z.uuid()).max(10) }))) b: { optionIds: string[] }) {
+    return this.content.vote(me.id, id, b.optionIds);
+  }
+
+  @Get('content/:id/bookmark')
+  async bookmarked(@CurrentUser() me: SessionUser, @Param('id', ParseUUIDPipe) id: string) {
+    return { bookmarked: !!(await this.prisma.db.bookmark.findUnique({ where: { userId_contentItemId: { userId: me.id, contentItemId: id } } })) };
+  }
+
+  @Post('content/:id/bookmark')
+  @HttpCode(200)
+  bookmark(@CurrentUser() me: SessionUser, @Param('id', ParseUUIDPipe) id: string) {
+    return this.content.toggleBookmark(me.id, id);
+  }
+
+  /** „Gemerkt“: eigene Lesezeichen, nur solange der Inhalt noch sichtbar ist. */
+  @Get('bookmarks')
+  async bookmarks(@CurrentUser() me: SessionUser) {
+    const marks = await this.prisma.db.bookmark.findMany({ where: { userId: me.id }, orderBy: { createdAt: 'desc' }, take: 200 });
+    const items = await this.prisma.db.contentItem.findMany({ where: { id: { in: marks.map((m) => m.contentItemId) }, ...this.content.visibleWhere(me.id) }, include: ITEM_INCLUDE });
+    const byId = new Map(items.map((i) => [i.id, i]));
+    return marks.flatMap((m) => { const i = byId.get(m.contentItemId); return i ? [{ id: i.id, type: i.post?.kind === 'SOCIAL' ? 'SOCIAL' : i.type === 'POST' ? 'NEWS' : i.type, title: this.content.titleOf(i), href: linkFor(i), savedAt: m.createdAt }] : []; });
   }
 
   @Get('content/:id/comments')

@@ -9,6 +9,7 @@ import { MentionText, Person } from '@/components/content/MentionText';
 import { Icon } from '@/components/Icon';
 import { Audience, AudienceOption } from '@/components/work';
 import { Absent, absentText } from '@/components/Absent';
+import { iso, PollDraft, PollEditor, pollJson, ScheduleField } from '@/components/content/Extras';
 
 function defaultShift() {
   const h = new Date().getHours();
@@ -26,6 +27,8 @@ export default function NewHandover() {
   const [text, setText] = useState('');
   const [mentions, setMentions] = useState<Person[]>([]);
   const [images, setImages] = useState<PickedImage[]>([]);
+  const [poll, setPoll] = useState<PollDraft | null>(null);
+  const [at, setAt] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   useEffect(() => { api<NonNullable<typeof opts>>('/handovers/options').then((o) => { setOpts(o); setTargets(o.defaults); }).catch((e) => setError(e.message)); }, []);
@@ -35,7 +38,7 @@ export default function NewHandover() {
     e.preventDefault();
     setBusy(true); setError(null);
     try {
-      const r = await api<{ id: string }>('/handovers', { method: 'POST', json: { targets, shiftLabel: shift, subject, text, mentionIds: mentions.map((m) => m.id), images: images.map((i) => ({ fileId: i.fileId, altText: i.altText || null })) } });
+      const r = await api<{ id: string }>('/handovers', { method: 'POST', json: { targets, shiftLabel: shift, subject, text, mentionIds: mentions.map((m) => m.id), images: images.map((i) => ({ fileId: i.fileId, altText: i.altText || null })), poll: pollJson(poll), publishAt: iso(at) } });
       router.replace(`/uebergaben/${r.id}`);
     } catch (err) { setError(err instanceof ApiError ? err.message : 'Speichern hat nicht geklappt.'); setBusy(false); }
   }
@@ -52,14 +55,16 @@ export default function NewHandover() {
           <MentionText id="txt" label="Übergabe-Text" value={text} onChange={setText} mentions={mentions} onMentions={setMentions} source={source} rows={7}
             placeholder="Mit @ erwähnst du Kolleg:innen – auch aus anderen Teams. Sie bekommen die Übergabe dann ebenfalls." /></div>
         <ImagePicker value={images} onChange={setImages} />
+        <PollEditor value={poll} onChange={setPoll} />
       </section>
       <section className="card stack">
         {opts ? <Audience options={opts.audiences} value={targets} onChange={setTargets} persons /> : <p className="muted">Lade …</p>}
         {away.length > 0 && <div className="note warn small" role="status"><strong>Gerade abwesend:</strong> {away.map((a) => `${a.name} (${absentText(a)})`).join(' · ')}</div>}
         <p className="small muted">Frei kombinierbar: Gruppen, einzelne Kolleg:innen oder beides. Mit @ im Text Erwähnte bekommen die Übergabe zusätzlich.</p>
       </section>
+      <section className="card stack"><ScheduleField value={at} onChange={setAt} /></section>
       {error && <div className="note warn" role="alert">{error}</div>}
-      <div className="row"><Link className="btn" href="/uebergaben">Abbrechen</Link><button className="btn pri big" disabled={busy || !subject || !text || !targets.length}>{busy ? 'Speichere …' : 'Übergabe speichern'}</button></div>
+      <div className="row"><Link className="btn" href="/uebergaben">Abbrechen</Link><button className="btn pri big" disabled={busy || !subject || !text || !targets.length}>{busy ? 'Speichere …' : at ? 'Übergabe planen' : 'Übergabe speichern'}</button></div>
     </form>
   );
 }

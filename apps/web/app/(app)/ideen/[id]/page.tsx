@@ -1,5 +1,6 @@
 'use client';
 
+import { BookmarkButton } from '@/components/content/Extras';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { ReadStatus } from '@/components/content/ReadStatus';
@@ -26,7 +27,7 @@ export default function Idea() {
         <h1>{i.title}</h1>
         <p className="small muted">{i.author} · {day(i.publishedAt)}</p>
         <div className="prose"><RichText text={i.description} /></div>
-        <div className="actions-bar"><LikeButton contentId={i.id} liked={i.liked} likes={i.likes} label="Unterstützen" /></div>
+        <div className="actions-bar"><LikeButton contentId={i.id} liked={i.liked} likes={i.likes} label="Unterstützen" /><BookmarkButton contentId={i.id} /></div>
         <h2 className="h-sub">Verlauf</h2>
         <ol className="plain stack-s">{i.history.map((h, n) => <li key={n} className="small"><strong>{i.statusLabels[h.status]}</strong> · {day(h.at)}{h.by && ` · ${h.by}`}{h.note && <span className="muted"> – {h.note}</span>}</li>)}</ol>
         {i.canManage && (

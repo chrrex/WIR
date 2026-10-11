@@ -22,6 +22,7 @@ const WIDGETS: Array<Omit<Widget, 'state'> & { readyInPhase: number }> = [
   { key: 'news', title: 'News', module: 'NEWS', readyInPhase: 2, text: 'Neuigkeiten aus deinem Team und dem ganzen Haus.' },
   { key: 'handovers', title: 'Übergaben', module: 'HANDOVERS', readyInPhase: 2, text: 'Was die vorige Schicht dir mitgibt.' },
   { key: 'social', title: 'Neu bei Social', module: 'SOCIAL', readyInPhase: 2, text: 'Grüße, Glückwünsche, Biete & Suche.' },
+  { key: 'thanks', title: 'Danke-Karten', module: 'SOCIAL', readyInPhase: 2, text: 'Wer sich bei wem bedankt hat.' },
   { key: 'tasks', title: 'Meine Aufgaben', module: 'TASKS', readyInPhase: 4, text: 'Deine offenen Aufgaben mit Fälligkeit.' },
   { key: 'checklists', title: 'Checklisten heute', module: 'CHECKLISTS', readyInPhase: 4, text: 'HACCP- und Schichtchecklisten, die heute fällig sind.' },
   { key: 'events', title: 'Veranstaltungen & Räume heute', module: 'EVENTS', readyInPhase: 5, text: 'Aus dem Eventtool – sobald die Anbindung steht.' },
@@ -62,8 +63,15 @@ export class DashboardController {
         w.items = rows.map((r) => ({ id: r.id, title: `${r.handover!.shiftLabel ?? ''} · ${r.handover!.subject}`, meta: `${r.handover!.group?.name ?? ''} · ${fmt(r.publishedAt)}`, unread: !r.readReceipts.length && r.authorId !== me.id, href: `/uebergaben/${r.id}` }));
       }
       if (w.key === 'social') {
-        const rows = await db.contentItem.findMany({ where: { type: 'POST', post: { kind: 'SOCIAL' }, ...visible }, include: { post: true, author: { select: { displayName: true } }, _count: { select: { attachments: true } } }, orderBy: { publishedAt: 'desc' }, take: 2 });
+        const rows = await db.contentItem.findMany({ where: { type: 'POST', post: { kind: 'SOCIAL', NOT: { socialCategory: 'THANKS' } }, ...visible }, include: { post: true, author: { select: { displayName: true } }, _count: { select: { attachments: true } } }, orderBy: { publishedAt: 'desc' }, take: 2 });
         w.items = rows.map((r) => ({ id: r.id, title: r.post!.title, meta: r.author?.displayName ?? '', unread: false, photo: r._count.attachments > 0, href: `/social/${r.id}` }));
+      }
+      if (w.key === 'thanks') {
+        const rows = await db.contentItem.findMany({ where: { type: 'POST', post: { socialCategory: 'THANKS' }, ...visible }, include: { post: true, author: { select: { displayName: true } } }, orderBy: { publishedAt: 'desc' }, take: 3 });
+        w.items = rows.map((r) => ({ id: r.id, title: r.post!.title, meta: `von ${r.author?.displayName ?? '–'}`, unread: false, href: `/social/${r.id}` }));
+        // Monatsrückblick: nur die Gesamtzahl, keine Namen (ADR-051)
+        const now = new Date();
+        w.count = await db.post.count({ where: { socialCategory: 'THANKS', contentItem: { status: 'PUBLISHED', deletedAt: null, publishedAt: { gte: new Date(now.getFullYear(), now.getMonth(), 1) } } } });
       }
       if (w.key === 'tasks') {
         const where = { type: 'TASK' as const, ...visible, task: { status: { notIn: ['DONE' as const, 'CANCELLED' as const] }, assignees: { some: { OR: [{ userId: me.id }, { groupId: { in: ctx.groupIds } }] } } } };

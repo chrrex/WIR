@@ -8,7 +8,7 @@ export interface NavItem {
   anyOf?: string[];
 }
 
-export type IconName = 'home' | 'news' | 'heart' | 'hand' | 'chat' | 'book' | 'doc' | 'task' | 'list' | 'poll' | 'idea' | 'contact' | 'team' | 'admin' | 'settings' | 'logout' | 'search' | 'bell' | 'menu' | 'lock' | 'check' | 'key' | 'globe' | 'x' | 'arrow' | 'camera' | 'thumb' | 'flag' | 'send' | 'plus' | 'trash' | 'pin' | 'back' | 'users' | 'bellring';
+export type IconName = 'home' | 'news' | 'heart' | 'hand' | 'chat' | 'book' | 'doc' | 'task' | 'list' | 'poll' | 'idea' | 'contact' | 'team' | 'admin' | 'settings' | 'logout' | 'search' | 'bell' | 'menu' | 'lock' | 'check' | 'key' | 'globe' | 'x' | 'arrow' | 'camera' | 'thumb' | 'flag' | 'send' | 'plus' | 'trash' | 'pin' | 'back' | 'users' | 'bellring' | 'bookmark';
 
 export const NAV: NavItem[] = [
   { href: '/', label: 'Start', icon: 'home', module: null },
@@ -24,6 +24,7 @@ export const NAV: NavItem[] = [
   { href: '/ideen', label: 'Ideen', icon: 'idea', module: 'IDEAS' },
   { href: '/kontakte', label: 'Kontakte', icon: 'contact', module: 'CONTACTS' },
   { href: '/team', label: 'Team', icon: 'team', module: 'TEAM' },
+  { href: '/gemerkt', label: 'Gemerkt', icon: 'bookmark', module: null },
   { href: '/einarbeitung', label: 'Einarbeitung', icon: 'users', module: null, anyOf: ['lifecycle.start', 'lifecycle.view_progress'] },
 ];
 

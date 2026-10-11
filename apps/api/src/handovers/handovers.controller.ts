@@ -6,7 +6,7 @@ import { CurrentUser, RequirePermission, SessionUser } from '../auth/decorators'
 import { PolicyService } from '../policy/policy.service';
 import { can } from '../policy/engine';
 import { AudienceTarget } from '../content/audience.service';
-import { ContentService, toBody } from '../content/content.service';
+import { ContentService, createPoll, PollInput, PublishAt, toBody } from '../content/content.service';
 import { NotificationService } from '../notifications/notification.service';
 import { AudienceKeys, toTargets } from '../work/common';
 import { AudienceService } from '../content/audience.service';
@@ -21,6 +21,8 @@ const CreateHandover = z.object({
   text: z.string().trim().min(1).max(6000),
   mentionIds: z.array(z.uuid()).max(10).default([]),
   images: z.array(z.object({ fileId: z.uuid(), altText: z.string().max(200).nullish() })).max(6).default([]),
+  poll: PollInput.nullish(),
+  publishAt: PublishAt,
 });
 
 @Controller('handovers')
@@ -31,7 +33,7 @@ export class HandoversController {
   @Get()
   async list(@CurrentUser() me: SessionUser, @Query('group') group?: string) {
     const items = await this.prisma.db.contentItem.findMany({
-      where: { type: 'HANDOVER', ...this.content.visibleWhere(me.id), ...(group ? { handover: { groupId: group } } : {}) },
+      where: { type: 'HANDOVER', ...this.content.visibleOrScheduled(me.id), ...(group ? { handover: { groupId: group } } : {}) },
       include: { handover: { include: { group: true } }, author: { select: { displayName: true } } },
       orderBy: { publishedAt: 'desc' },
       take: 60,
@@ -68,21 +70,14 @@ export class HandoversController {
     const group = groupId ? await this.prisma.db.group.findUnique({ where: { id: groupId } }) : null;
     const { item, recipientIds } = await this.content.create({
       type: 'HANDOVER', companyId: group?.companyId ?? author.employeeProfile?.companyId ?? ctx.companyIds[0] ?? null, authorId: me.id, targets,
-      attachmentFileIds: body.images.map((i) => ({ fileId: i.fileId, altText: i.altText ?? null })),
-      createSubtype: (tx, id) => tx.handover.create({
-        data: { id, groupId, subject: body.subject, body: toBody(body.text), bodyText: body.text, shiftLabel: body.shiftLabel, shiftDate: body.shiftDate ? new Date(body.shiftDate) : new Date() },
-      }),
+      attachmentFileIds: body.images.map((i) => ({ fileId: i.fileId, altText: i.altText ?? null })), publishAt: body.publishAt,
+      createSubtype: async (tx, id) => {
+        await tx.handover.create({ data: { id, groupId, subject: body.subject, body: toBody(body.text), bodyText: body.text, shiftLabel: body.shiftLabel, shiftDate: body.shiftDate ? new Date(body.shiftDate) : new Date() } });
+        await tx.mention.createMany({ data: mentioned.map((u) => ({ mentionedUserId: u.id, contentItemId: id })) });
+        await createPoll(tx, id, body.poll);
+      },
     });
-    const mentionSet = new Set(mentioned.map((u) => u.id));
-    await this.prisma.db.mention.createMany({ data: [...mentionSet].map((u) => ({ mentionedUserId: u, contentItemId: item.id })) });
-    await this.notifications.notify({
-      recipientIds: recipientIds.filter((r) => !mentionSet.has(r)), actorId: me.id, eventType: 'handover.new',
-      title: `Neue Übergabe ${body.shiftLabel}${group ? ` · ${group.name}` : ''}`, body: body.subject, linkPath: `/uebergaben/${item.id}`, contentItemId: item.id, dedupeKey: `handover:${item.id}`,
-    });
-    await this.notifications.notify({
-      recipientIds: [...mentionSet], actorId: me.id, eventType: 'mention', title: `${author.displayName} hat dich in einer Übergabe erwähnt`,
-      body: body.subject, linkPath: `/uebergaben/${item.id}`, contentItemId: item.id, dedupeKey: `handover-mention:${item.id}`,
-    });
+    if (!body.publishAt) await this.content.announce(item.id);
     return { id: item.id, recipients: recipientIds.length };
   }
 
@@ -96,7 +91,8 @@ export class HandoversController {
     return {
       id, subject: item.handover.subject, text: item.handover.bodyText, group: item.handover.group?.name ?? '–', shiftLabel: item.handover.shiftLabel,
       shiftDate: item.handover.shiftDate, publishedAt: item.publishedAt, author: { id: item.author?.id ?? null, name: item.author?.displayName ?? '–' },
-      mentions: mentions.map((m) => ({ id: m.mentionedUser.id, name: m.mentionedUser.displayName })), audience: await this.audiences.describe(id), mine: item.authorId === me.id, ...deco,
+      mentions: mentions.map((m) => ({ id: m.mentionedUser.id, name: m.mentionedUser.displayName })), audience: await this.audiences.describe(id), mine: item.authorId === me.id,
+      poll: await this.content.poll(me.id, id), ...deco,
     };
   }
 }

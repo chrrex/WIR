@@ -4,10 +4,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { when } from '@/lib/time';
-import { CATEGORIES, SocialPost } from '@/lib/social';
+import { CATEGORIES, MOTIF, SocialPost } from '@/lib/social';
 import { Avatar } from './Avatar';
 import { Images } from './Images';
 import { ContentReactions } from './Reactions';
+import { BookmarkButton } from './Extras';
 import { RichText } from './MentionText';
 import { Icon } from '../Icon';
 
@@ -19,12 +20,19 @@ export function SocialCard({ p, full = false, onChange }: { p: SocialPost; full?
     router.push(`/chat/${r.id}`);
   }
   return (
-    <article className="card social stack-s">
+    <article className={`card social stack-s ${p.kudos ? `thanks m-${p.kudos.motif}` : ''}`}>
       <div className="row">
         <Avatar name={p.author.name} id={p.author.id} />
         <span className="grow"><strong>{p.author.name}</strong><span className="block small muted">{when(p.publishedAt)}</span></span>
         <span className="chip">{CATEGORIES[p.category] ?? p.category}</span>
       </div>
+      {p.kudos && (
+        <div className="kudos">
+          <span className="kudos-emoji" aria-hidden="true">{MOTIF[p.kudos.motif]?.[0] ?? '💚'}</span>
+          <span className="grow"><span className="block xs strong">Danke-Karte · {MOTIF[p.kudos.motif]?.[1] ?? ''}</span>
+            <span className="block small">an {[...p.kudos.to.map((t) => t.name), ...(p.kudos.team ? [`Team ${p.kudos.team}`] : [])].join(', ')}{p.kudos.private && ' · nur für die Bedankten'}</span></span>
+        </div>
+      )}
       {full ? <h1 className="h-social">{p.title}</h1> : <Link href={`/social/${p.id}`} className="title-link"><strong className="title">{p.title}</strong></Link>}
       {p.category === 'MARKETPLACE' && (
         <div className="row wrap gap-s">
@@ -37,6 +45,7 @@ export function SocialCard({ p, full = false, onChange }: { p: SocialPost; full?
       <Images images={p.images} />
       <div className="row wrap actions-bar">
         <ContentReactions key={p.id} contentId={p.id} initial={p.reactions} />
+        {full && <BookmarkButton contentId={p.id} />}
         {!full && <Link className="btn sm" href={`/social/${p.id}`}><Icon name="chat" size={16} />{p.comments ? `${p.comments} Kommentar${p.comments === 1 ? '' : 'e'}` : 'Kommentieren'}</Link>}
         {p.category === 'MARKETPLACE' && !p.mine && !p.closed && <button className="btn sm pri" onClick={ask}><Icon name="chat" size={16} />Im Chat fragen</button>}
         {p.category === 'MARKETPLACE' && p.mine && !p.closed && full && (

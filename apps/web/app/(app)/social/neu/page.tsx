@@ -38,7 +38,7 @@ export default function NewSocial() {
       <h1>Neuer Beitrag</h1>
       <section className="card stack">
         <div className="field"><label htmlFor="cat">Worum geht es?</label>
-          <select id="cat" className="input" value={f.category} onChange={set('category')}>{Object.entries(CATEGORIES).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></div>
+          <select id="cat" className="input" value={f.category} onChange={set('category')}>{Object.entries(CATEGORIES).filter(([k]) => k !== 'THANKS').map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></div>
         {market && (
           <div className="row wrap">
             <div className="seg" role="group" aria-label="Biete oder Suche">

@@ -514,6 +514,19 @@ Für Vorführungen und Tests: Auf der Anmeldeseite eine Personenauswahl, in der 
 - Abruf über `GET /files/avatar/:userId` für alle Angemeldeten (5 Min. Cache); ohne Foto 404 ohne Cache – die Oberfläche zeigt dann wie bisher Initialen. So brauchen die Listen-Antworten kein zusätzliches Feld, nur die Personen-ID.
 - Angezeigt überall, wo bisher Initialen standen: Kopfzeile, Team, Teamprofil, Chatliste, Social, Kommentare, News- und Übergabe-Verfasser:innen, Verwaltung.
 
+## ADR-050 · Abstimmungen, Planen, Lesezeichen — ENTSCHIEDEN (11.10.2026)
+
+- **Abstimmung** in News und Übergaben: eine Frage, 2–10 Antworten, optional mehrere Antworten und ein Ende. Bewusst *nicht anonym* (Namen sichtbar für alle Empfänger:innen, wie bei Reaktionen); für anonyme Fragen bleiben die Umfragen (ADR-013). Stimme ändern oder zurückziehen bis zum Ende. Tabellen `polls`, `poll_options`, `poll_votes`.
+- **Planen**: News und Übergaben mit `publishAt` (Zukunft, max. 90 Tage) → Status `SCHEDULED`; bis dahin sieht nur die Autor:in den Beitrag (Listen mit „geplant für …“). Der Job (alle 5 Min.) veröffentlicht und verschickt erst dann die Benachrichtigungen (`ContentService.announce`, gleiche Logik wie beim sofortigen Veröffentlichen). Empfänger:innen werden beim Anlegen festgelegt.
+- **Lesezeichen** („Gemerkt“): für alle Inhalte mit Detailseite, nur für die Person selbst sichtbar; die Liste zeigt nur, was noch sichtbar ist. Tabelle `bookmarks`.
+
+## ADR-051 · Danke-Karten — ENTSCHIEDEN (11.10.2026)
+
+- Alle mit `social.post` können einzelnen Personen (bis 10) und/oder einem Team danken – stiftungsweit. Motive: Gastgeberschaft, Teamgeist, Hilfsbereitschaft, Nachhaltigkeit, „Weil Wir Wirkt“; Text max. 300 Zeichen.
+- Öffentlich (an alle, im Social-Bereich mit Reaktionen und Kommentaren) oder „nur an die Bedankten“. Die Bedankten (bei Teams alle Mitglieder) bekommen eine Benachrichtigung.
+- Keine Ranglisten und keine Auswertung pro Person für Vorgesetzte (keine Leistungskontrolle, Betriebsrat). Jede:r sieht die eigene Sammlung „Meine Danke-Karten“ in den Einstellungen; das Dashboard zeigt die letzten Karten und nur die Gesamtzahl des Monats.
+- Umsetzung als Social-Kategorie `THANKS` (`posts.kudos_motif`, `posts.kudos_group_id`, bedankte Personen in `mentions`). Migration `20261011020000_umfragen_lesezeichen_danke`.
+
 ## Nächste Schritte
 
 1. Anbieterauswahl (ADR-022) bestätigen und Gastromatic-Prüfauftrag (ADR-021) stellen.
