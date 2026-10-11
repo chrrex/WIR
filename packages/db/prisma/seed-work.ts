@@ -54,6 +54,9 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
   const kFront = await cat('Rezeption & Gäste', 'rezeption', 2);
   const kRules = await cat('Richtlinien & Arbeitsschutz', 'richtlinien', 3);
   const kGeneral = await cat('Allgemein', 'allgemein', 4);
+  const kGroup = await cat('Stiftungsgruppe', 'stiftungsgruppe', 0);
+  const kCheckin = (await prisma.knowledgeCategory.create({ data: { name: 'Check-in & Check-out', slug: 'check-in', parentId: kFront, sortOrder: 1 } })).id;
+  await prisma.knowledgeCategory.create({ data: { name: 'Allergene', slug: 'allergene', parentId: kKitchen, sortOrder: 1 } });
 
   async function article(o: { author: string; category: string; type: 'SOP' | 'HACCP' | 'POLICY' | 'PROCESS' | 'WIKI'; hoursAgo: number; ack?: boolean;
     audience: Parameters<typeof item>[3]; recipients: string[]; versions: Array<{ title: string; text: string; plain?: string; change?: string }>; ackBy?: string[] }) {
@@ -77,15 +80,22 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
         text: 'Kühlware wird sofort nach der Anlieferung geprüft und innerhalb von 15 Minuten eingeräumt.\n\nBei jeder Tiefkühl-Lieferung messen wir die Kerntemperatur. Grenzwert: -18 °C oder kälter. Kühlware (Fleisch, Fisch, Milchprodukte): höchstens +4 °C.\n\nLiegt ein Wert außerhalb, nimmst du die Ware nicht an, notierst es im Wareneingangsbuch und informierst sofort die Küchenleitung.\n\nDas Thermometer liegt in der Schublade am Wareneingang. Nach jeder Messung desinfizieren.',
         plain: 'Kühle Ware sofort prüfen. Tiefkühlware muss -18 °C oder kälter sein. Ist sie wärmer: Ware nicht annehmen und die Küchenleitung rufen.' },
     ] });
-  await article({ author: maren, category: kFront, type: 'PROCESS', hoursAgo: 200, audience: [{ targetType: 'GROUP', groupId: G('Rezeption') }], recipients: c.membersOf('Rezeption'),
+  await article({ author: maren, category: kCheckin, type: 'PROCESS', hoursAgo: 200, audience: [{ targetType: 'GROUP', groupId: G('Rezeption') }], recipients: c.membersOf('Rezeption'),
     versions: [{ title: 'Check-in am Schloss – Schritt für Schritt', text: 'Begrüße die Gäste mit Namen, sobald du ihn kennst.\n\nPrüfe Reservierung, Anzahl der Nächte und besondere Wünsche wie Allergien oder späte Anreise.\n\nErkläre kurz Frühstückszeiten, WLAN und den Weg zum Zimmer. Bei Tagungsgästen: Raum und Startzeit der Tagung nennen.\n\nSchlüsselkarten immer im Kartenhalter übergeben, nie die Zimmernummer laut sagen.' }] });
   const kleidung = await article({ author: lena, category: kRules, type: 'POLICY', hoursAgo: 400, audience: house, recipients: c.sglPeople,
     versions: [{ title: 'Dienstkleidung und Erscheinungsbild', text: 'Dienstkleidung bekommst du gestellt und gereinigt. Die Ausgabe ist montags und donnerstags von 7 bis 9 Uhr in der Wäscherei.\n\nNamensschild immer gut sichtbar links tragen. Schmuck nur dezent, in der Küche gar nicht.' }] });
   const ersteHilfe = await article({ author: lena, category: kGeneral, type: 'WIKI', hoursAgo: 500, audience: house, recipients: c.sglPeople,
     versions: [{ title: 'Erste Hilfe und Notfälle', text: 'Notruf: 112. Danach immer die Rezeption informieren, sie ist rund um die Uhr besetzt und weist den Rettungsdienst ein.\n\nVerbandkästen hängen in Küche, Rezeption, Wäscherei und Haustechnik. Der Defibrillator (AED) hängt neben der Rezeption.\n\nErsthelfer:innen im Haus findest du am schwarzen Brett im Personalraum.',
       plain: 'Im Notfall: 112 anrufen. Dann der Rezeption Bescheid sagen. Der Defibrillator hängt neben der Rezeption.' }] });
-  await article({ author: nora, category: kGeneral, type: 'WIKI', hoursAgo: 600, audience: [{ targetType: 'ALL_USERS' }], recipients: c.employees,
+  await article({ author: nora, category: kGroup, type: 'WIKI', hoursAgo: 600, audience: [{ targetType: 'ALL_USERS' }], recipients: c.employees,
     versions: [{ title: 'Willkommen in der Stiftungsgruppe (Beispieltext)', text: 'Dieser Artikel ist ein Platzhalter für die Inhalte der DKB STIFTUNG. Er zeigt, wie Wissen gruppenweit für alle Gesellschaften geteilt werden kann.' }] });
+
+  // Eintrag von Jana, wartet auf Freigabe durch die Teamleitung Rezeption (ADR-045)
+  const draft = await item('KNOWLEDGE_ARTICLE', jana, 10, [{ targetType: 'GROUP', groupId: G('Rezeption') }], c.membersOf('Rezeption'), { status: 'DRAFT', publishedAt: null });
+  await prisma.knowledgeArticle.create({ data: { id: draft, categoryId: kFront, articleType: 'WIKI', slug: `a-${draft.slice(0, 8)}`, ownerId: jana } });
+  await prisma.knowledgeVersion.create({ data: { articleId: draft, versionNumber: 1, status: 'DRAFT', title: 'Fundsachen richtig aufbewahren', authorId: jana, changeSummary: 'Erste Fassung',
+    bodyText: 'Fundsachen kommen mit Datum, Fundort und Namen der findenden Person ins Fundbuch.\n\nWertsachen (Schmuck, Geld, Ausweise) sofort in den Tresor, alles andere ins Regal hinter der Rezeption.\n\nNach 3 Monaten entscheidet die Direktion, was mit nicht abgeholten Sachen passiert.',
+    body: body('Fundsachen kommen mit Datum, Fundort und Namen der findenden Person ins Fundbuch.') } });
 
   // ---- Dokumente ------------------------------------------------------------
   const storage = path.resolve(process.env.STORAGE_DIR ?? path.join(process.cwd(), '../../apps/api/.data/uploads'));

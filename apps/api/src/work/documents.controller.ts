@@ -8,6 +8,7 @@ import { PolicyService } from '../policy/policy.service';
 import { can } from '../policy/engine';
 import { AudienceService } from '../content/audience.service';
 import { ContentService } from '../content/content.service';
+import { categoryTree } from './categories';
 import { AudienceKeys, assertOwnFreshFile, primaryCompany, toTargets } from './common';
 
 const Create = z.object({ categoryId: z.uuid(), title: z.string().trim().min(2).max(160), description: z.string().trim().max(1000).nullish(), fileId: z.uuid(), audience: AudienceKeys });
@@ -67,13 +68,8 @@ export class DocumentsController {
     return { id: item.id };
   }
 
-  /** Kategorienbaum (aktiv), sortiert, mit Pfad „Personal › Verträge“; vertraulich vererbt sich nach unten. */
   private async categories() {
-    const all = await this.prisma.db.documentCategory.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] });
-    const byId = new Map(all.map((c) => [c.id, c]));
-    const chain = (c: (typeof all)[number]) => { const out = [c]; let p = c.parentId ? byId.get(c.parentId) : undefined; while (p && out.length < 10) { out.unshift(p); p = p.parentId ? byId.get(p.parentId) : undefined; } return out; };
-    const rows = all.map((c) => { const ch = chain(c); return { id: c.id, name: c.name, parentId: c.parentId && byId.has(c.parentId) ? c.parentId : null, path: ch.map((x) => x.name).join(' › '), sensitive: ch.some((x) => x.isSensitive), sortOrder: c.sortOrder }; });
-    return rows.sort((a, b) => a.path.localeCompare(b.path, 'de'));
+    return categoryTree(await this.prisma.db.documentCategory.findMany({ where: { isActive: true } }));
   }
 
   @RequirePermission('documents.manage_categories')

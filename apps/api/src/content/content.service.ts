@@ -27,6 +27,8 @@ export interface CreateContentInput {
   importance?: 'NORMAL' | 'IMPORTANT';
   commentsEnabled?: boolean;
   requiresAcknowledgement?: boolean;
+  /** DRAFT = zur Prüfung eingereicht (nur Autor:in und Prüfende sehen es) */
+  status?: 'DRAFT' | 'PUBLISHED';
   reactionsEnabled?: boolean;
   expiresAt?: Date | null;
   targets: AudienceTarget[];
@@ -77,8 +79,8 @@ export class ContentService {
           type: input.type,
           companyId: input.companyId,
           authorId: input.authorId,
-          status: 'PUBLISHED',
-          publishedAt: new Date(),
+          status: input.status ?? 'PUBLISHED',
+          publishedAt: input.status === 'DRAFT' ? null : new Date(),
           importance: input.importance ?? 'NORMAL',
           commentsEnabled: input.commentsEnabled ?? true,
           reactionsEnabled: input.reactionsEnabled ?? true,

@@ -16,7 +16,7 @@ export class AudienceService {
   constructor(private readonly prisma: PrismaService) {}
 
   private async companyTree() {
-    const companies = await this.prisma.db.company.findMany({ select: { id: true, parentId: true, kind: true, name: true } });
+    const companies = await this.prisma.db.company.findMany({ select: { id: true, parentId: true, kind: true, name: true, isActive: true } });
     const parent = new Map(companies.map((c) => [c.id, c.parentId]));
     return { companies, parent };
   }
@@ -65,16 +65,16 @@ export class AudienceService {
    * Darf die Person diese Zielgruppen für News nutzen? (ADR-037)
    * Gruppen der eigenen Gesellschaft immer; ganze Gesellschaft nur Teamleitungen und höher, alle Gesellschaften nur mit Recht an der Stiftung.
    */
-  async assertNewsTargets(ctx: PolicyContext, targets: AudienceTarget[]) {
+  async assertNewsTargets(ctx: PolicyContext, targets: AudienceTarget[], open = false) {
     if (!targets.length) throw new BadRequestException('Bitte wähle mindestens eine Zielgruppe.');
     const { companies } = await this.companyTree();
     const groups = await this.prisma.db.group.findMany({ where: { id: { in: targets.filter((t) => t.type === 'GROUP').map((t) => (t as { groupId: string }).groupId) } } });
     for (const t of targets) {
       if (t.type === 'ALL') {
         const root = companies.find((c) => !c.parentId);
-        if (!root || !can(ctx, 'news.publish_wide', { companyId: root.id })) throw new ForbiddenException('An alle Gesellschaften darfst du nicht schreiben.');
+        if (!root || (!open && !can(ctx, 'news.publish_wide', { companyId: root.id }))) throw new ForbiddenException('An alle Gesellschaften darfst du nicht schreiben.');
       } else if (t.type === 'COMPANY') {
-        if (!(await this.wideAllowed(ctx, t.companyId))) throw new ForbiddenException('An alle Mitarbeitenden der Gesellschaft schreiben Teamleitungen, Abteilungsleitungen und Direktion.');
+        if (!(open ? this.inOwnCompanies(ctx, t.companyId, companies) : await this.wideAllowed(ctx, t.companyId))) throw new ForbiddenException('An alle Mitarbeitenden der Gesellschaft schreiben Teamleitungen, Abteilungsleitungen und Direktion.');
       } else if (t.type === 'GROUP') {
         const g = groups.find((x) => x.id === t.groupId);
         if (!g) throw new BadRequestException('Diese Gruppe gibt es nicht.');
@@ -119,14 +119,15 @@ export class AudienceService {
   }
 
   /** Zielgruppen, die die Person für News auswählen kann (für das Formular). */
-  async newsOptions(ctx: PolicyContext) {
+  /** open = Wissen mit Freigabe (ADR-045): ganze Stiftungsgruppe und eigene Gesellschaften für alle wählbar. */
+  async newsOptions(ctx: PolicyContext, open = false) {
     const { companies } = await this.companyTree();
     const groups = await this.prisma.db.group.findMany({ where: { isActive: true }, include: { company: true }, orderBy: { name: 'asc' } });
     const root = companies.find((c) => !c.parentId);
     const options: Array<{ key: string; label: string; company?: string; target: AudienceTarget; wide: boolean }> = [];
-    if (root && can(ctx, 'news.publish_wide', { companyId: root.id })) options.push({ key: 'ALL', label: 'Alle Gesellschaften der Stiftungsgruppe', target: { type: 'ALL' }, wide: true });
+    if (root && (open || can(ctx, 'news.publish_wide', { companyId: root.id }))) options.push({ key: 'ALL', label: 'Ganze Stiftungsgruppe (alle Gesellschaften)', target: { type: 'ALL' }, wide: true });
     for (const c of companies) {
-      if (c.kind !== 'FOUNDATION' && (await this.wideAllowed(ctx, c.id))) {
+      if (c.kind !== 'FOUNDATION' && c.isActive !== false && (open ? this.inOwnCompanies(ctx, c.id, companies) : await this.wideAllowed(ctx, c.id))) {
         options.push({ key: `C:${c.id}`, label: `Alle Mitarbeitenden · ${c.name}`, target: { type: 'COMPANY', companyId: c.id }, wide: true });
       }
     }

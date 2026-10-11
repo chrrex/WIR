@@ -43,12 +43,12 @@ export const SENSITIVE_PERMISSIONS: readonly PermissionKey[] = [
 const EMPLOYEE: PermissionKey[] = [
   'dashboard.view', 'news.read', 'news.create', 'news.publish', 'social.read', 'social.post',
   'handovers.read', 'handovers.create', 'comments.create', 'reactions.create', 'chat.use',
-  'knowledge.read', 'documents.read', 'documents.download', 'search.use', 'ai.use', 'tasks.read',
+  'knowledge.read', 'knowledge.create', 'documents.read', 'documents.download', 'search.use', 'ai.use', 'tasks.read',
   'checklists.execute', 'surveys.respond', 'ideas.read', 'ideas.create', 'contacts.read', 'contacts.view_emergency', 'employees.directory',
 ];
 
 const TEAM_LEAD: PermissionKey[] = [
-  ...EMPLOYEE, 'chat.create_group', 'news.mark_important', 'news.publish_wide', 'handovers.update_any',
+  ...EMPLOYEE, 'chat.create_group', 'news.mark_important', 'news.publish_wide', 'knowledge.publish', 'handovers.update_any',
   'read_status.view_summary', 'read_status.view_details', 'reminders.send_manual',
   'tasks.create', 'tasks.assign', 'checklists.approve', 'absences.view_team',
   'lifecycle.view_progress', 'surveys.create', 'surveys.view_results',
@@ -70,7 +70,7 @@ export const ROLES: RoleDefinition[] = [
   { key: 'team_lead', name: 'Teamleitung', description: 'Leitung einer Gruppe: Lesestatus, Erinnerungen, Aufgaben.', permissions: TEAM_LEAD },
   {
     key: 'department_head', name: 'Abteilungsleitung', description: 'Wie Teamleitung für die Gesellschaft, zusätzlich Wissen und Vorlagen.',
-    permissions: [...TEAM_LEAD, 'knowledge.publish', 'knowledge.create', 'knowledge.update', 'knowledge.require_acknowledgement', 'documents.create', 'documents.update',
+    permissions: [...TEAM_LEAD, 'knowledge.update', 'knowledge.manage_categories', 'knowledge.require_acknowledgement', 'documents.create', 'documents.update',
       'documents.deactivate', 'checklists.manage_templates', 'checklists.view_reports', 'lifecycle.start', 'ideas.manage', 'news.pin', 'contacts.manage', 'documents.manage_categories'],
   },
   {

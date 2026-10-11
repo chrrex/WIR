@@ -54,11 +54,35 @@ describe('Phase 3+4 (e2e)', () => {
     await (await as('jana.m')).get(`/api/v1/knowledge/${id}`).expect(404); // Rezeption ist nicht Zielgruppe
   });
 
-  test('Wissen: Mitarbeitende dürfen nicht schreiben, Abteilungsleitung schon', async () => {
-    const cat = (await prisma.db.knowledgeCategory.findFirstOrThrow()).id;
-    const body = { categoryId: cat, articleType: 'SOP', title: 'Test-SOP Ausgabe', text: 'Inhalt', audience: [`G:${await groupId('Küche')}`] };
-    await (await as('jana.m')).post('/api/v1/knowledge').send(body).expect(403);
-    await (await as('sven.r')).post('/api/v1/knowledge').send(body).expect(201);
+  test('Wissen: alle schreiben, Teamleitung prüft, korrigiert, gibt frei oder lehnt ab (ADR-045)', async () => {
+    const cat = (await prisma.db.knowledgeCategory.findFirstOrThrow({ where: { name: 'Rezeption & Gäste' } })).id;
+    const jana = await as('jana.m');
+    const jonas = await as('jonas.w');
+    const maren = await as('maren.h');
+    // stiftungsgruppenweit einreichen → Entwurf
+    const r = (await jana.post('/api/v1/knowledge').send({ categoryId: cat, articleType: 'WIKI', title: 'Taxi-Nummern für Gäste', text: 'Taxi Muster: 03300 000 999.', audience: ['ALL'] }).expect(201)).body;
+    expect(r.status).toBe('DRAFT');
+    await (await as('nora.s')).get(`/api/v1/knowledge/${r.id}`).expect(404); // noch nicht sichtbar
+    expect((await jana.get('/api/v1/search?q=Taxi').expect(200)).body.results).toHaveLength(0);
+    expect((await jonas.get('/api/v1/knowledge').expect(200)).body.review.map((a: { id: string }) => a.id)).toContain(r.id);
+    await maren.post(`/api/v1/knowledge/${r.id}/review`).send({ approve: true }).expect(404); // fremde Teamleitung sieht ihn nicht
+    await jana.post(`/api/v1/knowledge/${r.id}/review`).send({ approve: true }).expect(403);
+    // korrigieren und freigeben
+    await jonas.post(`/api/v1/knowledge/${r.id}/review`).send({ approve: true, correction: { title: 'Taxi für Gäste bestellen' } }).expect(200);
+    const pub = (await (await as('nora.s')).get(`/api/v1/knowledge/${r.id}`).expect(200)).body; // Stiftung sieht ihn
+    expect(pub).toMatchObject({ status: 'PUBLISHED', title: 'Taxi für Gäste bestellen' });
+    expect((await jana.get('/api/v1/search?q=Taxi').expect(200)).body.results).toHaveLength(1);
+    // ablehnen mit Begründung, überarbeiten, erneut einreichen
+    const s2 = (await jana.post('/api/v1/knowledge').send({ categoryId: cat, articleType: 'WIKI', title: 'Pausenregel', text: 'Pause wann man will.', audience: [`G:${await groupId('Rezeption')}`] }).expect(201)).body.id;
+    await jonas.post(`/api/v1/knowledge/${s2}/review`).send({ approve: false }).expect(400);
+    await jonas.post(`/api/v1/knowledge/${s2}/review`).send({ approve: false, reason: 'Bitte mit dem Dienstplan abstimmen.' }).expect(200);
+    expect((await jana.get(`/api/v1/knowledge/${s2}`).expect(200)).body).toMatchObject({ status: 'ARCHIVED', rejectedReason: 'Bitte mit dem Dienstplan abstimmen.' });
+    await jana.post(`/api/v1/knowledge/${s2}/resubmit`).send({ title: 'Pausenregel Rezeption', text: 'Pausen nach Absprache im Dienstplan.' }).expect(200);
+    expect((await jonas.get('/api/v1/knowledge').expect(200)).body.review.some((a: { id: string }) => a.id === s2)).toBe(true);
+    // Teamleitung veröffentlicht eigene Einträge direkt; Kategorien pflegt die Abteilungsleitung
+    expect((await jonas.post('/api/v1/knowledge').send({ categoryId: cat, articleType: 'SOP', title: 'Kassenabschluss', text: 'Täglich 22 Uhr.', audience: [`G:${await groupId('Rezeption')}`] }).expect(201)).body.status).toBe('PUBLISHED');
+    await jana.post('/api/v1/knowledge/categories').send({ name: 'Test' }).expect(403);
+    await (await as('sven.r')).post('/api/v1/knowledge/categories').send({ name: 'Weinwissen', parentId: cat }).expect(201);
   });
 
   test('Suche und KI finden nur berechtigte Inhalte; sensible Dokumente nie', async () => {
