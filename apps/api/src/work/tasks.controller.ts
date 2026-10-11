@@ -95,7 +95,12 @@ export class TasksController {
     const i = await this.prisma.db.contentItem.findUniqueOrThrow({ where: { id }, include: this.include });
     if (!this.mayChange(await this.policy.loadContext(me.id), me.id, i)) throw new ForbiddenException('Diese Aufgabe kannst du nicht ändern.');
     if (b.status === 'CANCELLED' && i.authorId !== me.id) throw new ForbiddenException('Abbrechen kann nur, wer die Aufgabe vergeben hat.');
-    await this.prisma.db.task.update({ where: { id }, data: { status: b.status, completedAt: b.status === 'DONE' ? new Date() : null } });
+    const task = await this.prisma.db.task.update({ where: { id }, data: { status: b.status, completedAt: b.status === 'DONE' ? new Date() : null } });
+    // Ein-/Austrittsplan: fertig, wenn alle Schritte erledigt sind
+    if (task.lifecycleInstanceId) {
+      const open = await this.prisma.db.task.count({ where: { lifecycleInstanceId: task.lifecycleInstanceId, status: { notIn: ['DONE', 'CANCELLED'] } } });
+      await this.prisma.db.lifecycleInstance.update({ where: { id: task.lifecycleInstanceId }, data: open ? { status: 'ACTIVE', completedAt: null } : { status: 'COMPLETED', completedAt: new Date() } });
+    }
     if (b.status === 'DONE' && i.authorId && i.authorId !== me.id) {
       const name = (await this.prisma.db.user.findUnique({ where: { id: me.id } }))?.displayName ?? 'Jemand';
       await this.notifications.notify({ recipientIds: [i.authorId], actorId: me.id, eventType: 'task.done', title: `Erledigt: ${i.task!.title}`, body: `von ${name}`, linkPath: `/aufgaben/${id}`, contentItemId: id });

@@ -15,6 +15,8 @@ interface Ctx {
 
 const ago = (h: number) => new Date(Date.now() - h * 3600_000);
 const body = (t: string) => ({ type: 'text', paragraphs: t.split(/\n{2,}/) });
+/** nächster Termin 06:00 Uhr deutscher Zeit (grob, nur für Demo) */
+const nextSix = () => { const d = new Date(); d.setUTCHours(4, 0, 0, 0); if (d < new Date()) d.setUTCDate(d.getUTCDate() + 1); return d; };
 const day = () => { const d = new Date(); d.setUTCHours(0, 0, 0, 0); return d; };
 
 /** Minimal gültige einseitige PDF-Datei mit einer Textzeile. */
@@ -76,9 +78,9 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
     ] });
   await article({ author: maren, category: kFront, type: 'PROCESS', hoursAgo: 200, audience: [{ targetType: 'GROUP', groupId: G('Rezeption') }], recipients: c.membersOf('Rezeption'),
     versions: [{ title: 'Check-in am Schloss – Schritt für Schritt', text: 'Begrüße die Gäste mit Namen, sobald du ihn kennst.\n\nPrüfe Reservierung, Anzahl der Nächte und besondere Wünsche wie Allergien oder späte Anreise.\n\nErkläre kurz Frühstückszeiten, WLAN und den Weg zum Zimmer. Bei Tagungsgästen: Raum und Startzeit der Tagung nennen.\n\nSchlüsselkarten immer im Kartenhalter übergeben, nie die Zimmernummer laut sagen.' }] });
-  await article({ author: lena, category: kRules, type: 'POLICY', hoursAgo: 400, audience: house, recipients: c.sglPeople,
+  const kleidung = await article({ author: lena, category: kRules, type: 'POLICY', hoursAgo: 400, audience: house, recipients: c.sglPeople,
     versions: [{ title: 'Dienstkleidung und Erscheinungsbild', text: 'Dienstkleidung bekommst du gestellt und gereinigt. Die Ausgabe ist montags und donnerstags von 7 bis 9 Uhr in der Wäscherei.\n\nNamensschild immer gut sichtbar links tragen. Schmuck nur dezent, in der Küche gar nicht.' }] });
-  await article({ author: lena, category: kGeneral, type: 'WIKI', hoursAgo: 500, audience: house, recipients: c.sglPeople,
+  const ersteHilfe = await article({ author: lena, category: kGeneral, type: 'WIKI', hoursAgo: 500, audience: house, recipients: c.sglPeople,
     versions: [{ title: 'Erste Hilfe und Notfälle', text: 'Notruf: 112. Danach immer die Rezeption informieren, sie ist rund um die Uhr besetzt und weist den Rettungsdienst ein.\n\nVerbandkästen hängen in Küche, Rezeption, Wäscherei und Haustechnik. Der Defibrillator (AED) hängt neben der Rezeption.\n\nErsthelfer:innen im Haus findest du am schwarzen Brett im Personalraum.',
       plain: 'Im Notfall: 112 anrufen. Dann der Rezeption Bescheid sagen. Der Defibrillator hängt neben der Rezeption.' }] });
   await article({ author: nora, category: kGeneral, type: 'WIKI', hoursAgo: 600, audience: [{ targetType: 'ALL_USERS' }], recipients: c.employees,
@@ -125,6 +127,7 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
 
   // ---- Checklisten ----------------------------------------------------------
   const haccp = await prisma.checklist.create({ data: { companyId: sgl, groupId: G('Küche'), title: 'HACCP Kühlräume morgens', kind: 'HACCP', description: 'Jeden Morgen vor Arbeitsbeginn.',
+    recurrenceRule: 'FREQ=DAILY;BYHOUR=6;BYMINUTE=0', nextRunAt: nextSix(),
     items: { create: [
       { title: 'Kühlraum 1', responseType: 'TEMPERATURE', minValue: 0, maxValue: 4, unit: '°C', sortOrder: 1, knowledgeArticleId: kuehlkette },
       { title: 'Tiefkühlraum', responseType: 'TEMPERATURE', minValue: -25, maxValue: -18, unit: '°C', sortOrder: 2 },
@@ -137,6 +140,11 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
       { title: 'Kasse gezählt und Anfangsbestand eingetragen', sortOrder: 1 }, { title: 'Anreiseliste gedruckt', sortOrder: 2 },
       { title: 'Schlüsselkarten-Encoder geprüft', sortOrder: 3 }, { title: 'Übergabe der Nacht gelesen', sortOrder: 4 },
       { title: 'Notiz für die Spätschicht', responseType: 'TEXT', isRequired: false, sortOrder: 5 },
+    ] } } });
+  await prisma.checklist.create({ data: { companyId: sgl, groupId: G('Service'), title: 'Bankett Aufbau Schlosssaal', kind: 'EVENT', requiresApproval: true,
+    items: { create: [
+      { title: 'Tische nach Plan gestellt', sortOrder: 1 }, { title: 'Eindecken geprüft (Besteck, Gläser)', sortOrder: 2 },
+      { title: 'Allergenkarten an den markierten Plätzen', sortOrder: 3 }, { title: 'Notausgänge frei', responseType: 'YES_NO', sortOrder: 4 },
     ] } } });
   const runId = await item('CHECKLIST_RUN', T('sven.r'), 26, [{ targetType: 'GROUP', groupId: G('Küche') }], c.membersOf('Küche'), { reactionsEnabled: false });
   const values: Record<string, { n?: number; t?: string; out?: boolean; note?: string }> = {
@@ -189,6 +197,21 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
     { companyId: sgl, categoryId: cFood, type: 'SUPPLIER', organizationName: 'Getränkehandel Beispiel', phone: '03300 000 202', email: 'bestellung@getraenke.example' },
     { companyId: sgl, categoryId: cServ, type: 'SERVICE_PROVIDER', organizationName: 'Wäscherei Beispiel', phone: '03300 000 301', notes: 'Abholung Mo, Mi, Fr ab 7 Uhr.' },
   ] });
+
+  // ---- Ein- und Austritt (Vorlagen) ------------------------------------------
+  await prisma.lifecycleTemplate.create({ data: { companyId: sgl, kind: 'ONBOARDING', name: 'Einarbeitung Service & Rezeption', steps: { create: [
+    { sortOrder: 1, offsetDays: -3, title: 'Arbeitsplatz, Spind und Zugang vorbereiten', responsibleType: 'LINE_MANAGER' },
+    { sortOrder: 2, offsetDays: 0, title: 'Begrüßung und Rundgang durchs Haus', responsibleType: 'LINE_MANAGER' },
+    { sortOrder: 3, offsetDays: 0, title: 'Dienstkleidung abholen', responsibleType: 'SUBJECT_EMPLOYEE', linkedContentId: kleidung, requiresAcknowledgement: true },
+    { sortOrder: 4, offsetDays: 1, title: 'Erste Hilfe und Notfälle lesen', responsibleType: 'SUBJECT_EMPLOYEE', linkedContentId: ersteHilfe, requiresAcknowledgement: true },
+    { sortOrder: 5, offsetDays: 2, title: 'Patenschaft: zwei Schichten gemeinsam', responsibleType: 'LINE_MANAGER' },
+    { sortOrder: 6, offsetDays: 30, title: 'Feedbackgespräch nach 30 Tagen', responsibleType: 'LINE_MANAGER' },
+  ] } } });
+  await prisma.lifecycleTemplate.create({ data: { companyId: sgl, kind: 'OFFBOARDING', name: 'Austritt', steps: { create: [
+    { sortOrder: 1, offsetDays: -7, title: 'Übergabe für das Team schreiben', responsibleType: 'SUBJECT_EMPLOYEE' },
+    { sortOrder: 2, offsetDays: 0, title: 'Schlüssel und Dienstkleidung zurückgeben', responsibleType: 'SUBJECT_EMPLOYEE' },
+    { sortOrder: 3, offsetDays: 0, title: 'Abschlussgespräch und Zugang beenden', responsibleType: 'LINE_MANAGER' },
+  ] } } });
 
   // Bestehende News in den Suchindex
   const news = await prisma.contentItem.findMany({ where: { type: 'POST', post: { kind: 'NEWS' } }, include: { post: true } });

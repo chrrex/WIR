@@ -456,6 +456,25 @@ Phase 3 und 4 wurden zusammengelegt und bewusst schlank umgesetzt: **kein neues 
 9. **Team:** Verzeichnis der eigenen Gesellschaft(en) – Name, Tätigkeit, Bereich, Leitung. Keine privaten Daten.
 10. **Ausgeschaltete Module sperren jetzt auch die API** (nicht nur das Menü), z. B. Checklisten und Übergaben für die Stiftung → 403.
 
+## ADR-042 · Lesestatus für alle dienstlichen Einträge — ENTSCHIEDEN (10.10.2026)
+
+**Wunsch der Hoteldirektion:** Bei allen Einträgen sehen, wer gelesen hat und wer nicht.
+**Umsetzung:**
+- Gilt automatisch für News, Übergaben, Wissen, Dokumente, Aufgaben, Checklisten und Ideen. Bei Umfragen zählt die **Teilnahme** – Antworten bleiben anonym (ADR-013). Das Häkchen pro Beitrag beim Schreiben entfällt (`news.require_read` gestrichen).
+- **Nicht** für Social (privat, ADR-031) und Chat (1:1 hat ✓✓, Gruppen nicht).
+- Gelesen = Detailseite geöffnet; bei Dokumenten auch Öffnen der Datei. Gespeichert wird nur das Datum.
+- Sehen dürfen weiterhin nur Autor:in sowie Leitungen mit `read_status.view_summary`/`view_details`; erinnern mit `reminders.send_manual` (max. 2×).
+- **Der globale Schalter `feature.read_tracking` bleibt.** In der Demo ist er an. Für den Echtbetrieb gilt weiter ADR-012: personengenaue Leserlisten sind mitbestimmungspflichtig (§ 87 Abs. 1 Nr. 6 BetrVG) – Schalter erst nach unterschriebener Betriebsvereinbarung einschalten. (Keine Rechtsberatung.)
+
+## ADR-043 · Push, Hintergrund-Erinnerungen, Freigabe, Ein-/Austritt — ENTSCHIEDEN (10.10.2026)
+
+Ohne Datenbank-Migration – alle Tabellen waren vorbereitet.
+
+1. **Push aufs Handy (Web-Push, VAPID):** Jedes Gerät meldet sich in den Einstellungen selbst an. Inhalt = Titel der Benachrichtigung, Chat nie mit Nachrichtentext. **Ruhezeit** je Person (z. B. 21–7 Uhr): kein Push, in der App bleibt alles sichtbar. Schlüssel aus `VAPID_PUBLIC_KEY/VAPID_PRIVATE_KEY/VAPID_SUBJECT`; ohne Angabe (Entwicklung) einmalig erzeugt und in `system_settings` abgelegt. iPhone: nur als installierte App (Home-Bildschirm). Gebündelter Versand nach Ende der Ruhezeit und E-Mail folgen bei Bedarf.
+2. **Hintergrund-Job alle 5 Minuten:** wiederkehrende Checklisten starten (täglich oder Mo–Fr zur Uhrzeit, Zeitzone Europe/Berlin, fällig nach 4 Stunden); überfällige an die Teamleitung (wichtig); Aufgaben in 24 h fällig; „Gelesen und verstanden“ nach 3 Tagen offen (einmal je Version); Umfrage endet in 24 h. Jede Erinnerung höchstens einmal je Person und Anlass (dedupeKey); ein Lauf startet auch mit mehreren Servern nie doppelt. Abschaltbar mit `JOBS=off`.
+3. **Freigabe (Vier-Augen-Prinzip)** je Vorlage: nach Abschluss „wartet auf Freigabe“ an die Teamleitung; wer abgeschlossen hat, kann nicht selbst freigeben; Zurückweisen öffnet die Liste wieder und benachrichtigt mit Hinweis.
+4. **Ein- und Austritt:** Vorlagen (Personal) mit Schritten „Tag x“, zuständig die Person selbst oder ihre Teamleitung (sonst wer startet), optional Pflichtlektüre. Start (Abteilungsleitung, Personal) erzeugt je Schritt eine Aufgabe und gibt verlinkte Artikel/Dokumente der Person frei. Fortschritt sehen Person, Startende und `lifecycle.view_progress`. Plan schließt sich, wenn alle Schritte erledigt sind. Nach dem Freischalten in der Verwaltung direkt „Einarbeitung starten“.
+
 ## Nächste Schritte
 
 1. Anbieterauswahl (ADR-022) bestätigen und Gastromatic-Prüfauftrag (ADR-021) stellen.

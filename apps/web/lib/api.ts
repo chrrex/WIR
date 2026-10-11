@@ -42,5 +42,5 @@ export interface Me {
   branding: Branding | null;
   modules: string[];
   permissions: string[];
-  settings: { theme: 'SYSTEM' | 'LIGHT' | 'DARK'; fontScalePercent: number; reducedMotion: boolean; highContrast: boolean; mobileNavItems: string[] } | null;
+  settings: { theme: 'SYSTEM' | 'LIGHT' | 'DARK'; fontScalePercent: number; reducedMotion: boolean; highContrast: boolean; mobileNavItems: string[]; quietHoursStart: string | null; quietHoursEnd: string | null } | null;
 }

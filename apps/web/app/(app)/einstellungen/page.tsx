@@ -6,6 +6,7 @@ import { api, ApiError } from '@/lib/api';
 import { useMe } from '@/lib/me';
 import { NAV } from '@/lib/nav';
 import { Icon } from '@/components/Icon';
+import { PushSettings } from '@/components/PushSettings';
 
 export default function SettingsPage() {
   const { me, refresh } = useMe();
@@ -24,7 +25,7 @@ export default function SettingsPage() {
     } catch (e) { setError(e instanceof ApiError ? e.message : 'Speichern hat nicht geklappt.'); }
   }
 
-  const navChoices = NAV.filter((n) => !n.module || me.modules.includes(n.module));
+  const navChoices = NAV.filter((n) => (!n.module || me.modules.includes(n.module)) && (!n.anyOf || n.anyOf.some((p) => me.permissions.includes(p))));
   const currentNav = s.mobileNavItems.length ? s.mobileNavItems : ['/', '/news', '/uebergaben', '/chat'].filter((h) => navChoices.some((n) => n.href === h));
 
   async function saveRecovery(e: React.FormEvent<HTMLFormElement>) {
@@ -63,6 +64,8 @@ export default function SettingsPage() {
           Weniger Bewegung und Animationen
         </label>
       </section>
+
+      <PushSettings />
 
       <section className="card stack">
         <h2>Untere Leiste auf dem Handy</h2>

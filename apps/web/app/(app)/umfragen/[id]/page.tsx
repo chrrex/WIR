@@ -2,6 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { ReadStatus } from '@/components/content/ReadStatus';
 import { api } from '@/lib/api';
 import { Back, ErrorNote, State, day, useLoad, useSubmit } from '@/components/work';
 
@@ -74,6 +75,7 @@ export default function SurveyPage() {
       {s.participated && <div className="note ok">Danke! Deine Antwort ist angekommen.</div>}
       {!s.open && !s.participated && <div className="note info">Diese Umfrage ist geschlossen.</div>}
       <Results key={String(s.participated)} id={id} />
+      <ReadStatus contentId={s.id} label="teilgenommen" />
     </div>
   );
 }

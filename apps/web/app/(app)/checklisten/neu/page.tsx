@@ -13,7 +13,7 @@ const blank = (): It => ({ title: '', responseType: 'CHECK', required: true, min
 export default function NewTemplate() {
   const router = useRouter();
   const [o, setO] = useState<{ kinds: string[]; responseTypes: string[]; groups: Array<{ id: string; name: string }> } | null>(null);
-  const [f, setF] = useState({ title: '', kind: 'SHIFT', groupId: '' });
+  const [f, setF] = useState({ title: '', kind: 'SHIFT', groupId: '', repeat: 'NONE', time: '06:00', requiresApproval: false });
   const [items, setItems] = useState<It[]>([blank()]);
   const { busy, error, run } = useSubmit();
   useEffect(() => { api<NonNullable<typeof o>>('/checklists/options').then((r) => { setO(r); setF((x) => ({ ...x, groupId: r.groups[0]?.id ?? '' })); }); }, []);
@@ -35,6 +35,12 @@ export default function NewTemplate() {
           <div className="field grow"><label htmlFor="k">Art</label><select id="k" className="input" value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value })}>{o.kinds.map((k) => <option key={k} value={k}>{CHECK_KIND[k]}</option>)}</select></div>
           <div className="field grow"><label htmlFor="g">Team</label><select id="g" className="input" value={f.groupId} onChange={(e) => setF({ ...f, groupId: e.target.value })}>{o.groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select></div>
         </div>
+        <div className="row wrap">
+          <div className="field grow"><label htmlFor="r">Wiederholen</label><select id="r" className="input" value={f.repeat} onChange={(e) => setF({ ...f, repeat: e.target.value })}><option value="NONE">Nur von Hand starten</option><option value="DAILY">Täglich automatisch</option><option value="WEEKDAYS">Mo–Fr automatisch</option></select></div>
+          {f.repeat !== 'NONE' && <div className="field"><label htmlFor="ti">Um</label><input id="ti" type="time" className="input" value={f.time} onChange={(e) => setF({ ...f, time: e.target.value })} /></div>}
+        </div>
+        {f.repeat !== 'NONE' && <p className="small muted">Das Team bekommt dann eine Benachrichtigung; nach 4 Stunden ist die Checkliste überfällig und die Teamleitung wird informiert.</p>}
+        <label className="check"><input type="checkbox" checked={f.requiresApproval} onChange={(e) => setF({ ...f, requiresApproval: e.target.checked })} />Nach dem Abschluss von der Teamleitung freigeben lassen (Vier-Augen-Prinzip)</label>
       </section>
       <section className="card stack">
         <h2>Punkte</h2>

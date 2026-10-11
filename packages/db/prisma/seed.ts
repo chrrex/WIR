@@ -22,7 +22,7 @@ async function main() {
     TRUNCATE audit_logs, sessions, credential_resets, user_roles, user_groups, employee_company_assignments,
       employee_profiles, user_settings, dashboard_preferences, users, role_permissions, permissions, roles,
       groups, company_brandings, companies, system_settings, knowledge_categories, document_categories,
-      contact_categories, idea_categories, file_objects CASCADE`);
+      contact_categories, idea_categories, file_objects, lifecycle_templates CASCADE`);
 
   // ---- Rechte & Rollen ------------------------------------------------------
   for (const [module, keys] of Object.entries(PERMISSIONS)) {
@@ -266,7 +266,7 @@ async function main() {
   // ---- Systemeinstellungen --------------------------------------------------
   await prisma.systemSetting.createMany({
     data: [
-      { key: 'feature.read_tracking', value: false }, // erst nach Betriebsvereinbarung (ADR-012)
+      { key: 'feature.read_tracking', value: true }, // Demo: an. Produktiv erst nach Betriebsvereinbarung (ADR-012)
       { key: 'auth.one_time_code_hours', value: 24 },
       { key: 'auth.max_failed_logins', value: 5 },
     ],

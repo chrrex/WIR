@@ -15,7 +15,7 @@ import { ReadStatus } from '@/components/content/ReadStatus';
 import { ReportButton } from '@/components/content/ReportButton';
 import { Icon } from '@/components/Icon';
 
-interface News { id: string; title: string; text: string; important: boolean; pinned: boolean; publishedAt: string; author: { name: string; job: string | null }; audiences: string[]; commentsEnabled: boolean; readTracking: boolean; mine: boolean; canDelete: boolean; liked: boolean; likes: number; images: ImageRef[] }
+interface News { id: string; title: string; text: string; important: boolean; pinned: boolean; publishedAt: string; author: { name: string; job: string | null }; audiences: string[]; commentsEnabled: boolean; mine: boolean; canDelete: boolean; liked: boolean; likes: number; images: ImageRef[] }
 
 export default function NewsDetail() {
   const { id } = useParams<{ id: string }>();
@@ -24,9 +24,9 @@ export default function NewsDetail() {
   const [n, setN] = useState<News | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
-    api<News>(`/news/${id}`).then((r) => { setN(r); api(`/content/${id}/seen`, { method: 'POST' }).then(refresh).catch(() => null); })
+    api<News>(`/news/${id}`).then(setN)
       .catch((e) => setError(e instanceof ApiError ? e.message : 'Fehler'));
-  }, [id, refresh]);
+  }, [id]);
   if (error) return <div className="card narrow stack"><h1>Nicht gefunden</h1><p className="muted">{error}</p><Link className="btn" href="/news">Zu den News</Link></div>;
   if (!n) return <div className="loading">Lade …</div>;
 
@@ -50,7 +50,7 @@ export default function NewsDetail() {
           </div>
           <Comments contentId={n.id} enabled={n.commentsEnabled} />
         </article>
-        {n.readTracking && <aside className="aside"><ReadStatus contentId={n.id} /></aside>}
+        <aside className="aside"><ReadStatus contentId={n.id} onSeen={refresh} /></aside>
       </div>
     </div>
   );

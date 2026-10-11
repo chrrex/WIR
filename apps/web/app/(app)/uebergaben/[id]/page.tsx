@@ -10,6 +10,7 @@ import { Avatar } from '@/components/content/Avatar';
 import { Images, ImageRef } from '@/components/content/Images';
 import { RichText } from '@/components/content/MentionText';
 import { Comments } from '@/components/content/Comments';
+import { ReadStatus } from '@/components/content/ReadStatus';
 import { Icon } from '@/components/Icon';
 
 interface H { id: string; subject: string; text: string; group: string; shiftLabel: string | null; publishedAt: string; author: { name: string }; mentions: Array<{ id: string; name: string }>; images: ImageRef[] }
@@ -20,9 +21,9 @@ export default function HandoverDetail() {
   const [h, setH] = useState<H | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
-    api<H>(`/handovers/${id}`).then((r) => { setH(r); api(`/content/${id}/seen`, { method: 'POST' }).then(refresh).catch(() => null); })
+    api<H>(`/handovers/${id}`).then(setH)
       .catch((e) => setError(e instanceof ApiError ? e.message : 'Fehler'));
-  }, [id, refresh]);
+  }, [id]);
   if (error) return <div className="card narrow stack"><h1>Nicht gefunden</h1><p className="muted">{error}</p><Link className="btn" href="/uebergaben">Zu den Übergaben</Link></div>;
   if (!h) return <div className="loading">Lade …</div>;
   return (
@@ -37,6 +38,7 @@ export default function HandoverDetail() {
         <h2 className="h-sub">Rückfragen & Erledigt</h2>
         <Comments contentId={h.id} />
       </article>
+      <ReadStatus contentId={h.id} onSeen={refresh} />
     </div>
   );
 }

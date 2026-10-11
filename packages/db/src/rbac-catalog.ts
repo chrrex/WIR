@@ -6,7 +6,7 @@
 
 export const PERMISSIONS = {
   dashboard: ['dashboard.view', 'dashboard.view_cross_company'],
-  news: ['news.read', 'news.create', 'news.publish', 'news.mark_important', 'news.require_read', 'news.publish_wide', 'news.update_any', 'news.delete_any', 'news.pin'],
+  news: ['news.read', 'news.create', 'news.publish', 'news.mark_important', 'news.publish_wide', 'news.update_any', 'news.delete_any', 'news.pin'],
   social: ['social.read', 'social.post', 'social.moderate'],
   handovers: ['handovers.read', 'handovers.create', 'handovers.update_any'],
   comments: ['comments.create', 'comments.moderate'],
@@ -48,7 +48,7 @@ const EMPLOYEE: PermissionKey[] = [
 ];
 
 const TEAM_LEAD: PermissionKey[] = [
-  ...EMPLOYEE, 'chat.create_group', 'news.mark_important', 'news.require_read', 'handovers.update_any',
+  ...EMPLOYEE, 'chat.create_group', 'news.mark_important', 'handovers.update_any',
   'read_status.view_summary', 'read_status.view_details', 'reminders.send_manual',
   'tasks.create', 'tasks.assign', 'checklists.approve', 'absences.view_team',
   'lifecycle.view_progress', 'surveys.create', 'surveys.view_results',

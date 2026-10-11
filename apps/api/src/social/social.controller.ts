@@ -84,7 +84,7 @@ export class SocialController {
     const market = body.category === 'MARKETPLACE';
     if (!market && (body.intent || body.price)) throw new BadRequestException('Preis und „Biete/Suche“ gibt es nur bei Biete & Suche.');
     const { item } = await this.content.create({
-      type: 'POST', companyId: profile?.companyId ?? null, authorId: me.id, importance: 'NORMAL', readTrackingEnabled: false,
+      type: 'POST', companyId: profile?.companyId ?? null, authorId: me.id, importance: 'NORMAL',
       expiresAt: market ? new Date(Date.now() + MARKET_DAYS * 864e5) : null, targets: [target],
       attachmentFileIds: body.images.map((i) => ({ fileId: i.fileId, altText: i.altText ?? null })),
       createSubtype: (tx, id) => tx.post.create({

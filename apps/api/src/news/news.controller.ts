@@ -3,7 +3,6 @@ import { BadRequestException, Body, Controller, Delete, ForbiddenException, Get,
 import { z } from 'zod';
 import { ZodPipe } from '../common/zod.pipe';
 import { PrismaService } from '../common/prisma.service';
-import { FeatureService } from '../common/feature.service';
 import { AuditService } from '../audit/audit.service';
 import { CurrentUser, RequirePermission, SessionUser } from '../auth/decorators';
 import { PolicyService } from '../policy/policy.service';
@@ -17,7 +16,6 @@ const CreateNews = z.object({
   text: z.string().trim().min(1).max(10_000),
   targets: z.array(z.string().max(60)).min(1).max(20),
   important: z.boolean().default(false),
-  readTracking: z.boolean().default(false),
   pinned: z.boolean().default(false),
   images: z.array(z.object({ fileId: z.uuid(), altText: z.string().max(200).nullish() })).max(6).default([]),
 });
@@ -37,7 +35,6 @@ export class NewsController {
     private readonly content: ContentService,
     private readonly audiences: AudienceService,
     private readonly policy: PolicyService,
-    private readonly features: FeatureService,
     private readonly notifications: NotificationService,
     private readonly audit: AuditService,
   ) {}
@@ -73,8 +70,6 @@ export class NewsController {
     return {
       audiences: (await this.audiences.newsOptions(ctx)).map((o) => ({ key: o.key, label: o.label, wide: o.wide })),
       canImportant: can(ctx, 'news.mark_important'),
-      canReadTracking: (await this.features.readTracking()) && can(ctx, 'news.require_read'),
-      readTrackingFeature: await this.features.readTracking(),
       canPin: can(ctx, 'news.pin'),
     };
   }
@@ -85,16 +80,15 @@ export class NewsController {
     const ctx = await this.policy.loadContext(me.id);
     const targets = body.targets.map(parseTarget);
     await this.audiences.assertNewsTargets(ctx, targets);
-    // Leitplanken (ADR-037): „Wichtig“, Lesestatus und Anheften nur mit eigenem Recht
+    // Leitplanken (ADR-037): „Wichtig“ und Anheften nur mit eigenem Recht
     if (body.important && !can(ctx, 'news.mark_important')) throw new ForbiddenException('„Wichtig“ setzen nur Leitungen.');
     if (body.pinned && !can(ctx, 'news.pin')) throw new ForbiddenException('Anheften dürfen nur Leitungen.');
-    const tracking = body.readTracking && (await this.features.readTracking()) && can(ctx, 'news.require_read');
     const user = await this.prisma.db.user.findUniqueOrThrow({ where: { id: me.id }, include: { employeeProfile: true } });
     const companyId = targets.find((t) => t.type === 'COMPANY') ? (targets.find((t) => t.type === 'COMPANY') as { companyId: string }).companyId
       : user.employeeProfile?.companyId ?? ctx.companyIds[0] ?? null;
 
     const { item, recipientIds } = await this.content.create({
-      type: 'POST', companyId, authorId: me.id, importance: body.important ? 'IMPORTANT' : 'NORMAL', readTrackingEnabled: tracking,
+      type: 'POST', companyId, authorId: me.id, importance: body.important ? 'IMPORTANT' : 'NORMAL',
       targets, attachmentFileIds: body.images.map((i) => ({ fileId: i.fileId, altText: i.altText ?? null })),
       createSubtype: (tx, id) => tx.post.create({ data: { id, title: body.title, body: toBody(body.text), bodyText: body.text, kind: 'NEWS', isPinned: body.pinned } }),
     });
@@ -119,7 +113,7 @@ export class NewsController {
     return {
       id, title: item.post.title, text: item.post.bodyText, important: item.importance === 'IMPORTANT', pinned: item.post.isPinned,
       publishedAt: item.publishedAt, author: { id: item.author?.id ?? null, name: item.author?.displayName ?? '–', job: item.author?.employeeProfile?.jobTitle ?? null },
-      audiences: await this.audiences.describe(id), commentsEnabled: item.commentsEnabled, readTracking: item.readTrackingEnabled,
+      audiences: await this.audiences.describe(id), commentsEnabled: item.commentsEnabled,
       mine: item.authorId === me.id,
       canDelete: item.authorId === me.id || can(ctx, 'news.delete_any', { companyId: item.companyId }),
       ...deco,

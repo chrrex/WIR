@@ -9,12 +9,18 @@ interface Status {
   people?: Array<{ id: string; name: string; group: string; readOn: string | null }> | null;
 }
 
-/** Lesestatus – nur sichtbar, wenn eingeschaltet und berechtigt (ADR-012). Keine Uhrzeiten, nur „gelesen“. */
-export function ReadStatus({ contentId }: { contentId: string }) {
+/**
+ * Markiert den Inhalt als gelesen und zeigt – nur Autor:in und Leitungen – wer gelesen hat und wer nicht
+ * (ADR-012/042). Keine Uhrzeiten. Bei Umfragen: Teilnahme statt Lesen.
+ */
+export function ReadStatus({ contentId, onSeen, label = 'gelesen' }: { contentId: string; onSeen?: () => void; label?: string }) {
   const [s, setS] = useState<Status | null>(null);
   const [tab, setTab] = useState<'open' | 'read'>('open');
   const [msg, setMsg] = useState<string | null>(null);
-  useEffect(() => { api<Status>(`/content/${contentId}/read-status?details=1`).then(setS).catch(() => null); }, [contentId]);
+  useEffect(() => {
+    api(`/content/${contentId}/seen`, { method: 'POST' }).then(() => onSeen?.()).catch(() => null)
+      .finally(() => api<Status>(`/content/${contentId}/read-status?details=1`).then(setS).catch(() => null));
+  }, [contentId, onSeen]);
   if (!s?.enabled || !s.visible || s.total === undefined) return null;
   const pct = s.total ? Math.round(((s.read ?? 0) / s.total) * 100) : 0;
   const open = s.people?.filter((p) => !p.readOn) ?? [];
@@ -22,12 +28,12 @@ export function ReadStatus({ contentId }: { contentId: string }) {
 
   return (
     <section className="card stack" aria-labelledby="rs-h">
-      <h2 id="rs-h">Lesestatus</h2>
+      <h2 id="rs-h">{label === 'gelesen' ? 'Lesestatus' : 'Teilnahme'}</h2>
       <div className="row">
-        <div className="donut" role="img" aria-label={`${s.read} von ${s.total} haben gelesen`} style={{ background: `conic-gradient(var(--brand) 0 ${pct}%, var(--line) ${pct}% 100%)` }}>
+        <div className="donut" role="img" aria-label={`${s.read} von ${s.total} haben ${label}`} style={{ background: `conic-gradient(var(--brand) 0 ${pct}%, var(--line) ${pct}% 100%)` }}>
           <div><strong>{s.read}</strong><span className="small muted">von {s.total}</span></div>
         </div>
-        <div className="small muted">Nur „gelesen“ oder „noch nicht“ – ohne Uhrzeit. Diese Übersicht sehen nur Autor:in und Leitungen.</div>
+        <div className="small muted">Nur „{label}“ oder „noch nicht“ – ohne Uhrzeit. Diese Übersicht sehen nur Autor:in und Leitungen.</div>
       </div>
       {s.canRemind && open.length > 0 && (
         <button className="btn pri" onClick={async () => {
@@ -40,7 +46,7 @@ export function ReadStatus({ contentId }: { contentId: string }) {
         <>
           <div className="tabs" role="tablist">
             <button role="tab" aria-selected={tab === 'open'} onClick={() => setTab('open')}>Noch nicht ({open.length})</button>
-            <button role="tab" aria-selected={tab === 'read'} onClick={() => setTab('read')}>Gelesen ({read.length})</button>
+            <button role="tab" aria-selected={tab === 'read'} onClick={() => setTab('read')}>{label[0].toUpperCase() + label.slice(1)} ({read.length})</button>
           </div>
           <ul className="plain">
             {(tab === 'open' ? open : read).map((p) => <li key={p.id} className="row between"><span>{p.name}</span><span className="small muted">{p.group}</span></li>)}

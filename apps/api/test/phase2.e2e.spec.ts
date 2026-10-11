@@ -98,6 +98,8 @@ describe('Phase 2 (e2e)', () => {
     });
 
     test('Lesestatus ist aus, solange der Schalter aus ist (ADR-012)', async () => {
+      await prisma.db.systemSetting.update({ where: { key: 'feature.read_tracking' }, data: { value: false } });
+      app.get(FeatureService).clear();
       const id = await newsId('HACCP');
       const r = await (await as('sven.r')).get(`/api/v1/content/${id}/read-status`).expect(200);
       expect(r.body.enabled).toBe(false);
@@ -109,7 +111,7 @@ describe('Phase 2 (e2e)', () => {
       app.get(FeatureService).clear();
       const maren = await as('maren.h');
       const svc = await groupId('Service');
-      const res = await maren.post('/api/v1/news').send({ title: 'Schulung Weinbegleitung', text: 'Dienstag 15 Uhr.', targets: [`G:${svc}`], readTracking: true }).expect(201);
+      const res = await maren.post('/api/v1/news').send({ title: 'Schulung Weinbegleitung', text: 'Dienstag 15 Uhr.', targets: [`G:${svc}`] }).expect(201);
       await (await as('tobias.k')).post(`/api/v1/content/${res.body.id}/seen`).expect(200);
       const st = await maren.get(`/api/v1/content/${res.body.id}/read-status?details=1`).expect(200);
       expect(st.body).toMatchObject({ enabled: true, visible: true, read: 1 });
@@ -118,8 +120,6 @@ describe('Phase 2 (e2e)', () => {
       expect(other.body.visible).toBe(false);
       const rem = await maren.post(`/api/v1/content/${res.body.id}/remind`).expect(200);
       expect(rem.body.reminded).toBe(st.body.total - 1);
-      await prisma.db.systemSetting.update({ where: { key: 'feature.read_tracking' }, data: { value: false } });
-      app.get(FeatureService).clear();
     });
   });
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
+import { ReadStatus } from '@/components/content/ReadStatus';
 import { api } from '@/lib/api';
 import { Comments } from '@/components/content/Comments';
 import { RichText } from '@/components/content/MentionText';
@@ -36,6 +37,7 @@ export default function TaskDetail() {
         <h2 className="h-sub">Rückfragen</h2>
         <Comments contentId={t.id} />
       </article>
+      <ReadStatus contentId={t.id} />
     </div>
   );
 }
