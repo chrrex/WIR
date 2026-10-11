@@ -17,6 +17,7 @@ import { ContentService } from '../src/content/content.service';
 import { TranslateService } from '../src/translate/translate.service';
 import { nextOccurrence } from '../src/work/recurrence';
 import { config } from '../src/common/config';
+import { berlinMidnight } from '../src/dashboard/house';
 
 jest.setTimeout(90_000);
 const PW = 'Wir-Demo-2026';
@@ -29,6 +30,10 @@ describe('Wiederholung und Ruhezeit (Einheit)', () => {
   test('Mo–Fr überspringt das Wochenende', () => {
     // Fr 2026-10-09 10:00 → Mo 2026-10-12 06:00 (UTC+2)
     expect(nextOccurrence('FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR;BYHOUR=6;BYMINUTE=0', new Date('2026-10-09T08:00:00Z')).toISOString()).toBe('2026-10-12T04:00:00.000Z');
+  });
+  test('Mitternacht in Berlin – Sommer- und Winterzeit (ADR-057)', () => {
+    expect(berlinMidnight(0, new Date('2026-10-11T22:30:00Z')).toISOString()).toBe('2026-10-11T22:00:00.000Z');
+    expect(berlinMidnight(1, new Date('2026-12-01T12:00:00Z')).toISOString()).toBe('2026-12-01T23:00:00.000Z');
   });
   test('Ruhezeit über Mitternacht', () => {
     expect(inQuietHours('23:30', '21:00', '07:00')).toBe(true);
@@ -452,5 +457,38 @@ describe('Neue Funktionen (e2e)', () => {
     await jana.put(`/api/v1/checklists/templates/${created.id}`).send({ ...tpl, startNow: false, visibility: 'PUBLIC', assignees: [`G:${rez}`] }).expect(200);
     expect((await prisma.db.checklist.findUniqueOrThrow({ where: { id: created.id } })).version).toBe(2);
     await jana.delete(`/api/v1/checklists/templates/${created.id}`).expect(200);
+  });
+  test('Heute im Haus: Demo-Hauszahlen, Geburtstage nur freiwillig, eigene Auswahl (ADR-057)', async () => {
+    const was = config.demoMode;
+    config.demoMode = true;
+    try {
+      const ana = await as('ana.f');
+      const r = (await ana.get('/api/v1/dashboard/today').expect(200)).body;
+      const tile = (k: string) => r.tiles.find((t: { key: string }) => t.key === k);
+      expect(tile('occupancy').value).toMatch(/^\d+ %$/);
+      expect(tile('occupancy').demo).toBe(true);
+      expect(tile('arrivals')).toBeTruthy();
+      expect(r.weather.days).toHaveLength(5);
+      expect(r.weather.hours.length).toBeGreaterThan(0);
+      expect(tile('birthdays').sub).toContain('Ana');
+      expect(tile('team').sub).toContain('Selin');
+      expect(r.celebrate).toContain('Geburtstag');
+      // Geburtstag wieder privat → taucht nicht mehr auf
+      await ana.patch('/api/v1/me/settings').send({ showBirthday: false }).expect(200);
+      expect(tile('birthdays').sub).toContain('Ana');
+      const r2 = (await (await as('jana.m')).get('/api/v1/dashboard/today').expect(200)).body;
+      expect(r2.tiles.find((t: { key: string }) => t.key === 'birthdays').sub).not.toContain('Ana');
+      expect(r2.celebrate).toBeNull();
+      await ana.patch('/api/v1/me/settings').send({ birthdayMonthDay: '13-40' }).expect(400);
+      // eigene Auswahl
+      await ana.put('/api/v1/dashboard/prefs').send({ items: [{ key: 'kpi:weather', visible: false }, { key: 'w:news', visible: true }] }).expect(200);
+      expect((await ana.get('/api/v1/dashboard').expect(200)).body.prefs).toEqual([{ key: 'kpi:weather', visible: false }, { key: 'w:news', visible: true }]);
+      await ana.put('/api/v1/dashboard/prefs').send({ items: [{ key: 'bad key', visible: true }] }).expect(400);
+    } finally { config.demoMode = false; }
+    // ohne Mews und ohne Demo keine Hauszahlen – nur Persönliches
+    const off = (await (await as('jana.m')).get('/api/v1/dashboard/today').expect(200)).body;
+    config.demoMode = was;
+    expect(off.tiles.some((t: { key: string }) => t.key === 'occupancy')).toBe(false);
+    expect(off.tiles.some((t: { key: string }) => t.key === 'mine')).toBe(true);
   });
 });

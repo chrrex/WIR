@@ -466,3 +466,38 @@ input[type="color"] { width: 44px; height: 44px; padding: 2px; border: 1px solid
 .sigpad { width: 100%; max-width: 480px; height: 160px; border: 1px dashed var(--line); border-radius: 10px; background: #fff; touch-action: none; }
 .sig-img { max-width: 260px; background: #fff; border: 1px solid var(--line); border-radius: 8px; }
 @media print { .cl-noprint, .actions-bar, .cmts { display: none !important; } .cl-item { break-inside: avoid; box-shadow: none; } }
+
+/* Heute im Haus (ADR-057): schmale Kennzahlen-Leiste, mobil wischbar */
+.today { display: flex; flex-direction: column; gap: .4rem; }
+.today-head { display: flex; justify-content: space-between; align-items: baseline; gap: .75rem; flex-wrap: wrap; }
+.today-head h2 { margin: 0; }
+.chip.xs { font-size: .72rem; padding: 0 8px; }
+.today-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.tile { min-width: 0; border-right: 1px solid var(--line-2); border-bottom: 1px solid var(--line-2); margin: 0 -1px -1px 0; }
+.tile > a, .tile > div { display: flex; flex-direction: column; gap: 2px; height: 100%; padding: .7rem 1rem .75rem; color: var(--fg); text-decoration: none; }
+.tile > a:hover { background: var(--surface-2); }
+.tile > a:focus-visible { outline: 3px solid var(--brand); outline-offset: -3px; border-radius: 12px; }
+.t-label { font-size: .78rem; font-weight: 600; color: var(--muted); }
+.t-value { font-size: 1.45rem; font-weight: 700; line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.t-sub { font-size: .8rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tile.warn .t-value { color: var(--warn-ink); }
+.tile.warn .t-sub { color: var(--warn-ink); font-weight: 600; }
+.tile.good .t-value { color: var(--ok-ink); }
+.celebrate { align-items: center; font-size: 1.05rem; }
+.dash-group { border: 0; padding: 0; margin: 0; }
+.dash-edit-list li { display: flex; align-items: center; gap: .4rem; border-bottom: 1px solid var(--line-2); }
+.dash-edit-list li:last-child { border-bottom: 0; }
+@media (max-width: 640px) { .today-strip { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 42%; overflow-x: auto; scroll-snap-type: x mandatory; } .tile { scroll-snap-align: start; margin: 0; border-bottom: 0; } .t-value { font-size: 1.3rem; } }
+
+/* Wetter-Widget (ADR-057) */
+.wx-now { display: flex; align-items: center; gap: .8rem; }
+.wx-ico { font-size: 2.4rem; line-height: 1; }
+.wx-temp { font-size: 2.4rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.wx-hours { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; margin: .9rem 0; padding: .6rem 0; border-top: 1px solid var(--line-2); border-bottom: 1px solid var(--line-2); }
+.wx-hours li { display: flex; flex-direction: column; align-items: center; gap: 2px; font-variant-numeric: tabular-nums; }
+.wx-rain { color: var(--info-ink); font-weight: 600; }
+.wx-days li { display: grid; grid-template-columns: 6.4rem 1.5rem 2.8rem minmax(0, 1fr); align-items: center; gap: .4rem; min-height: 34px; }
+.wx-day { font-weight: 600; }
+.wx-range { display: flex; align-items: center; gap: .4rem; font-variant-numeric: tabular-nums; justify-content: flex-end; }
+.wx-bar { position: relative; flex: 1; min-width: 24px; height: 5px; border-radius: 3px; background: var(--line-2); }
+.wx-bar span { position: absolute; top: 0; bottom: 0; border-radius: 3px; background: linear-gradient(90deg, #7FA7D8, #E3A33B); }

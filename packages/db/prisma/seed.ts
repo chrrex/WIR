@@ -273,6 +273,14 @@ async function main() {
     tx(haccp.id, 'body', haccp.bodyText, 'de', 'Es gibt eine neue Regel.\nSie gilt ab heute.\n\nWir bekommen gefrorene Ware.\nDann messen wir jedes Mal die Temperatur.\nWir messen innen in der Ware.\nDas heißt: Kern-Temperatur.\n\nHast du Fragen?\nDann frag Sven.', true),
   ] });
   await prisma.userSettings.updateMany({ where: { user: { username: 'marta.w' } }, data: { locale: 'pl', autoTranslate: true } });
+  // Heute im Haus (ADR-057): erfundene Geburtstage (freiwillig, ohne Jahr), Neue und ein Dienstjubiläum – relativ zum Seed-Tag
+  const md = (days: number) => new Intl.DateTimeFormat('en-CA', { month: '2-digit', day: '2-digit', timeZone: 'Europe/Berlin' }).format(new Date(Date.now() + days * 864e5)).replace('/', '-');
+  await prisma.userSettings.updateMany({ where: { user: { username: 'ana.f' } }, data: { showBirthday: true, birthdayMonthDay: md(0) } });
+  await prisma.userSettings.updateMany({ where: { user: { username: 'piotr.n' } }, data: { showBirthday: true, birthdayMonthDay: md(3) } });
+  await prisma.userSettings.updateMany({ where: { user: { username: 'jonas.w' } }, data: { showWorkAnniversary: true } });
+  const yearsAgo = (y: number) => { const d = new Date(); d.setUTCFullYear(d.getUTCFullYear() - y); return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())); };
+  await prisma.employeeProfile.updateMany({ where: { user: { username: 'jonas.w' } }, data: { entryDate: yearsAgo(5) } });
+  await prisma.employeeProfile.updateMany({ where: { user: { username: 'selin.a' } }, data: { entryDate: new Date(Date.now() - 6 * 864e5) } });
 
   async function handover(o: { author: string; group: string; shift: string; hoursAgo: number; subject: string; text: string; readBy?: string[] }) {
     const ci = await prisma.contentItem.create({ data: {

@@ -38,6 +38,8 @@ Passwort für alle oben: **`Wir-Demo-2026`**
 
 **Verwaltung ausprobieren:** Als `lena.k` → **Verwaltung**: unter „Teams & Gruppen“ z. B. eine Gruppe **Azubis** anlegen und Kolleg:innen hinzufügen, unter „Personen“ jemanden anklicken und eine Rolle vergeben, unter „Häuser“ Module und Farben ändern, unter „Rollen & Rechte“ eine eigene Rolle zusammenstellen.
 
+**Startseite ausprobieren:** Als `ana.f` siehst du oben „Heute im Haus“ mit Demo-Zahlen (ab 18 Uhr für morgen) und einen Geburtstagsgruß. Über **Anpassen** blendest du Kacheln und Bereiche ein oder aus und änderst die Reihenfolge. Den eigenen Geburtstag trägst du unter **Einstellungen** ein. Echte Hauszahlen kommen, sobald die Mews-Zugangsdaten gesetzt sind (siehe `.env.example`).
+
 **Checklisten ausprobieren:** Als `marta.w` unter **Checklisten → Vorlagen** die „Zimmerkontrolle nach Abreise“ starten – bei „Mangel“ erscheint ein Foto-Feld, beim Abschließen entsteht automatisch eine Folgeaufgabe. Als `jana.m` mit **Neue Checkliste** eine eigene bauen (öffentlich/privat, gemeinsam/jede:r einzeln, Pflicht-Text, Bedingungen) und dir selbst oder einer Gruppe zuweisen.
 
 **Freischaltung ausprobieren:** Als `lena.k` anmelden → **Verwaltung** → „Neu aus Gastromatic“ → **Freischalten**. Der angezeigte Code funktioniert sofort für die freigeschaltete Person.

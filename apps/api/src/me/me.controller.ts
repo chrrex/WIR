@@ -22,6 +22,9 @@ const SettingsBody = z.object({
   locale: z.enum(Object.keys(LANGUAGES) as [string, ...string[]]).optional(),
   autoTranslate: z.boolean().optional(),
   plainLanguage: z.boolean().optional(),
+  showBirthday: z.boolean().optional(),
+  birthdayMonthDay: z.string().regex(/^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/).nullable().optional(),
+  showWorkAnniversary: z.boolean().optional(),
 });
 const RecoveryBody = z.object({ email: z.email().max(200).nullable() });
 
@@ -84,6 +87,7 @@ export class MeController {
             highContrast: user.settings.highContrast, mobileNavItems: user.settings.mobileNavItems,
             quietHoursStart: user.settings.quietHoursStart, quietHoursEnd: user.settings.quietHoursEnd,
             locale: user.settings.locale, autoTranslate: user.settings.autoTranslate, plainLanguage: user.settings.plainLanguage,
+            showBirthday: user.settings.showBirthday, birthdayMonthDay: user.settings.birthdayMonthDay, showWorkAnniversary: user.settings.showWorkAnniversary,
           }
         : null,
     };
@@ -111,7 +115,7 @@ export class MeController {
   @Patch('me/settings')
   async updateSettings(@CurrentUser() me: SessionUser, @Body(new ZodPipe(SettingsBody)) body: z.infer<typeof SettingsBody>) {
     const s = await this.prisma.db.userSettings.upsert({ where: { userId: me.id }, create: { userId: me.id, ...body }, update: body });
-    return { theme: s.theme, fontScalePercent: s.fontScalePercent, reducedMotion: s.reducedMotion, highContrast: s.highContrast, mobileNavItems: s.mobileNavItems, quietHoursStart: s.quietHoursStart, quietHoursEnd: s.quietHoursEnd, locale: s.locale, autoTranslate: s.autoTranslate, plainLanguage: s.plainLanguage };
+    return { theme: s.theme, fontScalePercent: s.fontScalePercent, reducedMotion: s.reducedMotion, highContrast: s.highContrast, mobileNavItems: s.mobileNavItems, quietHoursStart: s.quietHoursStart, quietHoursEnd: s.quietHoursEnd, locale: s.locale, autoTranslate: s.autoTranslate, plainLanguage: s.plainLanguage, showBirthday: s.showBirthday, birthdayMonthDay: s.birthdayMonthDay, showWorkAnniversary: s.showWorkAnniversary };
   }
 
   /** Freiwillige private E-Mail nur für „Passwort vergessen“ (ADR-011). Bestätigung per Link folgt in Phase 2. */
