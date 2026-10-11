@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useMe } from '@/lib/me';
 import { Icon } from '@/components/Icon';
+import { WeatherWidget, type Forecast } from '@/components/WeatherWidget';
 
 interface Widget {
   key: string; title: string; state: 'ready' | 'coming'; phase?: number; text: string; count?: number;
@@ -19,7 +20,7 @@ interface Dashboard {
 }
 interface Pref { key: string; visible: boolean }
 interface Tile { key: string; label: string; value: string; sub: string; href?: string; tone?: 'warn' | 'good'; demo?: boolean }
-interface Today { evening: boolean; asOf: string; celebrate: string | null; tiles: Tile[] }
+interface Today { evening: boolean; asOf: string; celebrate: string | null; tiles: Tile[]; weather: Forecast | null }
 
 /** Eigene Reihenfolge zuerst, Neues hinten dran (sichtbar). */
 function arrange<T extends { key: string }>(items: T[], prefix: string, prefs: Pref[]) {
@@ -145,7 +146,9 @@ export default function StartPage() {
       )}
 
       <div className="grid">
-        {widgets.filter((x) => x.visible).map(({ item: w }) => (
+        {widgets.filter((x) => x.visible).map(({ item: w }) => w.key === 'weather' ? (
+          today && <WeatherWidget key={w.key} w={today.weather} title={w.title} fallback={w.text} />
+        ) : (
           <section className="card widget" key={w.key}>
             <div className="chead">
               <h2>{w.title}{w.count ? <span className="muted"> · {w.key === 'thanks' ? `${w.count}× Danke im ${new Intl.DateTimeFormat('de-DE', { month: 'long' }).format(new Date())}` : `${w.count} ${w.key === 'tasks' ? 'offen' : 'neu'}`}</span> : null}</h2>

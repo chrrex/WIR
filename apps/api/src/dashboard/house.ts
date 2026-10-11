@@ -19,7 +19,12 @@ export interface HouseDay {
   onDutyTeams: string;
 }
 export interface Weather { temp: number; max: number; code: number; rain: number }
-type WeatherDays = { today: Weather; tomorrow: Weather; demo: boolean };
+export interface Forecast {
+  now: { temp: number; feels: number; wind: number; code: number };
+  hours: Array<{ at: string; temp: number; code: number; rain: number }>; // die nächsten 12 Stunden, alle 2 Stunden
+  days: Array<{ date: string; min: number; max: number; code: number; rain: number }>; // 5 Tage
+}
+type WeatherDays = { today: Weather; tomorrow: Weather; forecast: Forecast; demo: boolean };
 export interface HouseData { days: { today: HouseDay; tomorrow: HouseDay; asOf: string } | null; weather: WeatherDays | null; demo: boolean }
 
 const env = process.env;
@@ -51,9 +56,13 @@ function demoDay(date: Date): HouseDay {
     onDuty: r(38, 58), onDutyTeams: `Rezeption ${r(3, 6)} · Küche ${r(7, 12)} · Service ${r(8, 15)}`,
   };
 }
-function demoWeather(date: Date): Weather {
-  const d = demoDay(date);
-  return { temp: 8 + (d.arrivals % 12), max: 10 + (d.arrivals % 12), code: [0, 2, 3, 61][d.departures % 4], rain: (d.events * 20) % 90 };
+function demoWeather(): Omit<WeatherDays, 'demo'> {
+  const day = (i: number) => { const d = demoDay(berlinMidnight(i)); return { date: berlinMidnight(i).toISOString(), min: 3 + (d.departures % 6), max: 9 + (d.arrivals % 10), code: [0, 2, 3, 61, 80][d.departures % 5], rain: (d.events * 20) % 90 }; };
+  const days = [0, 1, 2, 3, 4].map(day);
+  const start = Math.ceil(Date.now() / 36e5) * 36e5;
+  const hours = Array.from({ length: 6 }, (_, i) => ({ at: new Date(start + i * 2 * 36e5).toISOString(), temp: days[0].max - Math.abs(i - 2), code: days[0].code, rain: days[0].rain }));
+  const w = (d: (typeof days)[number], temp: number): Weather => ({ temp, max: d.max, code: d.code, rain: d.rain });
+  return { today: w(days[0], days[0].max - 2), tomorrow: w(days[1], days[1].max), forecast: { now: { temp: days[0].max - 2, feels: days[0].max - 4, wind: 14, code: days[0].code }, hours, days } };
 }
 
 // ---------------------------------------------------------------- Mews Connector API (vorbereitet; aktiv, sobald die Zugangsdaten gesetzt sind)
@@ -93,13 +102,24 @@ async function mewsCleanRooms() {
 }
 
 // ---------------------------------------------------------------- Wetter (Open-Meteo, frei nutzbar, ohne Schlüssel)
-async function fetchWeather() {
-  const q = `latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code&daily=temperature_2m_max,weather_code,precipitation_probability_max&timezone=Europe%2FBerlin&forecast_days=2`;
+async function fetchWeather(): Promise<WeatherDays> {
+  const q = `latitude=${LAT}&longitude=${LON}&current=temperature_2m,apparent_temperature,wind_speed_10m,weather_code`
+    + '&hourly=temperature_2m,weather_code,precipitation_probability&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max'
+    + '&timezone=Europe%2FBerlin&timeformat=unixtime&forecast_days=5&forecast_hours=14';
   const res = await fetch(`https://api.open-meteo.com/v1/forecast?${q}`, { signal: AbortSignal.timeout(8000) });
   if (!res.ok) throw new Error('Wetter: ' + res.status);
-  const j = (await res.json()) as { current: { temperature_2m: number; weather_code: number }; daily: { temperature_2m_max: number[]; weather_code: number[]; precipitation_probability_max: number[] } };
-  const day = (i: number, temp: number, code: number): Weather => ({ temp: Math.round(temp), max: Math.round(j.daily.temperature_2m_max[i]), code, rain: j.daily.precipitation_probability_max[i] ?? 0 });
-  return { today: day(0, j.current.temperature_2m, j.current.weather_code), tomorrow: day(1, j.daily.temperature_2m_max[1], j.daily.weather_code[1]), demo: false };
+  type Arr = Record<string, number[]>;
+  const j = (await res.json()) as { current: Record<string, number>; hourly: Arr; daily: Arr };
+  const r = Math.round, D = j.daily, H = j.hourly;
+  const days = D.time.map((t, i) => ({ date: new Date(t * 1000).toISOString(), min: r(D.temperature_2m_min[i]), max: r(D.temperature_2m_max[i]), code: D.weather_code[i], rain: D.precipitation_probability_max[i] ?? 0 }));
+  const hours = H.time.map((t, i) => ({ at: new Date(t * 1000).toISOString(), temp: r(H.temperature_2m[i]), code: H.weather_code[i], rain: H.precipitation_probability[i] ?? 0 })).filter((h) => new Date(h.at).getTime() > Date.now()).filter((_, i) => i % 2 === 0).slice(0, 6);
+  const c = j.current;
+  return {
+    today: { temp: r(c.temperature_2m), max: days[0].max, code: c.weather_code, rain: days[0].rain },
+    tomorrow: { temp: days[1].max, max: days[1].max, code: days[1].code, rain: days[1].rain },
+    forecast: { now: { temp: r(c.temperature_2m), feels: r(c.apparent_temperature), wind: r(c.wind_speed_10m), code: c.weather_code }, hours, days },
+    demo: false,
+  };
 }
 
 // ---------------------------------------------------------------- Zwischenspeicher
@@ -125,7 +145,7 @@ export async function houseData(): Promise<HouseData> {
     const [today, tomorrow] = await Promise.all([mewsDay(d0, clean), mewsDay(d1, null)]);
     return { today, tomorrow, asOf: new Date().toISOString() };
   }, () => null) : null;
-  const weather = await cached<WeatherDays>('weather', 30 * 60e3, fetchWeather, () => (config.demoMode ? { today: demoWeather(d0), tomorrow: demoWeather(d1), demo: true } : null));
+  const weather = await cached<WeatherDays>('weather', 30 * 60e3, fetchWeather, () => (config.demoMode ? { ...demoWeather(), demo: true } : null));
   return { days, weather, demo };
 }
 

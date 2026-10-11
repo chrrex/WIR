@@ -26,6 +26,7 @@ interface Widget {
 const WIDGETS: Array<Omit<Widget, 'state'> & { readyInPhase: number }> = [
   { key: 'news', title: 'News', module: 'NEWS', readyInPhase: 2, text: 'Neuigkeiten aus deinem Team und dem ganzen Haus.' },
   { key: 'handovers', title: 'Übergaben', module: 'HANDOVERS', readyInPhase: 2, text: 'Was die vorige Schicht dir mitgibt.' },
+  { key: 'weather', title: 'Wetter in Liebenberg', module: null, readyInPhase: 1, text: 'Das Wetter lässt sich gerade nicht abrufen.' },
   { key: 'social', title: 'Neu bei Social', module: 'SOCIAL', readyInPhase: 2, text: 'Grüße, Glückwünsche, Biete & Suche.' },
   { key: 'thanks', title: 'Danke-Karten', module: 'SOCIAL', readyInPhase: 2, text: 'Wer sich bei wem bedankt hat.' },
   { key: 'tasks', title: 'Meine Aufgaben', module: 'TASKS', readyInPhase: 4, text: 'Deine offenen Aufgaben mit Fälligkeit.' },
@@ -155,7 +156,7 @@ export class DashboardController {
     if (house.weather) {
       const w = evening ? house.weather.tomorrow : house.weather.today;
       const [txt, ico] = weatherText(w.code);
-      tiles.push({ key: 'weather', label: evening ? 'Wetter morgen' : 'Wetter', value: `${ico} ${w.temp}°`, sub: `${txt}${w.rain >= 30 ? ` · Regen ${w.rain} %` : ''}${evening ? '' : ` · bis ${w.max}°`}`, demo: house.weather.demo });
+      tiles.push({ key: 'weather', label: evening ? 'Wetter morgen' : 'Wetter', value: `${ico} ${w.temp}°`, sub: `${txt}${w.rain >= 30 ? ` (${w.rain} %)` : ''}${evening ? '' : ` · bis ${w.max}°`}`, demo: house.weather.demo });
     }
 
     // ---- Menschen: Geburtstage (freiwillig, ohne Jahr) und Neu & Jubiläen – nur im eigenen Haus
@@ -194,7 +195,7 @@ export class DashboardController {
       tiles.push({ key: 'mine', label: 'Für dich heute', value: n(tasks + runs), sub: tasks + runs ? [tasks && `${tasks} ${tasks === 1 ? 'Aufgabe' : 'Aufgaben'}`, runs && `${runs} ${runs === 1 ? 'Checkliste' : 'Checklisten'}`].filter(Boolean).join(' · ') + (overdue ? ` · ${overdue} überfällig` : '') : 'nichts fällig ✓', tone: overdue ? 'warn' : undefined, href: tasks || !runs ? '/aufgaben' : '/checklisten' });
     }
 
-    return { evening, asOf: house.days?.asOf ?? now.toISOString(), celebrate, tiles };
+    return { evening, asOf: house.days?.asOf ?? now.toISOString(), celebrate, tiles, weather: house.weather ? { ...house.weather.forecast, demo: house.weather.demo } : null };
   }
 }
 

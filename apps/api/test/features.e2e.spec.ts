@@ -468,6 +468,8 @@ describe('Neue Funktionen (e2e)', () => {
       expect(tile('occupancy').value).toMatch(/^\d+ %$/);
       expect(tile('occupancy').demo).toBe(true);
       expect(tile('arrivals')).toBeTruthy();
+      expect(r.weather.days).toHaveLength(5);
+      expect(r.weather.hours.length).toBeGreaterThan(0);
       expect(tile('birthdays').sub).toContain('Ana');
       expect(tile('team').sub).toContain('Selin');
       expect(r.celebrate).toContain('Geburtstag');
