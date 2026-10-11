@@ -14,7 +14,8 @@ Du brauchst nichts zu installieren – nur einen Browser und dein GitHub-Konto.
 1. Oben auf dieser Seite auf den grünen Button **„Code“** klicken.
 2. Reiter **„Codespaces“** → **„Create codespace on main“**.
 3. Beim ersten Start richtet sich alles selbst ein (Datenbank, Testdaten). Das dauert etwa 3–5 Minuten.
-4. Danach startet das WIR automatisch. Es öffnet sich ein neuer Tab – falls nicht: unten im Reiter **„Ports“** bei **„WIR (Web-App)“** auf das Weltkugel-Symbol klicken.
+4. Danach startet das WIR automatisch im Terminal **„wir“** (Datenbank-Updates werden dabei selbst eingespielt). Sobald dort `Ready` steht, unten im Reiter **„Ports“** bei **„WIR (Web-App)“** auf das Weltkugel-Symbol klicken.
+   **Fehler 502?** Dann läuft das WIR noch nicht – kurz warten und neu laden. Hilft das nicht: im Terminal `npm run codespace` eingeben und auf `Ready` warten.
 5. Zum Aufhören einfach den Tab schließen. Der Codespace schaltet sich nach 30 Minuten ohne Nutzung ab. Beim nächsten Mal unter **Code → Codespaces** wieder öffnen.
 
 ### Testzugänge (nur Entwicklung)
