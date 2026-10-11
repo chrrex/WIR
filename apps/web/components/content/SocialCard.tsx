@@ -4,15 +4,16 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { when } from '@/lib/time';
-import { CATEGORIES, MOTIF, SocialPost } from '@/lib/social';
+import { CATEGORIES, SocialPost } from '@/lib/social';
 import { Avatar } from './Avatar';
 import { Images } from './Images';
 import { ContentReactions } from './Reactions';
 import { BookmarkButton } from './Extras';
+import { KudosCard } from './KudosCard';
 import { RichText } from './MentionText';
 import { Icon } from '../Icon';
 
-export function SocialCard({ p, full = false, onChange }: { p: SocialPost; full?: boolean; onChange?: () => void }) {
+export function SocialCard({ p, full = false, onChange, autoOpen = false }: { p: SocialPost; full?: boolean; onChange?: () => void; autoOpen?: boolean }) {
   const router = useRouter();
   async function ask() {
     if (!p.author.id) return;
@@ -26,14 +27,8 @@ export function SocialCard({ p, full = false, onChange }: { p: SocialPost; full?
         <span className="grow"><strong>{p.author.name}</strong><span className="block small muted">{when(p.publishedAt)}</span></span>
         <span className="chip">{CATEGORIES[p.category] ?? p.category}</span>
       </div>
-      {p.kudos && (
-        <div className="kudos">
-          <span className="kudos-emoji" aria-hidden="true">{MOTIF[p.kudos.motif]?.[0] ?? '💚'}</span>
-          <span className="grow"><span className="block xs strong">Danke-Karte · {MOTIF[p.kudos.motif]?.[1] ?? ''}</span>
-            <span className="block small">an {[...p.kudos.to.map((t) => t.name), ...(p.kudos.team ? [`Team ${p.kudos.team}`] : [])].join(', ')}{p.kudos.private && ' · nur für die Bedankten'}</span></span>
-        </div>
-      )}
       {full ? <h1 className="h-social">{p.title}</h1> : <Link href={`/social/${p.id}`} className="title-link"><strong className="title">{p.title}</strong></Link>}
+      {p.kudos && <KudosCard k={p.kudos} text={p.text} author={p.author.name} id={p.id} autoOpen={autoOpen} />}
       {p.category === 'MARKETPLACE' && (
         <div className="row wrap gap-s">
           <span className={`chip ${p.intent === 'SEARCH' ? 'info' : 'ok'}`}>{p.intent === 'SEARCH' ? 'Suche' : 'Biete'}</span>
@@ -41,7 +36,7 @@ export function SocialCard({ p, full = false, onChange }: { p: SocialPost; full?
           {p.closed && <span className="chip">erledigt</span>}
         </div>
       )}
-      {p.text && (full ? <div className="prose"><RichText text={p.text} /></div> : <p className="excerpt">{p.text.length > 240 ? `${p.text.slice(0, 240)} …` : p.text}</p>)}
+      {p.text && !p.kudos && (full ? <div className="prose"><RichText text={p.text} /></div> : <p className="excerpt">{p.text.length > 240 ? `${p.text.slice(0, 240)} …` : p.text}</p>)}
       <Images images={p.images} />
       <div className="row wrap actions-bar">
         <ContentReactions key={p.id} contentId={p.id} initial={p.reactions} />

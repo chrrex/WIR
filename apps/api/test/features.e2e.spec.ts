@@ -283,4 +283,35 @@ describe('Neue Funktionen (e2e)', () => {
     expect(w.count).toBeGreaterThanOrEqual(2);
     await jana.post('/api/v1/social').send({ title: 'x', category: 'THANKS', visibility: 'ALL' }).expect(400);
   });
+
+  test('Danke-Karten plus: mitunterschreiben, Gästelob nur Leitungen, Erinnerung nach Veranstaltung (ADR-052)', async () => {
+    const jana = await as('jana.m');
+    const sven = await as('sven.r');
+    const lena = await as('lena.k');
+    const card = (await jana.post('/api/v1/social/thanks').send({ userIds: [await uid('sven.r')], motif: 'TEAM', text: 'Danke fürs Einspringen!' }).expect(201)).body;
+    await jana.post(`/api/v1/social/thanks/${card.id}/sign`).expect(400);
+    await sven.post(`/api/v1/social/thanks/${card.id}/sign`).expect(400);
+    const k = (await lena.post(`/api/v1/social/thanks/${card.id}/sign`).expect(200)).body;
+    expect(k).toMatchObject({ signed: true, signers: [{ name: 'Lena K.' }] });
+    expect((await sven.get(`/api/v1/social/${card.id}`).expect(200)).body.kudos).toMatchObject({ forMe: true, signers: [{ name: 'Lena K.' }] });
+    expect((await lena.post(`/api/v1/social/thanks/${card.id}/sign`).expect(200)).body.signers).toHaveLength(0);
+    // Gästelob
+    expect((await jana.get('/api/v1/social/thanks/options').expect(200)).body).toMatchObject({ leader: false });
+    await jana.post('/api/v1/social/thanks').send({ userIds: [await uid('sven.r')], motif: 'GUEST', text: 'Das Essen war ein Traum!' }).expect(403);
+    expect((await sven.get('/api/v1/social/thanks/options').expect(200)).body.motifs.GUEST).toBe('Gästelob');
+    const g = (await sven.post('/api/v1/social/thanks').send({ userIds: [await uid('ana.f')], motif: 'GUEST', text: 'Das Menü war ein Traum!', source: 'Gästebuch' }).expect(201)).body;
+    expect((await (await as('ana.f')).get(`/api/v1/social/${g.id}`).expect(200)).body.kudos).toMatchObject({ motif: 'GUEST', source: 'Gästebuch', forMe: true });
+    // Erinnerung
+    await jana.post('/api/v1/social/thanks/reminders').send({ occasion: 'Hochzeit Probe', dueOn: '2099-01-01' }).expect(403);
+    const kitchen = (await prisma.db.group.findFirstOrThrow({ where: { name: 'Küche' } })).id;
+    const tomorrow = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+    const list = (await sven.post('/api/v1/social/thanks/reminders').send({ occasion: 'Bankett Probe', dueOn: tomorrow, groupId: kitchen }).expect(201)).body;
+    expect(list[0]).toMatchObject({ occasion: 'Bankett Probe', team: 'Küche' });
+    const later = new Date(`${new Date(Date.now() + 2 * 864e5).toISOString().slice(0, 10)}T08:00:00Z`);
+    await app.get(JobsService).run(later);
+    const n = await prisma.db.notification.findFirstOrThrow({ where: { recipientId: await uid('sven.r'), eventType: 'thanks.reminder' } });
+    expect(n.title).toBe('„Bankett Probe“ ist vorbei – magst du Team Küche danken?');
+    expect(n.linkPath).toContain('/social/danke?anlass=Bankett+Probe&group=');
+    expect((await sven.get('/api/v1/social/thanks/reminders').expect(200)).body).toHaveLength(0);
+  });
 });

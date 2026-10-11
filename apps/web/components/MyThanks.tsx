@@ -10,7 +10,7 @@ export function MyThanks() {
   if (!data) return null;
   return (
     <section className="card stack">
-      <h2>Meine Danke-Karten</h2>
+      <div className="chead"><h2>Meine Danke-Karten</h2>{data.length > 0 && <Link className="lnk small" href="/social/danke/album">Als Album / PDF</Link>}</div>
       {data.length === 0 ? <p className="small muted">Noch keine – aber das kommt bestimmt. Und du kannst selbst <Link className="lnk" href="/social/danke">Danke sagen</Link>.</p> : (
         <div className="kudos-grid">
           {data.map((k) => (

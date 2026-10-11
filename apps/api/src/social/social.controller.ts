@@ -12,14 +12,17 @@ import { NotificationService } from '../notifications/notification.service';
 
 const CATEGORIES = ['GREETINGS', 'MARKETPLACE', 'CONGRATULATIONS', 'LEISURE', 'OTHER', 'THANKS'] as const;
 /** Motive der Danke-Karten (ADR-051) */
-export const MOTIFS = { HOST: 'Gastgeberschaft', TEAM: 'Teamgeist', HELP: 'Hilfsbereitschaft', GREEN: 'Nachhaltigkeit', WIR: 'Weil Wir Wirkt' } as const;
+export const MOTIFS = { HOST: 'Gastgeberschaft', TEAM: 'Teamgeist', HELP: 'Hilfsbereitschaft', GREEN: 'Nachhaltigkeit', WIR: 'Weil Wir Wirkt', GUEST: 'Gästelob' } as const;
 const CreateThanks = z.object({
   userIds: z.array(z.uuid()).max(10).default([]),
   groupId: z.uuid().nullish(),
   motif: z.enum(Object.keys(MOTIFS) as [keyof typeof MOTIFS]),
   text: z.string().trim().min(3).max(300),
   private: z.boolean().default(false),
+  /** nur Gästelob: woher das Lob stammt */
+  source: z.string().trim().max(120).nullish(),
 }).refine((b) => b.userIds.length || b.groupId, 'Bitte wähle mindestens eine Person oder ein Team.');
+const Reminder = z.object({ groupId: z.uuid().nullish(), occasion: z.string().trim().min(3).max(120), dueOn: z.iso.date() });
 const CreateSocial = z.object({
   title: z.string().trim().min(2).max(120),
   text: z.string().trim().max(4000).default(''),
@@ -38,20 +41,34 @@ export class SocialController {
   constructor(private readonly prisma: PrismaService, private readonly content: ContentService, private readonly policy: PolicyService, private readonly audit: AuditService, private readonly notifications: NotificationService) {}
 
   /** Danke-Karten-Angaben (Motiv, bedankte Personen und Team) für mehrere Beiträge. */
-  private async kudos(ids: string[]) {
-    const [posts, mentions] = await Promise.all([
-      this.prisma.db.post.findMany({ where: { id: { in: ids }, socialCategory: 'THANKS' }, select: { id: true, kudosMotif: true, kudosGroup: { select: { name: true } }, contentItem: { select: { audiences: { select: { targetType: true } } } } } }),
+  private async kudos(ids: string[], me: string) {
+    const [posts, mentions, signs, mine] = await Promise.all([
+      this.prisma.db.post.findMany({ where: { id: { in: ids }, socialCategory: 'THANKS' }, select: { id: true, kudosMotif: true, kudosSource: true, kudosGroupId: true, kudosGroup: { select: { name: true } }, contentItem: { select: { audiences: { select: { targetType: true } } } } } }),
       this.prisma.db.mention.findMany({ where: { contentItemId: { in: ids }, commentId: null }, include: { mentionedUser: { select: { id: true, displayName: true } } } }),
+      this.prisma.db.reaction.findMany({ where: { contentItemId: { in: ids }, type: 'SIGN' }, include: { user: { select: { id: true, displayName: true } } }, orderBy: { createdAt: 'asc' } }),
+      this.prisma.db.groupMembership.findMany({ where: { userId: me }, select: { groupId: true } }),
     ]);
-    return new Map(posts.map((p) => [p.id, { motif: p.kudosMotif, team: p.kudosGroup?.name ?? null, private: !p.contentItem.audiences.some((a) => a.targetType === 'ALL_USERS'),
-      to: mentions.filter((m) => m.contentItemId === p.id).map((m) => ({ id: m.mentionedUser.id, name: m.mentionedUser.displayName })) }]));
+    const myGroups = new Set(mine.map((g) => g.groupId));
+    return new Map(posts.map((p) => {
+      const to = mentions.filter((m) => m.contentItemId === p.id).map((m) => ({ id: m.mentionedUser.id, name: m.mentionedUser.displayName }));
+      const signers = signs.filter((x) => x.contentItemId === p.id).map((x) => ({ id: x.user.id, name: x.user.displayName }));
+      return [p.id, { motif: p.kudosMotif, source: p.kudosSource, team: p.kudosGroup?.name ?? null, private: !p.contentItem.audiences.some((a) => a.targetType === 'ALL_USERS'), to, signers,
+        signed: signers.some((x) => x.id === me), forMe: to.some((t) => t.id === me) || (!!p.kudosGroupId && myGroups.has(p.kudosGroupId)) }];
+    }));
+  }
+
+  /** Leitung = Teamleitung einer Gruppe oder Recht für hausweite News. */
+  private async isLeader(userId: string) {
+    if (await this.prisma.db.groupMembership.count({ where: { userId, isLead: true } })) return true;
+    return can(await this.policy.loadContext(userId), 'news.publish_wide');
   }
 
   @RequirePermission('social.post')
   @Get('thanks/options')
-  async thanksOptions() {
+  async thanksOptions(@CurrentUser() me: SessionUser) {
+    const leader = await this.isLeader(me.id);
     const groups = await this.prisma.db.group.findMany({ where: { isActive: true, parentGroupId: null }, include: { company: { select: { name: true } } }, orderBy: { name: 'asc' } });
-    return { motifs: MOTIFS, groups: groups.map((g) => ({ id: g.id, name: g.company ? `${g.name} · ${g.company.name}` : g.name })) };
+    return { motifs: leader ? MOTIFS : Object.fromEntries(Object.entries(MOTIFS).filter(([k]) => k !== 'GUEST')), leader, groups: groups.map((g) => ({ id: g.id, name: g.company ? `${g.name} · ${g.company.name}` : g.name })) };
   }
 
   /** Danke sagen: öffentlich für alle (stiftungsweit) oder nur an die Bedankten. */
@@ -59,6 +76,7 @@ export class SocialController {
   @Post('thanks')
   async thank(@CurrentUser() me: SessionUser, @Body(new ZodPipe(CreateThanks)) b: z.infer<typeof CreateThanks>) {
     const db = this.prisma.db;
+    if (b.motif === 'GUEST' && !(await this.isLeader(me.id))) throw new ForbiddenException('Gästelob geben Leitungen weiter.');
     const users = await db.user.findMany({ where: { id: { in: b.userIds.filter((u) => u !== me.id) }, status: 'ACTIVE' }, select: { id: true, displayName: true } });
     const group = b.groupId ? await db.group.findFirst({ where: { id: b.groupId, isActive: true } }) : null;
     if (!users.length && !group) throw new BadRequestException('Bitte wähle mindestens eine Person oder ein Team.');
@@ -69,14 +87,14 @@ export class SocialController {
     const { item, recipientIds } = await this.content.create({
       type: 'POST', companyId: profile?.companyId ?? null, authorId: me.id, targets,
       createSubtype: async (tx, id) => {
-        await tx.post.create({ data: { id, title, body: toBody(b.text), bodyText: b.text, kind: 'SOCIAL', socialCategory: 'THANKS', kudosMotif: b.motif, kudosGroupId: group?.id ?? null } });
+        await tx.post.create({ data: { id, title, body: toBody(b.text), bodyText: b.text, kind: 'SOCIAL', socialCategory: 'THANKS', kudosMotif: b.motif, kudosGroupId: group?.id ?? null, kudosSource: b.motif === 'GUEST' ? b.source ?? null : null } });
         await tx.mention.createMany({ data: users.map((u) => ({ mentionedUserId: u.id, contentItemId: id })) });
       },
     });
     const thanked = group ? (await db.groupMembership.findMany({ where: { groupId: group.id }, select: { userId: true } })).map((m) => m.userId) : [];
     const author = await db.user.findUniqueOrThrow({ where: { id: me.id }, select: { displayName: true } });
     await this.notifications.notify({ recipientIds: [...new Set([...users.map((u) => u.id), ...thanked])].filter((u) => u !== me.id && (b.private || recipientIds.includes(u))), actorId: me.id, eventType: 'thanks',
-      title: `${author.displayName} sagt Danke 💚`, body: MOTIFS[b.motif], linkPath: `/social/${item.id}`, contentItemId: item.id, dedupeKey: `thanks:${item.id}` });
+      title: b.motif === 'GUEST' ? `Gästelob für dich ⭐ – weitergegeben von ${author.displayName}` : `${author.displayName} sagt Danke 💚`, body: MOTIFS[b.motif], linkPath: `/social/${item.id}`, contentItemId: item.id, dedupeKey: `thanks:${item.id}` });
     return { id: item.id };
   }
 
@@ -89,8 +107,47 @@ export class SocialController {
       where: { type: 'POST', ...this.content.visibleWhere(me.id), post: { socialCategory: 'THANKS', OR: [{ kudosGroupId: { in: groups } }, { contentItem: { mentions: { some: { mentionedUserId: me.id, commentId: null } } } }] } },
       include: { post: true, author: { select: { id: true, displayName: true } } }, orderBy: { publishedAt: 'desc' }, take: 100,
     });
-    const k = await this.kudos(items.map((i) => i.id));
+    const k = await this.kudos(items.map((i) => i.id), me.id);
     return items.map((i) => ({ id: i.id, text: i.post!.bodyText, author: i.author?.displayName ?? '–', publishedAt: i.publishedAt, ...k.get(i.id)! }));
+  }
+
+  /** Danke-Karte mitunterschreiben (an/aus) – nicht die eigene und nicht als Bedankte:r. */
+  @RequirePermission('reactions.create')
+  @Post('thanks/:id/sign')
+  @HttpCode(200)
+  async sign(@CurrentUser() me: SessionUser, @Param('id', ParseUUIDPipe) id: string) {
+    const item = await this.content.getVisible(me.id, id);
+    if (item.post?.socialCategory !== 'THANKS' || item.status !== 'PUBLISHED') throw new BadRequestException('Das ist keine Danke-Karte.');
+    const k = (await this.kudos([id], me.id)).get(id)!;
+    if (item.authorId === me.id || k.forMe) throw new BadRequestException('Die eigene Karte kannst du nicht mitunterschreiben.');
+    const where = { contentItemId: id, userId: me.id, type: 'SIGN' as const };
+    const had = await this.prisma.db.reaction.findFirst({ where });
+    if (had) await this.prisma.db.reaction.delete({ where: { id: had.id } });
+    else await this.prisma.db.reaction.create({ data: where });
+    return (await this.kudos([id], me.id)).get(id);
+  }
+
+  /** Erinnerungen „nach der Veranstaltung Danke sagen“ – nur für Leitungen, nur die eigenen. */
+  @RequirePermission('social.post')
+  @Get('thanks/reminders')
+  async reminders(@CurrentUser() me: SessionUser) {
+    const rows = await this.prisma.db.thanksReminder.findMany({ where: { userId: me.id, sentAt: null }, include: { group: { select: { name: true } } }, orderBy: { dueOn: 'asc' } });
+    return rows.map((r) => ({ id: r.id, occasion: r.occasion, dueOn: r.dueOn, team: r.group?.name ?? null }));
+  }
+
+  @RequirePermission('social.post')
+  @Post('thanks/reminders')
+  async addReminder(@CurrentUser() me: SessionUser, @Body(new ZodPipe(Reminder)) b: z.infer<typeof Reminder>) {
+    if (!(await this.isLeader(me.id))) throw new ForbiddenException('Erinnerungen gibt es für Leitungen.');
+    if (b.dueOn < new Date().toISOString().slice(0, 10)) throw new BadRequestException('Das Datum liegt in der Vergangenheit.');
+    await this.prisma.db.thanksReminder.create({ data: { userId: me.id, groupId: b.groupId ?? null, occasion: b.occasion, dueOn: new Date(b.dueOn) } });
+    return this.reminders(me);
+  }
+
+  @Delete('thanks/reminders/:id')
+  async removeReminder(@CurrentUser() me: SessionUser, @Param('id', ParseUUIDPipe) id: string) {
+    await this.prisma.db.thanksReminder.deleteMany({ where: { id, userId: me.id } });
+    return this.reminders(me);
   }
 
   @RequirePermission('social.read')
@@ -108,7 +165,7 @@ export class SocialController {
       take: 60,
     });
     const deco = await this.content.decorate(me.id, items.map((i) => i.id));
-    const k = await this.kudos(items.map((i) => i.id));
+    const k = await this.kudos(items.map((i) => i.id), me.id);
     return items.map((i) => this.view(i, me.id, { ...deco(i.id), kudos: k.get(i.id) ?? null }));
   }
 
@@ -171,7 +228,7 @@ export class SocialController {
     if (item.post?.kind !== 'SOCIAL') throw new BadRequestException('Das ist kein Social-Beitrag.');
     const ctx = await this.policy.loadContext(me.id);
     const deco = (await this.content.decorate(me.id, [id]))(id);
-    return { ...this.view(item, me.id, { ...deco, kudos: (await this.kudos([id])).get(id) ?? null }), canDelete: item.authorId === me.id || can(ctx, 'social.moderate') };
+    return { ...this.view(item, me.id, { ...deco, kudos: (await this.kudos([id], me.id)).get(id) ?? null }), canDelete: item.authorId === me.id || can(ctx, 'social.moderate') };
   }
 
   @Post(':id/close')

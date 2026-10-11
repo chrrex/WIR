@@ -234,6 +234,7 @@ enum ReactionType {
   THUMBS_DOWN
   HEART
   CELEBRATE
+  SIGN // Danke-Karte mitunterschreiben (ADR-052)
 }
 
 enum AttachmentKind {
@@ -554,6 +555,7 @@ model User {
   reactions            Reaction[]
   pollVotes            PollVote[]
   bookmarks            Bookmark[]
+  thanksReminders      ThanksReminder[]
   mentionsReceived     Mention[]          @relation("MentionedUser")
   uploadedFiles        FileObject[]
 
@@ -732,6 +734,7 @@ model Group {
   aclPrincipals       ResourceAcl[]
   handovers           Handover[]
   kudosPosts          Post[]
+  thanksReminders     ThanksReminder[]
   tasks               Task[]
   taskAssignees       TaskAssignee[]
   checklists          Checklist[]
@@ -1180,6 +1183,7 @@ model Post {
   // nur THANKS: Motiv und bedanktes Team (Personen stehen in mentions)
   kudosMotif        String?            @map("kudos_motif")
   kudosGroupId      String?            @map("kudos_group_id") @db.Uuid
+  kudosSource       String?            @map("kudos_source") // Gästelob: woher, z. B. „Gästebuch“
 
   contentItem    ContentItem  @relation(fields: [id], references: [id], onDelete: Cascade)
   kudosGroup     Group?       @relation(fields: [kudosGroupId], references: [id], onDelete: SetNull)
@@ -2260,4 +2264,21 @@ model Bookmark {
 
   @@id([userId, contentItemId])
   @@map("bookmarks")
+}
+
+/// „Nach der Veranstaltung ans Danke erinnern“ (ADR-052) – später automatisch aus dem Eventtool.
+model ThanksReminder {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  groupId   String?   @map("group_id") @db.Uuid
+  occasion  String
+  dueOn     DateTime  @map("due_on") @db.Date
+  sentAt    DateTime? @map("sent_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+
+  @@index([dueOn, sentAt])
+  @@map("thanks_reminders")
 }
