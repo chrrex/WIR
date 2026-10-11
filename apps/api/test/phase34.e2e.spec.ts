@@ -169,6 +169,12 @@ describe('Phase 3+4 (e2e)', () => {
     const sv = (await lena.get(`/api/v1/content/${survey}/read-status?details=1`).expect(200)).body;
     expect(sv.read).toBeGreaterThanOrEqual(6); // Teilnahmen, Antworten bleiben anonym
     await (await as('jana.m')).get(`/api/v1/content/${doc.id}/read-status?details=1`).expect(200).expect((r) => expect(r.body.visible).toBe(false));
+    // Teamleitung sieht den Status von Einträgen an ihr Team, auch wenn sie nicht von ihr sind
+    const handover = (await prisma.db.handover.findFirstOrThrow({ where: { subject: { startsWith: 'Hochzeit Samstag' } } })).id;
+    const hs = (await (await as('maren.h')).get(`/api/v1/content/${handover}/read-status?details=1`).expect(200)).body;
+    expect(hs).toMatchObject({ visible: true, canRemind: true });
+    expect(hs.people.length).toBeGreaterThan(0);
+    expect((await (await as('ana.f')).get(`/api/v1/content/${handover}/read-status`).expect(200)).body.visible).toBe(false);
     const social = (await prisma.db.post.findFirstOrThrow({ where: { kind: 'SOCIAL' } })).id;
     expect((await lena.get(`/api/v1/content/${social}/read-status`).expect(200)).body.enabled).toBe(false);
   });

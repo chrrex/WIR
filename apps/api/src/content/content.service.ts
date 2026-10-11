@@ -302,7 +302,8 @@ export class ContentService {
     const isAuthor = item.authorId === userId;
     const company = item.companyId ? await this.prisma.db.company.findUnique({ where: { id: item.companyId } }) : null;
     const allRecipients = company?.readListVisibility === 'ALL_RECIPIENTS';
-    const mayView = isAuthor || can(ctx, 'read_status.view_summary', { companyId: item.companyId });
+    const lead = await this.leadCheck(ctx, item);
+    const mayView = isAuthor || lead('read_status.view_summary');
     if (!mayView && !allRecipients) return { enabled: true as const, visible: false as const };
     const db = this.prisma.db;
     const recipients = await db.contentRecipient.findMany({
@@ -311,10 +312,10 @@ export class ContentService {
     });
     const readMap = await this.readMap(item);
     const read = recipients.filter((r) => readMap.has(r.userId)).length;
-    const mayDetails = details && (isAuthor || allRecipients || can(ctx, 'read_status.view_details', { companyId: item.companyId }));
+    const mayDetails = details && (isAuthor || allRecipients || lead('read_status.view_details'));
     return {
       enabled: true as const, visible: true as const, read, total: recipients.length,
-      canRemind: isAuthor ? can(ctx, 'reminders.send_manual') : can(ctx, 'reminders.send_manual', { companyId: item.companyId }),
+      canRemind: isAuthor ? can(ctx, 'reminders.send_manual') : lead('reminders.send_manual'),
       people: mayDetails
         ? recipients.map((r) => ({
             id: r.userId, name: r.user.displayName, group: r.user.groupMemberships.map((m) => m.group.name).join(', '),
@@ -322,6 +323,12 @@ export class ContentService {
           }))
         : null,
     };
+  }
+
+  /** Leitungsrecht für einen Eintrag: Gesellschaft oder eine Zielgruppe (z. B. Teamleitung → Übergaben ihres Teams). */
+  private async leadCheck(ctx: PolicyContext, item: { id: string; companyId: string | null }) {
+    const groups = (await this.prisma.db.contentAudience.findMany({ where: { contentItemId: item.id, groupId: { not: null } }, select: { groupId: true } })).map((a) => a.groupId!);
+    return (perm: string) => can(ctx, perm, { companyId: item.companyId }) || groups.some((groupId) => can(ctx, perm, { groupId, companyId: item.companyId }));
   }
 
   /** Lesestatus gilt für alle dienstlichen Inhalte, solange der Schalter an ist – nie für Social (ADR-031, ADR-042). */
@@ -340,7 +347,7 @@ export class ContentService {
   async remind(ctx: PolicyContext, userId: string, actorName: string, id: string, linkPath: string) {
     const item = await this.getVisible(userId, id);
     if (!(await this.tracked(item))) throw new BadRequestException('Lesestatus ist für diesen Beitrag nicht aktiv.');
-    const allowed = item.authorId === userId ? can(ctx, 'reminders.send_manual') : can(ctx, 'reminders.send_manual', { companyId: item.companyId });
+    const allowed = item.authorId === userId ? can(ctx, 'reminders.send_manual') : (await this.leadCheck(ctx, item))('reminders.send_manual');
     if (!allowed) throw new ForbiddenException('Erinnern dürfen Autor:innen und Leitungen.');
     const db = this.prisma.db;
     const recipients = await db.contentRecipient.findMany({ where: { contentItemId: id, removedAt: null }, select: { userId: true } });
