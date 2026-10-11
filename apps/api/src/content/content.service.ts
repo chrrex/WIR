@@ -27,6 +27,8 @@ export interface CreateContentInput {
   importance?: 'NORMAL' | 'IMPORTANT';
   commentsEnabled?: boolean;
   requiresAcknowledgement?: boolean;
+  /** DRAFT = zur Prüfung eingereicht (nur Autor:in und Prüfende sehen es) */
+  status?: 'DRAFT' | 'PUBLISHED';
   reactionsEnabled?: boolean;
   expiresAt?: Date | null;
   targets: AudienceTarget[];
@@ -77,8 +79,8 @@ export class ContentService {
           type: input.type,
           companyId: input.companyId,
           authorId: input.authorId,
-          status: 'PUBLISHED',
-          publishedAt: new Date(),
+          status: input.status ?? 'PUBLISHED',
+          publishedAt: input.status === 'DRAFT' ? null : new Date(),
           importance: input.importance ?? 'NORMAL',
           commentsEnabled: input.commentsEnabled ?? true,
           reactionsEnabled: input.reactionsEnabled ?? true,
@@ -323,6 +325,29 @@ export class ContentService {
           }))
         : null,
     };
+  }
+
+  /**
+   * Lesestatus für Listen: „gelesen / gesamt“ je Eintrag – nur für Einträge, bei denen die Person
+   * Autor:in oder Leitung ist (dieselben Regeln wie auf der Detailseite). Andere Einträge fehlen in der Antwort.
+   */
+  async readSummaries(ctx: PolicyContext, userId: string, ids: string[]) {
+    if (!ids.length || !(await this.features.readTracking())) return {};
+    const db = this.prisma.db;
+    const items = await db.contentItem.findMany({ where: { id: { in: ids }, ...this.visibleWhere(userId) }, select: { id: true, authorId: true, companyId: true, post: { select: { kind: true } }, audiences: { select: { groupId: true } } } });
+    const allowed = items.filter((i) => i.post?.kind !== 'SOCIAL' && (i.authorId === userId || can(ctx, 'read_status.view_summary', { companyId: i.companyId })
+      || i.audiences.some((a) => a.groupId && can(ctx, 'read_status.view_summary', { groupId: a.groupId, companyId: i.companyId }))));
+    if (!allowed.length) return {};
+    const rows = await db.$queryRawUnsafe<Array<{ id: string; total: bigint; read: bigint }>>(`
+      SELECT r.content_item_id::text AS id, count(*) AS total,
+        count(CASE WHEN ci.type = 'SURVEY' THEN sp.user_id ELSE rr.user_id END) AS read
+      FROM content_recipients r
+      JOIN content_items ci ON ci.id = r.content_item_id
+      LEFT JOIN read_receipts rr ON rr.content_item_id = r.content_item_id AND rr.user_id = r.user_id
+      LEFT JOIN survey_participations sp ON sp.survey_id = r.content_item_id AND sp.user_id = r.user_id
+      WHERE r.content_item_id = ANY($1::uuid[]) AND r.removed_at IS NULL AND r.user_id IS DISTINCT FROM ci.author_id
+      GROUP BY r.content_item_id`, allowed.map((i) => i.id));
+    return Object.fromEntries(rows.map((r) => [r.id, { read: Number(r.read), total: Number(r.total) }]));
   }
 
   /** Leitungsrecht für einen Eintrag: Gesellschaft oder eine Zielgruppe (z. B. Teamleitung → Übergaben ihres Teams). */

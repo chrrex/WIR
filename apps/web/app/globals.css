@@ -355,3 +355,8 @@ mark { background: color-mix(in srgb, var(--brand) 22%, transparent); color: inh
 .card.deviation, .card.emergency { border-left: 4px solid var(--warn); }
 fieldset.plain { border: 0; padding: 0; margin: 0; }
 progress { accent-color: var(--brand); height: 10px; }
+.photo-ico { display: inline-flex; vertical-align: -2px; margin-left: 6px; color: var(--muted); }
+button.folder { text-align: left; width: 100%; font: inherit; color: inherit; cursor: pointer; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; }

@@ -8,7 +8,7 @@ import { Icon } from '@/components/Icon';
 
 interface Widget {
   key: string; title: string; state: 'ready' | 'coming'; phase?: number; text: string; count?: number;
-  items?: Array<{ id: string; title: string; meta: string; unread: boolean; important?: boolean; href: string }>;
+  items?: Array<{ id: string; title: string; meta: string; unread: boolean; important?: boolean; photo?: boolean; href: string }>;
 }
 interface Dashboard {
   widgets: Widget[];
@@ -79,7 +79,7 @@ export default function StartPage() {
                 {w.items.map((i) => (
                   <li key={i.id}><Link className="witem" href={i.href}>
                     <span className={`udot ${i.unread ? '' : 'off'}`} aria-label={i.unread ? 'ungelesen' : undefined} />
-                    <span className="grow">{i.important && <span className="chip warn">Wichtig</span>} <span className={i.unread ? 'strong' : ''}>{i.title}</span><span className="block xs muted">{i.meta}</span></span>
+                    <span className="grow">{i.important && <span className="chip warn">Wichtig</span>} <span className={i.unread ? 'strong' : ''}>{i.title}</span>{i.photo && <span className="photo-ico" title="mit Foto"><Icon name="camera" size={15} /><span className="sr"> (mit Foto)</span></span>}<span className="block xs muted">{i.meta}</span></span>
                   </Link></li>
                 ))}
               </ul>

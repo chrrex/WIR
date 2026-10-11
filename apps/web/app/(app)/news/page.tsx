@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { useMe } from '@/lib/me';
 import { when } from '@/lib/time';
 import { Icon } from '@/components/Icon';
+import { ReadChip, useReadCounts } from '@/components/content/ReadStatus';
 
 interface NewsRow { id: string; title: string; excerpt: string; important: boolean; pinned: boolean; author: string; publishedAt: string; read: boolean; mine: boolean; likes: number; comments: number; images: unknown[] }
 
@@ -15,6 +16,7 @@ export default function NewsList() {
   const [rows, setRows] = useState<NewsRow[] | null>(null);
   useEffect(() => { setRows(null); api<NewsRow[]>(`/news${filter === 'all' ? '' : `?filter=${filter}`}`).then(setRows).catch(() => setRows([])); }, [filter]);
 
+  const counts = useReadCounts((rows ?? []).map((r) => r.id));
   return (
     <div className="stack-lg">
       <div className="ptitle">
@@ -39,7 +41,7 @@ export default function NewsList() {
                   {n.pinned && <span className="chip"><Icon name="pin" size={12} /> angeheftet</span>}
                   <strong className="title">{n.title}</strong>
                 </span>
-                <span className="block muted small">{n.author} · {when(n.publishedAt)}</span>
+                <span className="block muted small">{n.author} · {when(n.publishedAt)} <ReadChip c={counts[n.id]} /></span>
                 <span className="block excerpt">{n.excerpt}</span>
                 <span className="block xs muted">{n.likes > 0 && `${n.likes} gefällt das`}{n.likes > 0 && n.comments > 0 && ' · '}{n.comments > 0 && `${n.comments} Kommentar${n.comments === 1 ? '' : 'e'}`}{n.images.length > 0 && ` · ${n.images.length} Foto${n.images.length === 1 ? '' : 's'}`}</span>
               </span>

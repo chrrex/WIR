@@ -1,12 +1,12 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ReadStatus } from '@/components/content/ReadStatus';
 import { api } from '@/lib/api';
 import { Back, ErrorNote, State, dayTime, size, upload, useLoad, useSubmit } from '@/components/work';
 
-interface D { id: string; title: string; description: string | null; category: string; sensitive: boolean; canUpdate: boolean; audience: string[]; versions: Array<{ n: number; fileId: string; name: string; size: number; changeNote: string | null; createdAt: string; by: string }> }
+interface D { id: string; title: string; description: string | null; categoryId: string; category: string; sensitive: boolean; canUpdate: boolean; audience: string[]; versions: Array<{ n: number; fileId: string; name: string; size: number; changeNote: string | null; createdAt: string; by: string }> }
 
 export default function DocumentDetail() {
   const { id } = useParams<{ id: string }>();
@@ -14,6 +14,8 @@ export default function DocumentDetail() {
   const [file, setFile] = useState<File | null>(null);
   const [note, setNote] = useState('');
   const { busy, error: err, run } = useSubmit();
+  const [cats, setCats] = useState<Array<{ id: string; name: string }>>([]);
+  useEffect(() => { if (d?.canUpdate) api<{ categories: typeof cats }>('/documents/options').then((o) => setCats(o.categories)).catch(() => null); }, [d?.canUpdate]);
   if (!d) return <State error={error} loading back={['/dokumente', 'Zu den Dokumenten']} />;
   return (
     <div className="stack-lg narrow-col wide">
@@ -23,6 +25,12 @@ export default function DocumentDetail() {
         <h1>{d.title}</h1>
         {d.description && <p>{d.description}</p>}
         <p className="small muted">Für {d.audience.join(', ')}</p>
+        {d.canUpdate && cats.length > 0 && (
+          <div className="row wrap"><label htmlFor="mv" className="small">Kategorie</label>
+            <select id="mv" className="input" value={d.categoryId} disabled={busy} onChange={(e) => { const v = e.target.value; run(() => api(`/documents/${id}`, { method: 'PATCH', json: { categoryId: v } })).then(reload); }}>
+              {cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select></div>
+        )}
         <div className="row"><a className="btn pri" href={`/api/v1/files/${d.versions[0].fileId}`} target="_blank" rel="noopener">Aktuelle Version öffnen</a></div>
       </section>
       <section className="card stack">

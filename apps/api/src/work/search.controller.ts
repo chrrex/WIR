@@ -6,6 +6,7 @@ import { CurrentUser, RequirePermission, SessionUser } from '../auth/decorators'
 import { PolicyService } from '../policy/policy.service';
 import { can } from '../policy/engine';
 import { linkFor } from '../content/content.controller';
+import { absencesToday } from '../people/people.controller';
 
 interface Hit { id: string; type: string; kind: string | null; title: string; snippet: string; text: string; rank: number }
 const LABEL: Record<string, string> = { KNOWLEDGE_ARTICLE: 'Wissen', DOCUMENT: 'Dokument', POST: 'News' };
@@ -43,7 +44,16 @@ export class SearchController {
     const contacts = can(ctx, 'contacts.read') && term.length >= 2
       ? await this.prisma.db.contact.findMany({ where: { isActive: true, OR: [{ companyId: null }, { companyId: { in: ctx.companyIds } }], AND: [{ OR: [{ organizationName: { contains: term, mode: 'insensitive' } }, { contactPerson: { contains: term, mode: 'insensitive' } }] }] }, take: 5 })
       : [];
+    // Kolleg:innen (Name, Tätigkeit, Bereich) – nur mit Verzeichnisrecht und aus den eigenen Gesellschaften
+    const people = can(ctx, 'employees.directory') && term.length >= 2
+      ? await this.prisma.db.user.findMany({ where: { status: 'ACTIVE', userType: 'EMPLOYEE', employeeProfile: { companyAssignments: { some: { companyId: { in: ctx.companyIds } } } },
+          OR: [{ displayName: { contains: term, mode: 'insensitive' } }, { employeeProfile: { OR: [{ firstName: { contains: term, mode: 'insensitive' } }, { lastName: { contains: term, mode: 'insensitive' } }, { jobTitle: { contains: term, mode: 'insensitive' } }] } },
+            { groupMemberships: { some: { group: { name: { contains: term, mode: 'insensitive' } } } } }] },
+        include: { employeeProfile: { select: { jobTitle: true } } }, orderBy: { displayName: 'asc' }, take: 8 })
+      : [];
+    const away = await absencesToday(this.prisma.db, people.map((p) => p.id));
     return {
+      people: people.map((p) => ({ id: p.id, name: p.displayName, job: p.employeeProfile?.jobTitle ?? null, absent: away.get(p.id) ?? null })),
       results: hits.map((h) => ({ id: h.id, label: LABEL[h.type] ?? h.type, title: h.title, snippet: h.snippet, href: linkFor({ id: h.id, type: h.type, post: h.kind ? { kind: h.kind } : null }) })),
       contacts: contacts.map((c) => ({ id: c.id, name: c.organizationName, person: c.contactPerson, phone: c.phone })),
     };

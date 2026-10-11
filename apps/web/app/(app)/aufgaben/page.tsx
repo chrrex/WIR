@@ -7,6 +7,7 @@ import { useMe } from '@/lib/me';
 import { Icon } from '@/components/Icon';
 import { ErrorNote, PersonPicker, State, dayTime, useLoad, useSubmit } from '@/components/work';
 import { PRIORITY, TASK_STATUS } from '@/lib/labels';
+import { ReadChip, useReadCounts } from '@/components/content/ReadStatus';
 
 interface T { id: string; title: string; status: string; priority: string; dueAt: string | null; assignee: string; author: string }
 
@@ -44,6 +45,7 @@ export default function Tasks() {
   const [view, setView] = useState('mine');
   const { data, error, reload } = useLoad<{ canCreate: boolean; tasks: T[] }>(`/tasks?view=${view}`);
   const [adding, setAdding] = useState(false);
+  const counts = useReadCounts((data?.tasks ?? []).map((t) => t.id));
   if (!data) return <State error={error} loading />;
   const overdue = (t: T) => t.dueAt && new Date(t.dueAt) < new Date() && !['DONE', 'CANCELLED'].includes(t.status);
   return (
@@ -60,7 +62,7 @@ export default function Tasks() {
               <span className={`udot ${overdue(t) || t.priority === 'URGENT' ? 'warn' : 'off'}`} aria-label={overdue(t) ? 'überfällig' : undefined} />
               <span className="grow">
                 <span className="row wrap gap-s"><span className={`chip ${t.status === 'DONE' ? 'ok' : 'info'}`}>{TASK_STATUS[t.status]}</span>{t.priority !== 'NORMAL' && <span className={`chip ${t.priority === 'URGENT' || t.priority === 'HIGH' ? 'warn' : ''}`}>{PRIORITY[t.priority]}</span>}<strong className="title">{t.title}</strong></span>
-                <span className="block muted small">{view === 'created' ? `für ${t.assignee}` : `von ${t.author}`}{t.dueAt && ` · fällig ${dayTime(t.dueAt)}`}{overdue(t) && ' · überfällig'}</span>
+                <span className="block muted small">{view === 'created' ? `für ${t.assignee}` : `von ${t.author}`}{t.dueAt && ` · fällig ${dayTime(t.dueAt)}`}{overdue(t) && ' · überfällig'} <ReadChip c={counts[t.id]} /></span>
               </span>
             </Link>
           ))}

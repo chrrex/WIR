@@ -3,11 +3,12 @@ import { z } from 'zod';
 import type { PrismaService } from '../common/prisma.service';
 import type { AudienceTarget } from '../content/audience.service';
 
-/** Zielgruppen aus dem Formular: "ALL", "C:<id>" (Gesellschaft), "G:<id>" (Gruppe). */
-export const AudienceKeys = z.array(z.string().regex(/^(ALL|[CG]:[0-9a-f-]{36})$/)).min(1).max(20);
+/** Zielgruppen aus dem Formular: "ALL", "C:<id>" (Gesellschaft), "G:<id>" (Gruppe), "U:<id>" (Person). */
+export const AudienceKeys = z.array(z.string().regex(/^(ALL|[CGU]:[0-9a-f-]{36})$/)).min(1).max(60);
 
 export function toTargets(keys: string[]): AudienceTarget[] {
-  return keys.map((k) => (k === 'ALL' ? { type: 'ALL' } : k.startsWith('C:') ? { type: 'COMPANY', companyId: k.slice(2) } : { type: 'GROUP', groupId: k.slice(2) }));
+  return keys.map((k): AudienceTarget => (k === 'ALL' ? { type: 'ALL' } : k.startsWith('C:') ? { type: 'COMPANY', companyId: k.slice(2) }
+    : k.startsWith('U:') ? { type: 'USER', userId: k.slice(2) } : { type: 'GROUP', groupId: k.slice(2) }));
 }
 
 /** Hauptgesellschaft einer Person (Eigentümerin neuer Inhalte). */

@@ -652,7 +652,8 @@ model EmployeeProfile {
   firstName        String     @map("first_name")
   lastName         String     @map("last_name")
   jobTitle         String?    @map("job_title")
-  phoneWork        String?    @map("phone_work")
+  phoneWork        String?    @map("phone_work") // Durchwahl / Festnetz
+  phoneMobile      String?    @map("phone_mobile") // dienstliches Handy, freiwillig
   aboutMe          String?    @map("about_me") // freiwillig
   avatarFileId     String?    @map("avatar_file_id") @db.Uuid
   entryDate        DateTime?  @map("entry_date") @db.Date
@@ -1855,6 +1856,7 @@ model Absence {
   startsOn          DateTime    @map("starts_on") @db.Date
   endsOn            DateTime    @map("ends_on") @db.Date
   showAsAbsent      Boolean     @default(true) @map("show_as_absent") // für Abwesenheitshinweise
+  note              String?     // z. B. „Vertretung: Selin A.“ – nie Gründe
   source            DataSource  @default(LOCAL)
   createdAt         DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)

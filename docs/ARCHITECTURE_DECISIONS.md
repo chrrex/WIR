@@ -475,6 +475,29 @@ Ohne Datenbank-Migration – alle Tabellen waren vorbereitet.
 3. **Freigabe (Vier-Augen-Prinzip)** je Vorlage: nach Abschluss „wartet auf Freigabe“ an die Teamleitung; wer abgeschlossen hat, kann nicht selbst freigeben; Zurückweisen öffnet die Liste wieder und benachrichtigt mit Hinweis.
 4. **Ein- und Austritt:** Vorlagen (Personal) mit Schritten „Tag x“, zuständig die Person selbst oder ihre Teamleitung (sonst wer startet), optional Pflichtlektüre. Start (Abteilungsleitung, Personal) erzeugt je Schritt eine Aufgabe und gibt verlinkte Artikel/Dokumente der Person frei. Fortschritt sehen Person, Startende und `lifecycle.view_progress`. Plan schließt sich, wenn alle Schritte erledigt sind. Nach dem Freischalten in der Verwaltung direkt „Einarbeitung starten“.
 
+## ADR-044 · Freie Empfänger, Teamleitungen an alle, Dokument-Kategorien, Lesestatus in Listen — ENTSCHIEDEN (11.10.2026)
+
+1. **Übergaben** haben kein festes Team mehr: Empfänger:innen frei kombinierbar aus Gruppen der eigenen Gesellschaft(en) und einzelnen Personen; mit @ Erwähnte kommen dazu. „Ganze Gesellschaft“ bzw. „alle“ nur mit `news.publish_wide` (wie News, ADR-037). Das Team einer Übergabe (Filter) ist die erste gewählte Gruppe, sonst das eigene Team.
+2. **News, Wissen, Dokumente, Umfragen:** Gruppen *und/oder* Gesellschaften in einer Auswahl, gegliedert nach „Alle & Gesellschaften“ und „Gruppen“. Leitplanke 2 aus ADR-037 präzisiert: **jede Gruppe der eigenen Gesellschaft** ist für alle erlaubt (vorher nur das eigene Team); ganze Gesellschaft/Stiftung weiterhin nur Leitungen.
+3. **„Alle Mitarbeitenden der Gesellschaft“** (News, Übergaben) dürfen jetzt auch **Teamleitungen** – für die Gesellschaft ihres Teams (`news.publish_wide` über die eigene Gruppe). „Alle Gesellschaften der Stiftungsgruppe“ bleibt der Redaktion Stiftung vorbehalten. (Entscheidung Hoteldirektion 11.10.2026)
+4. **Dokument-Kategorien als Baum:** Unterkategorien beliebig tief, Ordneransicht mit Pfad, Suche über alle Dokumente; anlegen, umbenennen, ausblenden mit `documents.manage_categories` (Abteilungsleitung, Personal). „Vertraulich“ vererbt sich auf Unterkategorien; beim Verschieben in eine vertrauliche Kategorie verschwindet das Dokument aus Suche und KI. Kategorien mit Dokumenten lassen sich nicht ausblenden.
+5. **Startseite:** Social-Beiträge mit Foto bekommen ein kleines Kamera-Symbol.
+6. **Lesestatus in allen Listen** („8/12 gelesen“, bei Umfragen „teilgenommen“) für Autor:in und Leitungen – dieselben Regeln wie auf der Detailseite; Teamleitungen sehen ihn bei allem, was an ihr Team ging.
+
+## ADR-045 · Wissen: alle schreiben, Teamleitung gibt frei; Kategorien; stiftungsweit — ENTSCHIEDEN (11.10.2026)
+
+- **Alle Mitarbeitenden** (`knowledge.create`) schreiben Einträge. Ohne eigenes Freigaberecht landen sie als **Entwurf** bei der **Teamleitung der Autor:in** (`knowledge.publish` über die eigene Gruppe; Abteilungsleitung und Redaktion für die Gesellschaft). Diese **gibt frei**, **korrigiert und gibt frei** oder **lehnt mit Pflicht-Begründung ab**; die Autor:in überarbeitet und reicht erneut ein. Eigene Einträge gibt immer jemand anderes frei. Entwürfe sind nicht in Suche/KI und für niemanden außer Autor:in und Prüfenden sichtbar. Ablehnungen stehen im Audit-Protokoll.
+- **Stiftungsgruppenweit:** Zielgruppe „Ganze Stiftungsgruppe“ ist für Wissen frei wählbar – die Freigabe durch die Teamleitung sichert ab. Eigene Kategorie „Stiftungsgruppe“.
+- **Kategorien als Baum** (Unterkategorien), gepflegt mit `knowledge.manage_categories` (Abteilungsleitung, Redaktion Wissen); gemeinsamer Baustein mit den Dokumenten.
+- Inhaltliche Änderungen an veröffentlichten Artikeln (neue Version) weiterhin mit `knowledge.update`.
+
+## ADR-046 · Team-Profil, Personen in der Suche, Abwesenheiten — ENTSCHIEDEN (11.10.2026)
+
+- **Suche** findet Kolleg:innen (Name, Tätigkeit, Bereich) – nur mit Verzeichnisrecht, nur eigene Gesellschaften.
+- **Team → Profil:** E-Mail, Durchwahl, dienstliches Handy, Position, Bereiche, Abwesenheiten; „Nachricht schreiben“. Alle Kontaktangaben pflegt jede Person **selbst und freiwillig** (Einstellungen → Mein Profil); nur dienstliche Angaben. Externe sehen keine Profile.
+- **Abwesenheit** trägt jede Person selbst ein: Urlaub, Dienstreise, Fortbildung oder „abwesend“ – **bewusst ohne Krankheit oder andere Gründe** (Art. 9 DSGVO), optional mit Hinweis wie „Vertretung: …“. Angezeigt im Team (Filter „heute abwesend“), im Profil, in der Suche, **im Chat** beim Anschreiben und **beim Schreiben einer Übergabe** für alle gewählten Empfänger:innen.
+- Migration `20261011000000_profil_abwesenheit`: `employee_profiles.phone_mobile`, `absences.note`.
+
 ## Nächste Schritte
 
 1. Anbieterauswahl (ADR-022) bestätigen und Gastromatic-Prüfauftrag (ADR-021) stellen.

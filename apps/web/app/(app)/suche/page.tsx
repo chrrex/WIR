@@ -6,6 +6,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { useMe } from '@/lib/me';
 import { ErrorNote, useSubmit } from '@/components/work';
+import { Absent, AbsentChip } from '@/components/Absent';
 
 interface Result { id: string; label: string; title: string; snippet: string; href: string }
 interface Ai { mode: 'llm' | 'sources'; answer: string | null; sources: Array<Result & { n: number }> }
@@ -19,7 +20,7 @@ function Search() {
   const router = useRouter();
   const q = useSearchParams().get('q') ?? '';
   const { can } = useMe();
-  const [res, setRes] = useState<{ results: Result[]; contacts: Array<{ id: string; name: string; person: string | null; phone: string | null }> } | null>(null);
+  const [res, setRes] = useState<{ results: Result[]; people: Array<{ id: string; name: string; job: string | null; absent: Absent | null }>; contacts: Array<{ id: string; name: string; person: string | null; phone: string | null }> } | null>(null);
   const [question, setQuestion] = useState('');
   const [ai, setAi] = useState<Ai | null>(null);
   const { busy, error, run } = useSubmit();
@@ -35,12 +36,13 @@ function Search() {
       </form>
       {res && (
         <section className="stack-s" aria-live="polite">
-          <h2 className="h-sub">{res.results.length + res.contacts.length} Treffer</h2>
+          <h2 className="h-sub">{res.results.length + res.contacts.length + res.people.length} Treffer</h2>
           <div className="list">
+            {res.people.map((p) => <Link key={p.id} href={`/team/${p.id}`} className="card listitem"><span className="grow"><span className="row gap-s"><span className="chip">Team</span><strong className="title">{p.name}</strong><AbsentChip a={p.absent} /></span>{p.job && <span className="block small muted">{p.job}</span>}</span></Link>)}
             {res.results.map((r) => <Link key={r.id} href={r.href} className="card listitem"><span className="grow"><span className="row gap-s"><span className="chip info">{r.label}</span><strong className="title">{r.title}</strong></span><Snippet text={r.snippet} /></span></Link>)}
             {res.contacts.map((c) => <Link key={c.id} href={`/kontakte?q=${encodeURIComponent(c.name)}`} className="card listitem"><span className="grow"><span className="row gap-s"><span className="chip">Kontakt</span><strong className="title">{c.name}</strong></span><span className="block small muted">{[c.person, c.phone].filter(Boolean).join(' · ')}</span></span></Link>)}
           </div>
-          {res.results.length + res.contacts.length === 0 && <p className="muted">Nichts gefunden. Du siehst nur Inhalte, die für dich freigegeben sind.</p>}
+          {res.results.length + res.contacts.length + res.people.length === 0 && <p className="muted">Nichts gefunden. Du siehst nur Inhalte, die für dich freigegeben sind.</p>}
         </section>
       )}
       {can('ai.use') && (

@@ -54,11 +54,35 @@ describe('Phase 3+4 (e2e)', () => {
     await (await as('jana.m')).get(`/api/v1/knowledge/${id}`).expect(404); // Rezeption ist nicht Zielgruppe
   });
 
-  test('Wissen: Mitarbeitende dürfen nicht schreiben, Abteilungsleitung schon', async () => {
-    const cat = (await prisma.db.knowledgeCategory.findFirstOrThrow()).id;
-    const body = { categoryId: cat, articleType: 'SOP', title: 'Test-SOP Ausgabe', text: 'Inhalt', audience: [`G:${await groupId('Küche')}`] };
-    await (await as('jana.m')).post('/api/v1/knowledge').send(body).expect(403);
-    await (await as('sven.r')).post('/api/v1/knowledge').send(body).expect(201);
+  test('Wissen: alle schreiben, Teamleitung prüft, korrigiert, gibt frei oder lehnt ab (ADR-045)', async () => {
+    const cat = (await prisma.db.knowledgeCategory.findFirstOrThrow({ where: { name: 'Rezeption & Gäste' } })).id;
+    const jana = await as('jana.m');
+    const jonas = await as('jonas.w');
+    const maren = await as('maren.h');
+    // stiftungsgruppenweit einreichen → Entwurf
+    const r = (await jana.post('/api/v1/knowledge').send({ categoryId: cat, articleType: 'WIKI', title: 'Taxi-Nummern für Gäste', text: 'Taxi Muster: 03300 000 999.', audience: ['ALL'] }).expect(201)).body;
+    expect(r.status).toBe('DRAFT');
+    await (await as('nora.s')).get(`/api/v1/knowledge/${r.id}`).expect(404); // noch nicht sichtbar
+    expect((await jana.get('/api/v1/search?q=Taxi').expect(200)).body.results).toHaveLength(0);
+    expect((await jonas.get('/api/v1/knowledge').expect(200)).body.review.map((a: { id: string }) => a.id)).toContain(r.id);
+    await maren.post(`/api/v1/knowledge/${r.id}/review`).send({ approve: true }).expect(404); // fremde Teamleitung sieht ihn nicht
+    await jana.post(`/api/v1/knowledge/${r.id}/review`).send({ approve: true }).expect(403);
+    // korrigieren und freigeben
+    await jonas.post(`/api/v1/knowledge/${r.id}/review`).send({ approve: true, correction: { title: 'Taxi für Gäste bestellen' } }).expect(200);
+    const pub = (await (await as('nora.s')).get(`/api/v1/knowledge/${r.id}`).expect(200)).body; // Stiftung sieht ihn
+    expect(pub).toMatchObject({ status: 'PUBLISHED', title: 'Taxi für Gäste bestellen' });
+    expect((await jana.get('/api/v1/search?q=Taxi').expect(200)).body.results).toHaveLength(1);
+    // ablehnen mit Begründung, überarbeiten, erneut einreichen
+    const s2 = (await jana.post('/api/v1/knowledge').send({ categoryId: cat, articleType: 'WIKI', title: 'Pausenregel', text: 'Pause wann man will.', audience: [`G:${await groupId('Rezeption')}`] }).expect(201)).body.id;
+    await jonas.post(`/api/v1/knowledge/${s2}/review`).send({ approve: false }).expect(400);
+    await jonas.post(`/api/v1/knowledge/${s2}/review`).send({ approve: false, reason: 'Bitte mit dem Dienstplan abstimmen.' }).expect(200);
+    expect((await jana.get(`/api/v1/knowledge/${s2}`).expect(200)).body).toMatchObject({ status: 'ARCHIVED', rejectedReason: 'Bitte mit dem Dienstplan abstimmen.' });
+    await jana.post(`/api/v1/knowledge/${s2}/resubmit`).send({ title: 'Pausenregel Rezeption', text: 'Pausen nach Absprache im Dienstplan.' }).expect(200);
+    expect((await jonas.get('/api/v1/knowledge').expect(200)).body.review.some((a: { id: string }) => a.id === s2)).toBe(true);
+    // Teamleitung veröffentlicht eigene Einträge direkt; Kategorien pflegt die Abteilungsleitung
+    expect((await jonas.post('/api/v1/knowledge').send({ categoryId: cat, articleType: 'SOP', title: 'Kassenabschluss', text: 'Täglich 22 Uhr.', audience: [`G:${await groupId('Rezeption')}`] }).expect(201)).body.status).toBe('PUBLISHED');
+    await jana.post('/api/v1/knowledge/categories').send({ name: 'Test' }).expect(403);
+    await (await as('sven.r')).post('/api/v1/knowledge/categories').send({ name: 'Weinwissen', parentId: cat }).expect(201);
   });
 
   test('Suche und KI finden nur berechtigte Inhalte; sensible Dokumente nie', async () => {
@@ -177,5 +201,62 @@ describe('Phase 3+4 (e2e)', () => {
     expect((await (await as('ana.f')).get(`/api/v1/content/${handover}/read-status`).expect(200)).body.visible).toBe(false);
     const social = (await prisma.db.post.findFirstOrThrow({ where: { kind: 'SOCIAL' } })).id;
     expect((await lena.get(`/api/v1/content/${social}/read-status`).expect(200)).body.enabled).toBe(false);
+  });
+
+  test('Lesestatus in Listen: nur für Autor:in und Leitungen, nie Social', async () => {
+    const ids = (await prisma.db.contentItem.findMany({ where: { type: { in: ['POST', 'HANDOVER', 'SURVEY'] } }, select: { id: true } })).map((i) => i.id);
+    const sven = (await (await as('sven.r')).post('/api/v1/content/read-summaries').send({ ids }).expect(200)).body;
+    const social = (await prisma.db.post.findMany({ where: { kind: 'SOCIAL' }, select: { id: true } })).map((p) => p.id);
+    expect(Object.keys(sven).length).toBeGreaterThanOrEqual(2);
+    expect(Object.keys(sven).some((id) => social.includes(id))).toBe(false);
+    const survey = (await prisma.db.survey.findFirstOrThrow({ where: { title: { startsWith: 'Wie zufrieden' } } })).id;
+    expect(sven[survey].read).toBeGreaterThanOrEqual(6); // Teilnahmen
+    const jana = (await (await as('jana.m')).post('/api/v1/content/read-summaries').send({ ids }).expect(200)).body;
+    const janaOwn = (await prisma.db.contentItem.findMany({ where: { author: { username: 'jana.m' }, id: { in: ids } }, select: { id: true } })).map((i) => i.id);
+    expect(Object.keys(jana).every((id) => janaOwn.includes(id))).toBe(true);
+  });
+
+  test('Dokument-Kategorien: anlegen, vertraulich vererbt, verschieben, nicht leer ausblenden', async () => {
+    const sven = await as('sven.r');
+    await (await as('jana.m')).post('/api/v1/documents/categories').send({ name: 'Test' }).expect(403);
+    const hr = (await prisma.db.documentCategory.findFirstOrThrow({ where: { name: 'Personal (vertraulich)' } })).id;
+    const sub = (await (await as('lena.k')).post('/api/v1/documents/categories').send({ name: 'Zeugnisse', parentId: hr }).expect(201)).body.id;
+    const list = (await sven.get('/api/v1/documents').expect(200)).body;
+    expect(list.canManage).toBe(true);
+    expect(list.categories.find((c: { name: string }) => c.name === 'Urlaub & Abwesenheit').path).toBe('Vorlagen & Formulare › Urlaub & Abwesenheit');
+    // Dokument in vertrauliche Unterkategorie verschieben → aus der Suche
+    const doc = (await prisma.db.document.findFirstOrThrow({ where: { title: 'Temperaturliste Kühlräume' } })).id;
+    expect((await sven.get('/api/v1/search?q=Temperaturliste').expect(200)).body.results.length).toBe(1);
+    await sven.patch(`/api/v1/documents/${doc}`).send({ categoryId: sub }).expect(200);
+    expect((await sven.get('/api/v1/search?q=Temperaturliste').expect(200)).body.results.length).toBe(0);
+    expect((await sven.get('/api/v1/documents').expect(200)).body.categories.find((c: { id: string }) => c.id === sub).sensitive).toBe(true);
+    await sven.patch(`/api/v1/documents/categories/${sub}`).send({ isActive: false }).expect(400); // nicht leer
+  });
+
+  test('Team: Personen in der Suche, Profil mit Kontaktdaten, eigene Abwesenheit sichtbar in Team, Chat und Übergaben (ADR-046)', async () => {
+    const jana = await as('jana.m');
+    const maren = await prisma.db.user.findUniqueOrThrow({ where: { username: 'maren.h' } });
+    const found = (await jana.get('/api/v1/search?q=Hofmann').expect(200)).body.people;
+    expect(found[0]).toMatchObject({ name: 'Maren H.' });
+    expect(found[0].absent).toMatchObject({ label: 'im Urlaub', note: 'Vertretung: Tobias K.' });
+    const p = (await jana.get(`/api/v1/people/${maren.id}`).expect(200)).body;
+    expect(p).toMatchObject({ email: 'maren.hofmann@sgl.example', phoneMobile: '0170 000 1210' });
+    expect(p.absences).toHaveLength(1);
+    expect((await jana.get('/api/v1/people/directory').expect(200)).body.find((x: { id: string }) => x.id === maren.id).absent.label).toBe('im Urlaub');
+    await (await as('tom.b.extern')).get(`/api/v1/people/${maren.id}`).expect(403); // Externe ohne Verzeichnis
+    // Übergabe an Service → Hinweis, wer abwesend ist
+    const away = (await jana.post('/api/v1/people/absent').send({ targets: [`G:${await groupId('Service')}`] }).expect(200)).body;
+    expect(away.map((a: { name: string }) => a.name)).toEqual(['Maren H.']);
+    // Chat mit Maren zeigt die Abwesenheit
+    const chat = (await jana.post('/api/v1/chat/direct').send({ userId: maren.id }).expect(201)).body.id;
+    expect((await jana.get(`/api/v1/chat/${chat}`).expect(200)).body.absent[0]).toMatchObject({ name: 'Maren H.', label: 'im Urlaub' });
+    // eigenes Profil und eigene Abwesenheit pflegen
+    const today = new Date().toISOString().slice(0, 10);
+    const mine = (await jana.post('/api/v1/people/me/absences').send({ type: 'BUSINESS_TRIP', startsOn: today, endsOn: today, note: 'Messe' }).expect(201)).body;
+    expect(mine.absences).toHaveLength(1);
+    await jana.post('/api/v1/people/me/absences').send({ type: 'SICK', startsOn: today, endsOn: today }).expect(400); // keine Gründe wie Krankheit
+    await jana.put('/api/v1/people/me/profile').send({ phoneWork: '-101', email: 'maren.hofmann@sgl.example' }).expect(400); // E-Mail vergeben
+    expect((await jana.put('/api/v1/people/me/profile').send({ phoneWork: '-101', phoneMobile: '' }).expect(200)).body.phoneWork).toBe('-101');
+    await jana.delete(`/api/v1/people/me/absences/${mine.absences[0].id}`).expect(200);
   });
 });

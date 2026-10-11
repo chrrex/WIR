@@ -6,6 +6,7 @@ import { CurrentUser, RequirePermission, SessionUser } from '../auth/decorators'
 import { PolicyService } from '../policy/policy.service';
 import { can } from '../policy/engine';
 import { NotificationService } from '../notifications/notification.service';
+import { absencesToday } from '../people/people.controller';
 
 const SendBody = z.object({
   text: z.string().max(4000).default(''),
@@ -156,6 +157,9 @@ export class ChatController {
     const other = c.type === 'DIRECT' ? c.participants.find((x) => x.userId !== me.id)?.user : null;
     return {
       id, type: c.type, title: c.type === 'GROUP' ? c.title : other?.displayName ?? 'Chat',
+      // Abwesenheiten der anderen (im 1:1 die Person, in Gruppen alle) – Hinweis beim Schreiben (ADR-046)
+      absent: [...(await absencesToday(this.prisma.db, c.participants.map((x) => x.userId).filter((u) => u !== me.id))).entries()]
+        .map(([uid, a]) => ({ id: uid, name: c.participants.find((x) => x.userId === uid)?.user.displayName ?? '', ...a })),
       members: c.participants.map((x) => ({ id: x.user.id, name: x.user.displayName })),
       messages: messages.reverse().map((m) => ({
         id: m.id, text: m.deletedAt ? null : m.body, deleted: !!m.deletedAt, at: m.createdAt, mine: m.senderId === me.id,

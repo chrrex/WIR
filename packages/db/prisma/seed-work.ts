@@ -5,6 +5,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import sharp from 'sharp';
 import type { PrismaClient } from '../src/generated/client';
 import { indexContent } from '../src/search';
 
@@ -53,6 +54,9 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
   const kFront = await cat('Rezeption & Gäste', 'rezeption', 2);
   const kRules = await cat('Richtlinien & Arbeitsschutz', 'richtlinien', 3);
   const kGeneral = await cat('Allgemein', 'allgemein', 4);
+  const kGroup = await cat('Stiftungsgruppe', 'stiftungsgruppe', 0);
+  const kCheckin = (await prisma.knowledgeCategory.create({ data: { name: 'Check-in & Check-out', slug: 'check-in', parentId: kFront, sortOrder: 1 } })).id;
+  await prisma.knowledgeCategory.create({ data: { name: 'Allergene', slug: 'allergene', parentId: kKitchen, sortOrder: 1 } });
 
   async function article(o: { author: string; category: string; type: 'SOP' | 'HACCP' | 'POLICY' | 'PROCESS' | 'WIKI'; hoursAgo: number; ack?: boolean;
     audience: Parameters<typeof item>[3]; recipients: string[]; versions: Array<{ title: string; text: string; plain?: string; change?: string }>; ackBy?: string[] }) {
@@ -76,15 +80,22 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
         text: 'Kühlware wird sofort nach der Anlieferung geprüft und innerhalb von 15 Minuten eingeräumt.\n\nBei jeder Tiefkühl-Lieferung messen wir die Kerntemperatur. Grenzwert: -18 °C oder kälter. Kühlware (Fleisch, Fisch, Milchprodukte): höchstens +4 °C.\n\nLiegt ein Wert außerhalb, nimmst du die Ware nicht an, notierst es im Wareneingangsbuch und informierst sofort die Küchenleitung.\n\nDas Thermometer liegt in der Schublade am Wareneingang. Nach jeder Messung desinfizieren.',
         plain: 'Kühle Ware sofort prüfen. Tiefkühlware muss -18 °C oder kälter sein. Ist sie wärmer: Ware nicht annehmen und die Küchenleitung rufen.' },
     ] });
-  await article({ author: maren, category: kFront, type: 'PROCESS', hoursAgo: 200, audience: [{ targetType: 'GROUP', groupId: G('Rezeption') }], recipients: c.membersOf('Rezeption'),
+  await article({ author: maren, category: kCheckin, type: 'PROCESS', hoursAgo: 200, audience: [{ targetType: 'GROUP', groupId: G('Rezeption') }], recipients: c.membersOf('Rezeption'),
     versions: [{ title: 'Check-in am Schloss – Schritt für Schritt', text: 'Begrüße die Gäste mit Namen, sobald du ihn kennst.\n\nPrüfe Reservierung, Anzahl der Nächte und besondere Wünsche wie Allergien oder späte Anreise.\n\nErkläre kurz Frühstückszeiten, WLAN und den Weg zum Zimmer. Bei Tagungsgästen: Raum und Startzeit der Tagung nennen.\n\nSchlüsselkarten immer im Kartenhalter übergeben, nie die Zimmernummer laut sagen.' }] });
   const kleidung = await article({ author: lena, category: kRules, type: 'POLICY', hoursAgo: 400, audience: house, recipients: c.sglPeople,
     versions: [{ title: 'Dienstkleidung und Erscheinungsbild', text: 'Dienstkleidung bekommst du gestellt und gereinigt. Die Ausgabe ist montags und donnerstags von 7 bis 9 Uhr in der Wäscherei.\n\nNamensschild immer gut sichtbar links tragen. Schmuck nur dezent, in der Küche gar nicht.' }] });
   const ersteHilfe = await article({ author: lena, category: kGeneral, type: 'WIKI', hoursAgo: 500, audience: house, recipients: c.sglPeople,
     versions: [{ title: 'Erste Hilfe und Notfälle', text: 'Notruf: 112. Danach immer die Rezeption informieren, sie ist rund um die Uhr besetzt und weist den Rettungsdienst ein.\n\nVerbandkästen hängen in Küche, Rezeption, Wäscherei und Haustechnik. Der Defibrillator (AED) hängt neben der Rezeption.\n\nErsthelfer:innen im Haus findest du am schwarzen Brett im Personalraum.',
       plain: 'Im Notfall: 112 anrufen. Dann der Rezeption Bescheid sagen. Der Defibrillator hängt neben der Rezeption.' }] });
-  await article({ author: nora, category: kGeneral, type: 'WIKI', hoursAgo: 600, audience: [{ targetType: 'ALL_USERS' }], recipients: c.employees,
+  await article({ author: nora, category: kGroup, type: 'WIKI', hoursAgo: 600, audience: [{ targetType: 'ALL_USERS' }], recipients: c.employees,
     versions: [{ title: 'Willkommen in der Stiftungsgruppe (Beispieltext)', text: 'Dieser Artikel ist ein Platzhalter für die Inhalte der DKB STIFTUNG. Er zeigt, wie Wissen gruppenweit für alle Gesellschaften geteilt werden kann.' }] });
+
+  // Eintrag von Jana, wartet auf Freigabe durch die Teamleitung Rezeption (ADR-045)
+  const draft = await item('KNOWLEDGE_ARTICLE', jana, 10, [{ targetType: 'GROUP', groupId: G('Rezeption') }], c.membersOf('Rezeption'), { status: 'DRAFT', publishedAt: null });
+  await prisma.knowledgeArticle.create({ data: { id: draft, categoryId: kFront, articleType: 'WIKI', slug: `a-${draft.slice(0, 8)}`, ownerId: jana } });
+  await prisma.knowledgeVersion.create({ data: { articleId: draft, versionNumber: 1, status: 'DRAFT', title: 'Fundsachen richtig aufbewahren', authorId: jana, changeSummary: 'Erste Fassung',
+    bodyText: 'Fundsachen kommen mit Datum, Fundort und Namen der findenden Person ins Fundbuch.\n\nWertsachen (Schmuck, Geld, Ausweise) sofort in den Tresor, alles andere ins Regal hinter der Rezeption.\n\nNach 3 Monaten entscheidet die Direktion, was mit nicht abgeholten Sachen passiert.',
+    body: body('Fundsachen kommen mit Datum, Fundort und Namen der findenden Person ins Fundbuch.') } });
 
   // ---- Dokumente ------------------------------------------------------------
   const storage = path.resolve(process.env.STORAGE_DIR ?? path.join(process.cwd(), '../../apps/api/.data/uploads'));
@@ -100,6 +111,9 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
   const dForms = (await prisma.documentCategory.create({ data: { name: 'Vorlagen & Formulare', sortOrder: 1 } })).id;
   const dKitchen = (await prisma.documentCategory.create({ data: { name: 'Küche & HACCP', sortOrder: 2 } })).id;
   const dHr = (await prisma.documentCategory.create({ data: { name: 'Personal (vertraulich)', sortOrder: 3, isSensitive: true } })).id;
+  const dLeave = (await prisma.documentCategory.create({ data: { name: 'Urlaub & Abwesenheit', parentId: dForms, sortOrder: 1 } })).id;
+  await prisma.documentCategory.create({ data: { name: 'Reinigungspläne', parentId: dKitchen, sortOrder: 1 } });
+  await prisma.documentCategory.create({ data: { name: 'Verträge', parentId: dHr, sortOrder: 1 } });
   async function doc(o: { author: string; category: string; title: string; description: string; audience: Parameters<typeof item>[3]; recipients: string[]; sensitive?: boolean; versions: string[] }) {
     const id = await item('DOCUMENT', o.author, 300, o.audience, o.recipients, { commentsEnabled: false, reactionsEnabled: false, currentVersion: o.versions.length });
     await prisma.document.create({ data: { id, categoryId: o.category, title: o.title, description: o.description } });
@@ -108,7 +122,7 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
     }
     if (!o.sensitive) await indexContent(prisma, id, o.versions.length, o.title, o.description);
   }
-  await doc({ author: lena, category: dForms, title: 'Urlaubsantrag', description: 'Formular für Urlaub und Freizeitausgleich. Bitte ausgefüllt bei deiner Leitung abgeben.', audience: house, recipients: c.sglPeople, versions: ['Erste Fassung', 'Neues Feld für Resturlaub'] });
+  await doc({ author: lena, category: dLeave, title: 'Urlaubsantrag', description: 'Formular für Urlaub und Freizeitausgleich. Bitte ausgefüllt bei deiner Leitung abgeben.', audience: house, recipients: c.sglPeople, versions: ['Erste Fassung', 'Neues Feld für Resturlaub'] });
   await doc({ author: T('sven.r'), category: dKitchen, title: 'Temperaturliste Kühlräume', description: 'Vorlage zum Ausdrucken, falls das Tablet ausfällt. Grenzwerte für Kühlraum, Tiefkühlraum und Patisserie.', audience: [{ targetType: 'GROUP', groupId: G('Küche') }], recipients: c.membersOf('Küche'), versions: ['Erste Fassung'] });
   await doc({ author: lena, category: dHr, title: 'Checkliste Personalakte', description: 'Welche Unterlagen bei einer Einstellung in die Personalakte gehören.', audience: [{ targetType: 'GROUP', groupId: G('Personal & Verwaltung') }], recipients: c.membersOf('Personal & Verwaltung'), sensitive: true, versions: ['Erste Fassung'] });
 
@@ -212,6 +226,35 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
     { sortOrder: 2, offsetDays: 0, title: 'Schlüssel und Dienstkleidung zurückgeben', responsibleType: 'SUBJECT_EMPLOYEE' },
     { sortOrder: 3, offsetDays: 0, title: 'Abschlussgespräch und Zugang beenden', responsibleType: 'LINE_MANAGER' },
   ] } } });
+
+  // Social: Urlaubsgruß mit (generiertem) Foto – zeigt das Foto-Symbol auf der Startseite
+  const ostsee = await prisma.post.findFirst({ where: { title: 'Grüße von der Ostsee' }, include: { contentItem: true } });
+  if (ostsee) {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800"><defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9cc9e8"/><stop offset="1" stop-color="#e9f3f9"/></linearGradient></defs>
+      <rect width="1200" height="520" fill="url(#s)"/><circle cx="930" cy="170" r="70" fill="#ffd66b"/><rect y="500" width="1200" height="140" fill="#3f7fa8"/><rect y="630" width="1200" height="170" fill="#e8d6a8"/></svg>`;
+    const data = await sharp(Buffer.from(svg)).webp({ quality: 80 }).toBuffer();
+    const id = randomUUID();
+    const rel = path.join('seed', `${id}.webp`);
+    await mkdir(path.join(storage, 'seed'), { recursive: true });
+    await writeFile(path.join(storage, rel), data);
+    await prisma.fileObject.create({ data: { id, storageKey: rel, originalFilename: 'ostsee.webp', mimeType: 'image/webp', sizeBytes: BigInt(data.length), checksumSha256: createHash('sha256').update(data).digest('hex'), scanStatus: 'CLEAN', uploadedById: ostsee.contentItem.authorId } });
+    await prisma.attachment.create({ data: { fileObjectId: id, contentItemId: ostsee.id, kind: 'IMAGE', altText: 'Strand an der Ostsee mit Sonne', sortOrder: 0 } });
+  }
+
+  // ---- Profile & Abwesenheiten (erfunden, Beispiel-Domain) --------------------
+  const contact: Array<[string, string, string, string]> = [
+    [maren, 'maren.hofmann@sgl.example', '-210', '0170 000 1210'], [T('sven.r'), 'kueche@sgl.example', '-300', '0170 000 1300'],
+    [jana, 'rezeption@sgl.example', '-100', ''], [lena, 'personal@sgl.example', '-400', ''],
+  ];
+  for (const [userId, email, ext, mobile] of contact) {
+    await prisma.user.update({ where: { id: userId }, data: { email } });
+    await prisma.employeeProfile.update({ where: { userId }, data: { phoneWork: `03300 000${ext}`, phoneMobile: mobile || null } });
+  }
+  const marenProfile = await prisma.employeeProfile.findUniqueOrThrow({ where: { userId: maren } });
+  const d = (n: number) => { const x = day(); x.setUTCDate(x.getUTCDate() + n); return x; };
+  await prisma.absence.create({ data: { employeeProfileId: marenProfile.id, type: 'VACATION', startsOn: d(-1), endsOn: d(5), note: 'Vertretung: Tobias K.' } });
+  const svenProfile = await prisma.employeeProfile.findUniqueOrThrow({ where: { userId: T('sven.r') } });
+  await prisma.absence.create({ data: { employeeProfileId: svenProfile.id, type: 'TRAINING', startsOn: d(10), endsOn: d(11) } });
 
   // Bestehende News in den Suchindex
   const news = await prisma.contentItem.findMany({ where: { type: 'POST', post: { kind: 'NEWS' } }, include: { post: true } });

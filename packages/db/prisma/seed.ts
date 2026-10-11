@@ -142,7 +142,7 @@ async function main() {
   // Weitere Kolleg:innen (aktiv), damit Team, Chat und Lesestatus lebendig wirken
   const extra: Array<[string, string, string, string, string, string[]]> = [
     ['selin.a', 'Selin', 'Aydin', 'Rezeption', 'Rezeption · Nachtdienst', ['employee']],
-    ['jonas.w', 'Jonas', 'Weber', 'Rezeption', 'Rezeption', ['employee']],
+    ['jonas.w', 'Jonas', 'Weber', 'Rezeption', 'Teamleitung Rezeption', ['employee']],
     ['piotr.n', 'Piotr', 'Nowak', 'Rezeption', 'Rezeption', ['employee']],
     ['tobias.k', 'Tobias', 'Krüger', 'Service', 'Service', ['employee']],
     ['ana.f', 'Ana', 'Ferreira', 'Service', 'Service', ['employee']],
@@ -155,6 +155,9 @@ async function main() {
       roles: rs.map((key) => (key === 'department_head' ? { key, company: sgl.id } : { key })) });
     team.set(username, u.id);
   }
+  // Teamleitung Rezeption (prüft u. a. Wissenseinträge des Teams)
+  await prisma.userRole.create({ data: { userId: team.get('jonas.w')!, roleId: roles.get('team_lead')!, groupId: groups.get('Rezeption') } });
+  await prisma.groupMembership.updateMany({ where: { userId: team.get('jonas.w')!, groupId: groups.get('Rezeption') }, data: { isLead: true } });
 
   // Erstzugang mit Einmal-Code (Pflicht-Passwortwechsel)
   const paula = await person({ username: 'paula.s', first: 'Paula', last: 'Seidel', job: 'Veranstaltungsbetreuung', company: sgl.id,

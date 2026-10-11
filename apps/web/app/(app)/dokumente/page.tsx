@@ -4,9 +4,11 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Icon } from '@/components/Icon';
+import { Cat, Folders, within } from '@/components/Folders';
 import { Audience, AudienceOption, ErrorNote, State, day, size, upload, useLoad, useSubmit } from '@/components/work';
+import { ReadChip, useReadCounts } from '@/components/content/ReadStatus';
 
-interface DocRow { id: string; title: string; description: string | null; category: string; sensitive: boolean; current: { n: number; fileId: string; name: string; size: number; createdAt: string } }
+interface DocRow { id: string; title: string; description: string | null; categoryId: string; category: string; sensitive: boolean; current: { n: number; fileId: string; name: string; size: number; createdAt: string } }
 
 function NewDocument({ onDone }: { onDone: () => void }) {
   const [o, setO] = useState<{ categories: Array<{ id: string; name: string; sensitive: boolean }>; audiences: AudienceOption[] } | null>(null);
@@ -35,24 +37,32 @@ function NewDocument({ onDone }: { onDone: () => void }) {
 }
 
 export default function Documents() {
-  const { data, error, reload } = useLoad<{ canCreate: boolean; documents: DocRow[] }>('/documents');
+  const { data, error, reload } = useLoad<{ canCreate: boolean; canManage: boolean; categories: Cat[]; documents: DocRow[] }>('/documents');
   const [adding, setAdding] = useState(false);
-  const [cat, setCat] = useState('');
+  const [folder, setFolder] = useState<string | null>(null);
+  const [q, setQ] = useState('');
+  const counts = useReadCounts((data?.documents ?? []).map((d) => d.id));
   if (!data) return <State error={error} loading />;
-  const cats = [...new Set(data.documents.map((d) => d.category))];
+  const cats = data.categories;
+  const hasSubs = cats.some((c) => c.parentId === folder);
+  const term = q.trim().toLowerCase();
+  const docs = term ? data.documents.filter((d) => `${d.title} ${d.description ?? ''}`.toLowerCase().includes(term)) : data.documents.filter((d) => d.categoryId === folder);
+  const sensitive = (d: DocRow) => cats.find((c) => c.id === d.categoryId)?.sensitive ?? d.sensitive;
   return (
     <div className="stack-lg">
       <div className="ptitle"><h1>Dokumente</h1>{data.canCreate && <button className="btn pri" onClick={() => setAdding(!adding)}><Icon name="plus" size={18} />Hochladen</button>}</div>
       {adding && <NewDocument onDone={() => { setAdding(false); reload(); }} />}
-      {cats.length > 1 && <div className="chips" role="group" aria-label="Kategorie"><button className={`fchip ${!cat ? 'on' : ''}`} aria-pressed={!cat} onClick={() => setCat('')}>Alle</button>{cats.map((c) => <button key={c} className={`fchip ${cat === c ? 'on' : ''}`} aria-pressed={cat === c} onClick={() => setCat(c)}>{c}</button>)}</div>}
-      {data.documents.length === 0 ? <div className="card empty">Noch keine Dokumente für dich.</div> : (
+      <div className="field"><label htmlFor="dq" className="sr">Dokumente durchsuchen</label><input id="dq" type="search" className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="In allen Dokumenten suchen …" /></div>
+      {!term && <Folders cats={cats} folder={folder} setFolder={setFolder} canManage={data.canManage} base="/documents/categories" sensitiveOption onChange={reload}
+        count={(id) => data.documents.filter((d) => within(cats, d.categoryId, id)).length} />}
+      {docs.length === 0 ? ((term || (folder && !hasSubs)) && <div className="card empty">{term ? 'Nichts gefunden.' : 'In dieser Kategorie liegen keine Dokumente.'}</div>) : (
         <div className="list">
-          {data.documents.filter((d) => !cat || d.category === cat).map((d) => (
+          {docs.map((d) => (
             <div key={d.id} className="card listitem">
               <Icon name="doc" />
               <span className="grow">
                 <Link href={`/dokumente/${d.id}`} className="title title-link">{d.title}</Link>
-                <span className="block muted small">{d.category}{d.sensitive && ' · vertraulich'} · Version {d.current.n} · {day(d.current.createdAt)} · {size(d.current.size)}</span>
+                <span className="block muted small">{term && `${cats.find((c) => c.id === d.categoryId)?.path ?? d.category} · `}{sensitive(d) && 'vertraulich · '}Version {d.current.n} · {day(d.current.createdAt)} · {size(d.current.size)} <ReadChip c={counts[d.id]} /></span>
                 {d.description && <span className="block excerpt">{d.description}</span>}
               </span>
               <a className="btn sm" href={`/api/v1/files/${d.current.fileId}`} target="_blank" rel="noopener" aria-label={`${d.title} öffnen`}>Öffnen</a>

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { api, ApiError } from '@/lib/api';
 import { ImagePicker, PickedImage } from '@/components/content/ImagePicker';
 import { Icon } from '@/components/Icon';
+import { Audience } from '@/components/work';
 
 interface Options { audiences: Array<{ key: string; label: string; wide: boolean }>; canImportant: boolean; canPin: boolean }
 
@@ -42,19 +43,7 @@ export default function NewNews() {
         <ImagePicker value={images} onChange={setImages} />
       </section>
       <section className="card stack">
-        <h2>An wen?</h2>
-        {!o ? <p className="muted">Lade …</p> : (
-          <div className="chips">
-            {o.audiences.map((a) => {
-              const on = targets.includes(a.key);
-              return (
-                <label key={a.key} className={`fchip ${on ? 'on' : ''}`}>
-                  <input type="checkbox" checked={on} onChange={() => setTargets(on ? targets.filter((t) => t !== a.key) : [...targets, a.key])} />{a.label}
-                </label>
-              );
-            })}
-          </div>
-        )}
+        {!o ? <p className="muted">Lade …</p> : <Audience options={o.audiences} value={targets} onChange={setTargets} />}
         {o && !o.audiences.some((a) => a.wide) && <p className="small muted">Mitteilungen an das ganze Haus schreiben Abteilungsleitungen und Direktion.</p>}
       </section>
       {o && (o.canImportant || o.canPin) && (

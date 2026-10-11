@@ -7,6 +7,7 @@ import { useMe } from '@/lib/me';
 import { NAV } from '@/lib/nav';
 import { Icon } from '@/components/Icon';
 import { PushSettings } from '@/components/PushSettings';
+import { ProfileSettings } from '@/components/ProfileSettings';
 
 export default function SettingsPage() {
   const { me, refresh } = useMe();
@@ -39,6 +40,7 @@ export default function SettingsPage() {
   return (
     <div className="stack-lg narrow-col">
       <div className="ptitle"><h1>Einstellungen</h1></div>
+      <ProfileSettings />
       {saved && <div className="note ok" role="status"><Icon name="check" size={18} />{saved}</div>}
       {error && <div className="note warn" role="alert">{error}</div>}
 

@@ -12,7 +12,7 @@ interface Widget {
   module: AppModule | null;
   /** coming = Rahmen steht, Inhalte folgen in der genannten Phase */
   state: 'ready' | 'coming';
-  items?: Array<{ id: string; title: string; meta: string; unread: boolean; important?: boolean; href: string }>;
+  items?: Array<{ id: string; title: string; meta: string; unread: boolean; important?: boolean; photo?: boolean; href: string }>;
   count?: number;
   phase?: number;
   text: string;
@@ -62,8 +62,8 @@ export class DashboardController {
         w.items = rows.map((r) => ({ id: r.id, title: `${r.handover!.shiftLabel ?? ''} · ${r.handover!.subject}`, meta: `${r.handover!.group?.name ?? ''} · ${fmt(r.publishedAt)}`, unread: !r.readReceipts.length && r.authorId !== me.id, href: `/uebergaben/${r.id}` }));
       }
       if (w.key === 'social') {
-        const rows = await db.contentItem.findMany({ where: { type: 'POST', post: { kind: 'SOCIAL' }, ...visible }, include: { post: true, author: { select: { displayName: true } } }, orderBy: { publishedAt: 'desc' }, take: 2 });
-        w.items = rows.map((r) => ({ id: r.id, title: r.post!.title, meta: r.author?.displayName ?? '', unread: false, href: `/social/${r.id}` }));
+        const rows = await db.contentItem.findMany({ where: { type: 'POST', post: { kind: 'SOCIAL' }, ...visible }, include: { post: true, author: { select: { displayName: true } }, _count: { select: { attachments: true } } }, orderBy: { publishedAt: 'desc' }, take: 2 });
+        w.items = rows.map((r) => ({ id: r.id, title: r.post!.title, meta: r.author?.displayName ?? '', unread: false, photo: r._count.attachments > 0, href: `/social/${r.id}` }));
       }
       if (w.key === 'tasks') {
         const where = { type: 'TASK' as const, ...visible, task: { status: { notIn: ['DONE' as const, 'CANCELLED' as const] }, assignees: { some: { OR: [{ userId: me.id }, { groupId: { in: ctx.groupIds } }] } } } };
