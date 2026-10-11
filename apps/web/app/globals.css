@@ -129,7 +129,10 @@ td.actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end
 .logo-plate img { width: 100%; height: auto; display: block; }
 .logo-plate.logo-side { width: 100%; }
 .logo-plate.logo-head { width: 128px; padding: 7px 10px; border-radius: 8px; }
-.logo-plate.logo-hero { width: 320px; max-width: 100%; padding: 22px 26px; }
+.logo-plate.logo-hero { width: auto; margin: -3rem -3rem 0; padding: 36px 3rem; border-radius: 0; justify-content: flex-start; }
+.logo-plate.logo-hero img { width: 300px; max-width: 100%; }
+.logo-img.logo-dkb.logo-side { width: 100%; }
+.logo-img.logo-dkb.logo-head { width: 120px; }
 .logo-text { font-weight: 700; color: #fff; }
 .wordmark { display: flex; flex-direction: column; gap: 2px; }
 .wordmark .wm { font-weight: 700; font-size: 1.45rem; letter-spacing: .42em; line-height: 1.1; }
@@ -138,15 +141,25 @@ td.actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end
 
 /* App-Rahmen */
 .app { min-height: 100vh; display: grid; grid-template-columns: 260px minmax(0, 1fr); }
-.side { background: var(--nav-bg); color: #fff; display: flex; flex-direction: column; padding-bottom: 20px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
-.side .brandbox { padding: 24px 22px 18px; display: flex; flex-direction: column; gap: 14px; }
-.side .wordmark { padding-top: 12px; border-top: 1px solid rgba(255,255,255,.4); }
-.side .nav { display: flex; flex-direction: column; gap: 2px; padding: 0 12px; }
-.side .nav a { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; border-radius: 8px; color: #fff; text-decoration: none; font-weight: 600; }
-.side .nav a:hover { background: rgba(0,0,0,.14); }
-.side .nav a[aria-current="page"] { background: rgba(0,0,0,.24); font-weight: 700; box-shadow: inset 4px 0 0 #fff; }
-.side .nav .nav-admin { margin-top: 10px; }
-.side .foot { margin-top: auto; padding: 18px 24px 0; font-size: .82rem; font-weight: 600; }
+.side { background: var(--surface); color: var(--fg); border-right: 1px solid var(--line); display: flex; flex-direction: column; padding-bottom: 16px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+/* Markenfläche oben: Farbe der Gesellschaft – bei der DKB STIFTUNG weiß mit viel Luft (ADR-053) */
+.side .brandbox { margin: 12px 12px 14px; padding: 22px 20px 16px; border-radius: 14px; background: var(--nav-bg); color: #fff; display: flex; flex-direction: column; gap: 12px; }
+.side .wordmark { padding-top: 10px; border-top: 1px solid rgba(255,255,255,.35); }
+.side .wordmark .wm { font-size: 1.15rem; font-weight: 600; letter-spacing: .38em; }
+.side .wordmark .wm-sub { font-weight: 400; }
+[data-logo="white"] .side .brandbox { background: #FFFFFF; color: #1E2318; border: 1px solid var(--line-2); padding: 32px 26px 20px; gap: 22px; }
+[data-logo="white"] .side .wordmark { border-top-color: #E3E6EC; }
+[data-logo="white"] .side .wordmark .wm { color: var(--brand); }
+[data-logo="white"] .side .wordmark .wm-sub { color: #5B6152; }
+.side .nav { display: flex; flex-direction: column; gap: 1px; padding: 0 10px; }
+.side .nav a { display: flex; align-items: center; gap: 12px; min-height: 40px; padding: 0 12px; border-radius: 8px; color: var(--fg); text-decoration: none; font-weight: 500; font-size: .95rem; }
+.side .nav a svg { color: var(--muted); }
+.side .nav a:hover { background: var(--surface-2); }
+.side .nav a[aria-current="page"] { background: var(--brand-tint); color: var(--brand-ink); font-weight: 600; box-shadow: inset 3px 0 0 var(--brand); }
+.side .nav a[aria-current="page"] svg { color: var(--brand-ink); }
+.side .nav .nav-admin { margin-top: 10px; border-top: 1px solid var(--line-2); border-radius: 0 0 8px 8px; }
+.side .nav .nbadge { background: var(--brand); color: #fff; }
+.side .foot { margin-top: auto; padding: 16px 22px 0; font-size: .8rem; color: var(--muted); }
 .main { display: flex; flex-direction: column; min-width: 0; }
 .topbar { display: flex; align-items: center; gap: 10px; padding: 12px 28px; background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 10; }
 .mobile-brand { display: none; }
@@ -181,6 +194,10 @@ td.actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end
   .mobile-brand { display: flex; align-items: center; gap: 12px; flex: 1; }
   .topbar .iconbtn { background: transparent; border: 0; color: #fff; }
   .topbar .avatar { background: rgba(255,255,255,.9); color: var(--fg); }
+  [data-logo="white"] .topbar { background: #FFFFFF; color: #1E2318; border-bottom: 1px solid #E3E6EC; }
+  [data-logo="white"] .topbar .iconbtn { color: #1E2318; }
+  [data-logo="white"] .topbar .avatar { background: var(--brand-tint); color: var(--brand-ink); }
+  [data-logo="white"] .topbar .wm { color: var(--brand); }
   .content { padding: 18px 16px; }
   h1 { font-size: 1.6rem; }
   .bnav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--line); padding: 6px 4px 14px; z-index: 20; }
@@ -192,16 +209,15 @@ td.actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end
   .login .hero { padding: 2rem 1.25rem; }
   .login .hero h1 { font-size: 2rem; }
   .login .pane { padding: 1.5rem 1rem 3rem; }
-  .logo-plate.logo-hero { width: 240px; }
+  .logo-plate.logo-hero { margin: -2rem -1.25rem 0; padding: 26px 1.25rem; }
+  .logo-plate.logo-hero img { width: 220px; }
 }
 
 .brandband { display: flex; align-items: center; gap: 14px; margin: -1.2rem -1.4rem 0; padding: 14px 1.4rem; background: var(--nav-bg); color: #fff; border-radius: 14px 14px 0 0; }
 
 /* Flächenfarben mit weniger als 4,5 : 1 Kontrast zu Weiß (z. B. Logo-Blau der DKB STIFTUNG, 3,4 : 1):
    Schrift auf der Fläche wird „groß und fett“ (WCAG: ab 18,66 px fett genügt 3 : 1). ADR-039 */
-[data-surface="low-contrast"] .side .nav a { font-size: 1.17rem; font-weight: 700; }
-[data-surface="low-contrast"] .side .foot { font-size: 1.17rem; font-weight: 700; line-height: 1.3; }
-[data-surface="low-contrast"] .wordmark .wm-sub { display: none; }
+[data-surface="low-contrast"] .login .wordmark .wm-sub { display: none; }
 [data-surface="low-contrast"] .wordmark.compact .wm { font-size: 1.2rem; }
 [data-surface="low-contrast"] .login .hero .small { font-size: 1.17rem; font-weight: 700; }
 [data-surface="low-contrast"] .brandband .wm, [data-surface="low-contrast"] .topbar .wm { font-size: 1.2rem; }
@@ -427,3 +443,5 @@ button.folder { text-align: left; width: 100%; font: inherit; color: inherit; cu
   .album { gap: 8mm; } .album-card { box-shadow: none; }
 }
 .kcard ~ .btn { justify-self: start; }
+[data-logo="white"] .brandband { background: #FFFFFF; color: #1E2318; border-bottom: 1px solid #E3E6EC; }
+[data-logo="white"] .brandband .wm { color: var(--brand); }
