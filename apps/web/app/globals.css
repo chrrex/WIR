@@ -390,8 +390,8 @@ button.folder { text-align: left; width: 100%; font: inherit; color: inherit; cu
 .social.thanks.m-GREEN { --motif: #3D6B2A; } .social.thanks.m-WIR { --motif: #6B7A3E; }
 .kudos { display: flex; gap: .75rem; align-items: center; padding: .75rem; border-radius: 12px; background: var(--brand-tint); }
 .kudos-emoji { font-size: 2rem; line-height: 1; }
-.motifs { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: .5rem; }
-.motifs button { display: grid; justify-items: center; gap: .25rem; padding: .75rem .25rem; font-size: .85rem; border: 2px solid var(--line, #E5E5E0); border-radius: 12px; background: var(--card, #fff); font: inherit; cursor: pointer; }
+.motifs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; }
+.motifs button { display: grid; justify-items: center; gap: .25rem; padding: .75rem .25rem; font-size: .85rem; border: 2px solid var(--line, #E5E5E0); border-radius: 12px; background: var(--surface); font: inherit; cursor: pointer; }
 .motifs button[aria-pressed="true"] { border-color: var(--brand, #6B7A3E); background: var(--brand-tint); }
 .motifs .e { font-size: 1.75rem; }
 .kudos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: .75rem; }
@@ -400,3 +400,30 @@ button.folder { text-align: left; width: 100%; font: inherit; color: inherit; cu
 .poll .bar span { display: block; height: 100%; background: var(--brand, #6B7A3E); }
 .poll-edit { border: 1px dashed var(--line, #D9D9D2); border-radius: 12px; padding: .75rem; }
 .btn.on { background: var(--brand-tint); }
+/* Danke-Karten plus (ADR-052): Klappkarte, Unterschriften, Konfetti */
+.social.thanks.m-GUEST { --motif: #B07D10; }
+.kcard { display: grid; perspective: 1200px; max-width: 520px; }
+.kface { grid-area: 1 / 1; border-radius: 14px; overflow: hidden; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow);
+  backface-visibility: hidden; transition: transform .6s cubic-bezier(.2,.7,.2,1); cursor: pointer; }
+.kface.back { transform: rotateY(180deg); padding: 1.25rem; display: flex; flex-direction: column; gap: .6rem; justify-content: center; border-top: 6px solid var(--motif, var(--brand)); }
+.kcard.flipped .front { transform: rotateY(-180deg); } .kcard.flipped .back { transform: rotateY(0); }
+.kart { display: block; width: 100%; height: auto; }
+.kmeta { display: grid; gap: .2rem; padding: .75rem 1rem 1rem; }
+.kflip { justify-self: start; background: none; border: 0; padding: 0; cursor: pointer; color: var(--brand-ink); text-decoration: underline; font: inherit; }
+.ktext { font-size: 1.15rem; line-height: 1.5; font-style: italic; margin: 0; }
+.ksigs { display: grid; gap: .1rem; border-top: 1px dashed var(--line); padding-top: .5rem; }
+.sig { font-family: 'Segoe Script', 'Bradley Hand', 'Snell Roundhand', 'Brush Script MT', cursive; font-size: 1.2rem; color: var(--info-ink); }
+.confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 60; }
+.confetti i { position: absolute; top: -12px; width: 9px; height: 14px; border-radius: 2px; animation: fall linear forwards; }
+@keyframes fall { to { top: 105%; transform: translateX(40px) rotate(720deg); } }
+/* Danke-Album: zum Drucken / als PDF speichern */
+.album { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.album-card { break-inside: avoid; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: #fff; color: #1E2318; }
+.album-card .body { padding: .9rem 1rem 1rem; display: grid; gap: .4rem; }
+@media (max-width: 640px) { .album { grid-template-columns: 1fr; } }
+@media print {
+  .side, .topbar, .bnav, .demo-bar, .noprint { display: none !important; }
+  body, .app, .main, .content { background: #fff !important; padding: 0 !important; margin: 0 !important; display: block !important; }
+  .album { gap: 8mm; } .album-card { box-shadow: none; }
+}
+.kcard ~ .btn { justify-self: start; }

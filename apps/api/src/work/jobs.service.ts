@@ -26,7 +26,22 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
   onModuleDestroy() { if (this.timer) clearInterval(this.timer); }
 
   async run(now = new Date()) {
-    return { published: await this.content.publishDue(now), started: await this.recurringChecklists(now), overdue: await this.overdueRuns(now), tasks: await this.tasksDue(now), acks: await this.openAcks(now), surveys: await this.surveysClosing(now) };
+    return { published: await this.content.publishDue(now), thanks: await this.thanksReminders(now), started: await this.recurringChecklists(now), overdue: await this.overdueRuns(now), tasks: await this.tasksDue(now), acks: await this.openAcks(now), surveys: await this.surveysClosing(now) };
+  }
+
+  /** Danke-Erinnerung: am Morgen nach der Veranstaltung (ab 8 Uhr) an die Leitung (ADR-052). */
+  private async thanksReminders(now: Date) {
+    const db = this.prisma.db;
+    if (Number(new Intl.DateTimeFormat('de-DE', { hour: 'numeric', hourCycle: 'h23', timeZone: 'Europe/Berlin' }).format(now)) < 8) return 0;
+    const due = await db.thanksReminder.findMany({ where: { sentAt: null, dueOn: { lt: new Date(now.toISOString().slice(0, 10)) } }, include: { group: { select: { name: true } } } });
+    for (const r of due) {
+      const claimed = await db.thanksReminder.updateMany({ where: { id: r.id, sentAt: null }, data: { sentAt: now } });
+      if (!claimed.count) continue;
+      const q = new URLSearchParams({ anlass: r.occasion, ...(r.groupId ? { group: r.groupId } : {}) });
+      await this.notifications.notify({ recipientIds: [r.userId], eventType: 'thanks.reminder', title: `„${r.occasion}“ ist vorbei – magst du ${r.group ? `Team ${r.group.name}` : 'deinem Team'} danken?`,
+        body: 'Ein kurzes Danke wirkt lange nach.', linkPath: `/social/danke?${q}`, dedupeKey: `thanks-reminder:${r.id}` });
+    }
+    return due.length;
   }
 
   /** Wiederkehrende Checklisten starten (z. B. HACCP täglich 06:00), fällig nach 4 Stunden. */

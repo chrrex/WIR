@@ -237,14 +237,16 @@ async function main() {
   await prisma.pollVote.createMany({ data: [[T('sven.r'), 0], [T('ana.f'), 0], [T('selin.a'), 1]].map(([userId, i]) => ({ userId: userId as string, optionId: poll.options[i as number].id })) });
 
   // Danke-Karten (ADR-051)
-  async function thanks(author: string, motif: string, to: string[], group: string | null, text: string, hoursAgo: number) {
+  async function thanks(author: string, motif: string, to: string[], group: string | null, text: string, hoursAgo: number, signers: string[] = [], source: string | null = null) {
     const names = [...live.filter((u) => to.includes(u.id)).map((u) => u.displayName), ...(group ? [`Team ${group}`] : [])];
     const ci = await post({ author, kind: 'SOCIAL', category: 'THANKS', hoursAgo, title: `Danke, ${names.join(' und ')}!`, text, recipients: employees, audience: [{ targetType: 'ALL_USERS' }], likes: [maren.id] });
-    await prisma.post.update({ where: { id: ci.id }, data: { kudosMotif: motif, kudosGroupId: group ? groups.get(group) : null } });
+    await prisma.post.update({ where: { id: ci.id }, data: { kudosMotif: motif, kudosGroupId: group ? groups.get(group) : null, kudosSource: source } });
+    await prisma.reaction.createMany({ data: signers.map((userId) => ({ contentItemId: ci.id, userId, type: 'SIGN' as const })) });
     await prisma.mention.createMany({ data: to.map((mentionedUserId) => ({ mentionedUserId, contentItemId: ci.id })) });
   }
-  await thanks(jana.id, 'HELP', [], 'Housekeeping', 'Danke für die superschnelle Zimmerfreigabe am Samstag – 14 Anreisen vor 13 Uhr, und alle Gäste waren happy!', 26);
-  await thanks(T('sven.r'), 'TEAM', [T('ana.f')], null, 'Ana, du bist gestern beim Bankett spontan eingesprungen und hast den Abend gerettet. Danke!', 40);
+  await thanks(jana.id, 'HELP', [], 'Housekeeping', 'Danke für die superschnelle Zimmerfreigabe am Samstag – 14 Anreisen vor 13 Uhr, und alle Gäste waren happy!', 26, [T('selin.a'), T('jonas.w'), maren.id]);
+  await thanks(T('sven.r'), 'TEAM', [T('ana.f')], null, 'Ana, du bist gestern beim Bankett spontan eingesprungen und hast den Abend gerettet. Danke!', 40, [T('tobias.k')]);
+  await thanks(maren.id, 'GUEST', [], 'Service', 'Wir haben uns vom ersten Moment an willkommen gefühlt. Das Frühstücksteam war herzlich wie nie – danke für dieses wunderbare Wochenende!', 52, [], 'Gästebuch');
 
   async function handover(o: { author: string; group: string; shift: string; hoursAgo: number; subject: string; text: string; readBy?: string[] }) {
     const ci = await prisma.contentItem.create({ data: {

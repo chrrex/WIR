@@ -527,6 +527,16 @@ Für Vorführungen und Tests: Auf der Anmeldeseite eine Personenauswahl, in der 
 - Keine Ranglisten und keine Auswertung pro Person für Vorgesetzte (keine Leistungskontrolle, Betriebsrat). Jede:r sieht die eigene Sammlung „Meine Danke-Karten“ in den Einstellungen; das Dashboard zeigt die letzten Karten und nur die Gesamtzahl des Monats.
 - Umsetzung als Social-Kategorie `THANKS` (`posts.kudos_motif`, `posts.kudos_group_id`, bedankte Personen in `mentions`). Migration `20261011020000_umfragen_lesezeichen_danke`.
 
+## ADR-052 · Danke-Karten plus — ENTSCHIEDEN (11.10.2026)
+
+- **Klappkarte**: eigene, flache Illustration je Motiv (inline SVG, keine fremden Bilder); vorne Motiv und Empfänger:innen, hinten Text und Unterschriften. Umdrehen per Klick oder Knopf (Tastatur), die verdeckte Seite ist `inert`.
+- **Konfetti** beim ersten Öffnen einer Karte an dich (auch als Team-Mitglied); gemerkt nur im Browser, kein Lesestatus bei Social (ADR-031). Bei „weniger Bewegung“ kein Konfetti.
+- **Mitunterschreiben**: Reaktion `SIGN`, nicht für Autor:in und Bedankte. Namen erscheinen als Unterschriften auf der Kartenrückseite.
+- **Gästelob** (Motiv `GUEST`, ⭐): nur Leitungen (Teamleitung oder `news.publish_wide`), optional mit Quelle (`posts.kudos_source`), ohne Gästenamen.
+- **Erinnerung nach Veranstaltungen**: Leitungen planen Anlass, Datum und Team (`thanks_reminders`); am Morgen danach (ab 8 Uhr) kommt eine Benachrichtigung mit vorausgefüllter Karte. Später legt das Eventtool solche Erinnerungen automatisch an.
+- **Danke-Album**: eigene Karten als Druckansicht („Als PDF speichern“) – nur für die Person selbst.
+- Migration `20261011030000_danke_karten_plus`.
+
 ## Nächste Schritte
 
 1. Anbieterauswahl (ADR-022) bestätigen und Gastromatic-Prüfauftrag (ADR-021) stellen.
