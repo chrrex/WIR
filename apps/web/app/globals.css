@@ -384,3 +384,19 @@ button.folder { text-align: left; width: 100%; font: inherit; color: inherit; cu
 .rank .small { white-space: nowrap; }
 .rank a:hover .grow { text-decoration: underline; }
 .avatar { overflow: hidden; } .avatar .av { width: 100%; height: 100%; background: none; color: inherit; }
+/* Danke-Karten (ADR-051) */
+.social.thanks { border-top: 6px solid var(--motif, #6B7A3E); }
+.social.thanks.m-HOST { --motif: #8A6A2E; } .social.thanks.m-TEAM { --motif: #1E3560; } .social.thanks.m-HELP { --motif: #8A3443; }
+.social.thanks.m-GREEN { --motif: #3D6B2A; } .social.thanks.m-WIR { --motif: #6B7A3E; }
+.kudos { display: flex; gap: .75rem; align-items: center; padding: .75rem; border-radius: 12px; background: var(--brand-tint); }
+.kudos-emoji { font-size: 2rem; line-height: 1; }
+.motifs { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: .5rem; }
+.motifs button { display: grid; justify-items: center; gap: .25rem; padding: .75rem .25rem; font-size: .85rem; border: 2px solid var(--line, #E5E5E0); border-radius: 12px; background: var(--card, #fff); font: inherit; cursor: pointer; }
+.motifs button[aria-pressed="true"] { border-color: var(--brand, #6B7A3E); background: var(--brand-tint); }
+.motifs .e { font-size: 1.75rem; }
+.kudos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: .75rem; }
+/* Abstimmung */
+.poll .bar { height: 8px; border-radius: 4px; background: var(--line, #E5E5E0); overflow: hidden; margin-top: .2rem; }
+.poll .bar span { display: block; height: 100%; background: var(--brand, #6B7A3E); }
+.poll-edit { border: 1px dashed var(--line, #D9D9D2); border-radius: 12px; padding: .75rem; }
+.btn.on { background: var(--brand-tint); }

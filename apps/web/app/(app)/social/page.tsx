@@ -19,7 +19,7 @@ export default function SocialFeed() {
     <div className="stack-lg feed-col">
       <div className="ptitle">
         <div><h1>Social</h1><p className="muted small">Privates unter Kolleg:innen – freiwillig, ohne Lesestatus.</p></div>
-        {can('social.post') && <Link className="btn pri" href="/social/neu"><Icon name="plus" size={18} />Beitrag</Link>}
+        {can('social.post') && <div className="row"><Link className="btn" href="/social/danke">💚 Danke sagen</Link><Link className="btn pri" href="/social/neu"><Icon name="plus" size={18} />Beitrag</Link></div>}
       </div>
       <div className="chips" role="group" aria-label="Kategorie">
         <button className={`fchip ${!cat ? 'on' : ''}`} aria-pressed={!cat} onClick={() => setCat('')}>Alles</button>

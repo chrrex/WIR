@@ -22,7 +22,7 @@ function greeting() {
   return h < 11 ? 'Guten Morgen' : h < 17 ? 'Hallo' : 'Guten Abend';
 }
 
-const WIDGET_HREF: Record<string, string> = { news: '/news', handovers: '/uebergaben', social: '/social', tasks: '/aufgaben', checklists: '/checklisten', surveys: '/umfragen' };
+const WIDGET_HREF: Record<string, string> = { news: '/news', handovers: '/uebergaben', social: '/social', tasks: '/aufgaben', checklists: '/checklisten', surveys: '/umfragen', thanks: '/social' };
 
 export default function StartPage() {
   const { me } = useMe();
@@ -71,7 +71,7 @@ export default function StartPage() {
         {(data?.widgets ?? []).filter((w) => w.state === 'ready').map((w) => (
           <section className="card widget" key={w.key}>
             <div className="chead">
-              <h2>{w.title}{w.count ? <span className="muted"> · {w.count} {w.key === 'tasks' ? 'offen' : 'neu'}</span> : null}</h2>
+              <h2>{w.title}{w.count ? <span className="muted"> · {w.key === 'thanks' ? `${w.count}× Danke im ${new Intl.DateTimeFormat('de-DE', { month: 'long' }).format(new Date())}` : `${w.count} ${w.key === 'tasks' ? 'offen' : 'neu'}`}</span> : null}</h2>
               <Link className="lnk small" href={WIDGET_HREF[w.key] ?? '/'}>Alle</Link>
             </div>
             {w.items?.length ? (

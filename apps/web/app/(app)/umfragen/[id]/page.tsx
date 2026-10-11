@@ -1,5 +1,6 @@
 'use client';
 
+import { BookmarkButton } from '@/components/content/Extras';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ReadStatus } from '@/components/content/ReadStatus';
@@ -53,6 +54,7 @@ export default function SurveyPage() {
       <Back href="/umfragen" label="Umfragen" />
       <section className="card stack">
         <h1>{s.title}</h1>
+        <div className="row"><BookmarkButton contentId={s.id} /></div>
         {s.description && <p>{s.description}</p>}
         <p className="small muted">{s.anonymous ? 'Anonym: deine Antworten werden ohne deinen Namen gespeichert.' : 'Nicht anonym.'}{s.closesAt && ` Läuft bis ${day(s.closesAt)}.`} Für {s.audience.join(', ')}.</p>
       </section>

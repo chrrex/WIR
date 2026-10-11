@@ -35,6 +35,7 @@ const P: Record<IconName, string> = {
   pin: 'M9 4h6l-1 6 4 3H6l4-3zM12 13v8',
   back: 'M15 6l-6 6 6 6',
   users: 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 20a6 6 0 0 1 12 0M16 5a3 3 0 0 1 0 6M21 20a6 6 0 0 0-4-5.6',
+  bookmark: 'M6 3h12v18l-6-4-6 4z',
   bellring: 'M6 16v-5a6 6 0 1 1 12 0v5l2 2H4zM10 21a2 2 0 0 0 4 0M3 7a9 9 0 0 1 3-4M21 7a9 9 0 0 0-3-4',
 };
 

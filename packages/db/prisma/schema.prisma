@@ -214,6 +214,7 @@ enum SocialCategory {
   CONGRATULATIONS
   LEISURE // Freizeit & Sport
   OTHER
+  THANKS // Danke-Karten (ADR-051)
 }
 
 enum MarketplaceIntent {
@@ -551,6 +552,8 @@ model User {
   remindersTriggered   Reminder[]         @relation("ReminderTriggeredBy")
   comments             Comment[]
   reactions            Reaction[]
+  pollVotes            PollVote[]
+  bookmarks            Bookmark[]
   mentionsReceived     Mention[]          @relation("MentionedUser")
   uploadedFiles        FileObject[]
 
@@ -728,6 +731,7 @@ model Group {
   audienceTargets     ContentAudience[]
   aclPrincipals       ResourceAcl[]
   handovers           Handover[]
+  kudosPosts          Post[]
   tasks               Task[]
   taskAssignees       TaskAssignee[]
   checklists          Checklist[]
@@ -863,6 +867,8 @@ model ContentItem {
   task             Task?
   checklistRun     ChecklistRun?
   idea             Idea?
+  poll             Poll?
+  bookmarks        Bookmark[]
 
   audiences    ContentAudience[]
   recipients   ContentRecipient[]
@@ -1171,8 +1177,12 @@ model Post {
   marketplaceIntent MarketplaceIntent? @map("marketplace_intent")
   priceLabel        String?            @map("price_label") // Freitext: "80 €", "zu verschenken"
   listingClosedAt   DateTime?          @map("listing_closed_at") @db.Timestamptz(6) // "verkauft/erledigt"
+  // nur THANKS: Motiv und bedanktes Team (Personen stehen in mentions)
+  kudosMotif        String?            @map("kudos_motif")
+  kudosGroupId      String?            @map("kudos_group_id") @db.Uuid
 
   contentItem    ContentItem  @relation(fields: [id], references: [id], onDelete: Cascade)
+  kudosGroup     Group?       @relation(fields: [kudosGroupId], references: [id], onDelete: SetNull)
   embeddedSurvey ContentItem? @relation("PostEmbeddedSurvey", fields: [embeddedSurveyId], references: [id], onDelete: SetNull)
 
   @@index([kind, socialCategory])
@@ -2198,4 +2208,56 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([actorId, occurredAt])
   @@map("audit_logs")
+}
+
+/// Kurze Abstimmung in News oder Übergaben (ADR-050) – nicht anonym, dafür gibt es Umfragen.
+model Poll {
+  id       String    @id @db.Uuid // = content_items.id
+  question String
+  multiple Boolean   @default(false)
+  closesAt DateTime? @map("closes_at") @db.Timestamptz(6)
+
+  contentItem ContentItem  @relation(fields: [id], references: [id], onDelete: Cascade)
+  options     PollOption[]
+
+  @@map("polls")
+}
+
+model PollOption {
+  id        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pollId    String @map("poll_id") @db.Uuid
+  label     String
+  sortOrder Int    @default(0) @map("sort_order")
+
+  poll  Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes PollVote[]
+
+  @@index([pollId])
+  @@map("poll_options")
+}
+
+model PollVote {
+  optionId  String   @map("option_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  option PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([optionId, userId])
+  @@index([userId])
+  @@map("poll_votes")
+}
+
+/// Lesezeichen: „Gemerkt“ – nur für die Person selbst sichtbar (ADR-050).
+model Bookmark {
+  userId        String   @map("user_id") @db.Uuid
+  contentItemId String   @map("content_item_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+
+  @@id([userId, contentItemId])
+  @@map("bookmarks")
 }
