@@ -187,4 +187,19 @@ describe('Neue Funktionen (e2e)', () => {
     await jana.post(`/api/v1/chat/messages/${msg.id}/reactions`).send({ type: 'LIKE' }).expect(400);
     await (await as('sven.r')).post(`/api/v1/chat/messages/${msg.id}/reactions`).send({ type: 'HEART' }).expect((r) => expect([403, 404]).toContain(r.status));
   });
+
+  test('Reaktionen bei News und Social (ADR-048)', async () => {
+    const jana = await as('jana.m');
+    const news = (await jana.get('/api/v1/news').expect(200)).body[0];
+    const before = news.reactions.find((r: { type: string }) => r.type === 'THUMBS_DOWN')?.count ?? 0;
+    const r1 = await jana.post(`/api/v1/content/${news.id}/reactions`).send({ type: 'THUMBS_DOWN' }).expect(200);
+    expect(r1.body.reactions.find((r: { type: string }) => r.type === 'THUMBS_DOWN')).toMatchObject({ count: before + 1, mine: true });
+    const detail = (await jana.get(`/api/v1/news/${news.id}`).expect(200)).body;
+    expect(detail.reactions.find((r: { type: string }) => r.type === 'THUMBS_DOWN').mine).toBe(true);
+    await jana.post(`/api/v1/content/${news.id}/reactions`).send({ type: 'THUMBS_DOWN' }).expect(200); // wieder aus
+    const post = (await jana.get('/api/v1/social').expect(200)).body[0];
+    const r2 = await jana.post(`/api/v1/content/${post.id}/reactions`).send({ type: 'CELEBRATE' }).expect(200);
+    expect(r2.body.reactions.some((r: { type: string; mine: boolean }) => r.type === 'CELEBRATE' && r.mine)).toBe(true);
+    await jana.post(`/api/v1/content/${post.id}/reactions`).send({ type: 'LIKE' }).expect(400);
+  });
 });

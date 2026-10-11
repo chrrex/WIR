@@ -4,7 +4,7 @@ import { ZodPipe } from '../common/zod.pipe';
 import { PrismaService } from '../common/prisma.service';
 import { CurrentUser, RequirePermission, SessionUser } from '../auth/decorators';
 import { PolicyService } from '../policy/policy.service';
-import { ContentService } from './content.service';
+import { ContentService, REACTIONS, ReactionKind } from './content.service';
 
 const CommentBody = z.object({ text: z.string().min(1).max(2000), mentionIds: z.array(z.uuid()).max(20).default([]) });
 const ReportBody = z.object({ reason: z.string().min(3).max(500) });
@@ -35,6 +35,13 @@ export class ContentController {
   @HttpCode(200)
   like(@CurrentUser() me: SessionUser, @Param('id', ParseUUIDPipe) id: string) {
     return this.content.toggleLike(me.id, id);
+  }
+
+  @RequirePermission('reactions.create')
+  @Post('content/:id/reactions')
+  @HttpCode(200)
+  react(@CurrentUser() me: SessionUser, @Param('id', ParseUUIDPipe) id: string, @Body(new ZodPipe(z.object({ type: z.enum(REACTIONS) }))) b: { type: ReactionKind }) {
+    return this.content.toggleReaction(me.id, id, b.type);
   }
 
   @Get('content/:id/comments')

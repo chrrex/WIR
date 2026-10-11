@@ -9,13 +9,13 @@ import { when } from '@/lib/time';
 import { Avatar } from '@/components/content/Avatar';
 import { Images, ImageRef } from '@/components/content/Images';
 import { RichText } from '@/components/content/MentionText';
-import { LikeButton } from '@/components/content/LikeButton';
+import { ContentReactions, Reaction } from '@/components/content/Reactions';
 import { Comments } from '@/components/content/Comments';
 import { ReadStatus } from '@/components/content/ReadStatus';
 import { ReportButton } from '@/components/content/ReportButton';
 import { Icon } from '@/components/Icon';
 
-interface News { id: string; title: string; text: string; important: boolean; pinned: boolean; publishedAt: string; author: { name: string; job: string | null }; audiences: string[]; commentsEnabled: boolean; mine: boolean; canDelete: boolean; liked: boolean; likes: number; images: ImageRef[] }
+interface News { id: string; title: string; text: string; important: boolean; pinned: boolean; publishedAt: string; author: { name: string; job: string | null }; audiences: string[]; commentsEnabled: boolean; mine: boolean; canDelete: boolean; reactions: Reaction[]; images: ImageRef[] }
 
 export default function NewsDetail() {
   const { id } = useParams<{ id: string }>();
@@ -44,7 +44,7 @@ export default function NewsDetail() {
           <div className="prose"><RichText text={n.text} /></div>
           <Images images={n.images} />
           <div className="row wrap actions-bar">
-            <LikeButton contentId={n.id} liked={n.liked} likes={n.likes} />
+            <ContentReactions contentId={n.id} initial={n.reactions} />
             {!n.mine && <ReportButton path={`/content/${n.id}/report`} />}
             {n.canDelete && <button className="btn sm warn" onClick={async () => { await api(`/news/${n.id}`, { method: 'DELETE' }); router.replace('/news'); }}><Icon name="trash" size={16} />Löschen</button>}
           </div>

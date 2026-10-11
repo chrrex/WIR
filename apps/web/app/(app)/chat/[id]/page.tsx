@@ -11,28 +11,10 @@ import { ChatList } from '@/components/chat/ChatList';
 import { MentionText, Person } from '@/components/content/MentionText';
 import { Absent, absentText } from '@/components/Absent';
 import { Icon } from '@/components/Icon';
+import { Reaction, Reactions } from '@/components/content/Reactions';
 
-interface Msg { id: string; text: string | null; deleted: boolean; at: string; mine: boolean; sender: { id: string; name: string } | null; image: string | null; readByOther: boolean; reactions: Array<{ type: string; count: number; mine: boolean; names: string[] }> }
+interface Msg { id: string; text: string | null; deleted: boolean; at: string; mine: boolean; sender: { id: string; name: string } | null; image: string | null; readByOther: boolean; reactions: Reaction[] }
 interface Conv { id: string; type: 'DIRECT' | 'GROUP'; title: string; members: Array<{ id: string; name: string }>; absent: Array<Absent & { id: string; name: string }>; messages: Msg[] }
-
-const EMOJI: Array<[string, string, string]> = [['THUMBS_UP', '👍', 'Daumen hoch'], ['THUMBS_DOWN', '👎', 'Daumen runter'], ['HEART', '❤️', 'Herz'], ['CELEBRATE', '🎉', 'Feiern']];
-
-/** Reaktionen unter einer Nachricht: vorhandene als Pillen, dazu ein kleiner Knopf zum Reagieren. */
-function Reactions({ m, onToggle }: { m: Msg; onToggle: (type: string) => void }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="reacts">
-      {m.reactions.map((r) => { const e = EMOJI.find((x) => x[0] === r.type)!; return (
-        <button key={r.type} className={`react ${r.mine ? 'on' : ''}`} aria-pressed={r.mine} title={r.names.join(', ')} aria-label={`${e[2]}: ${r.count} (${r.names.join(', ')})`} onClick={() => onToggle(r.type)}>{e[1]} {r.count}</button>
-      ); })}
-      {open ? (
-        <span className="react-pick" role="group" aria-label="Reaktion wählen">
-          {EMOJI.map(([type, e, label]) => <button key={type} className="react" aria-label={label} title={label} onClick={() => { onToggle(type); setOpen(false); }}>{e}</button>)}
-        </span>
-      ) : <button className="react add" aria-label="Reagieren" title="Reagieren" onClick={() => setOpen(true)}>☺︎+</button>}
-    </div>
-  );
-}
 
 export default function ChatThread() {
   const { id } = useParams<{ id: string }>();
@@ -114,7 +96,7 @@ export default function ChatThread() {
                     )}
                     <span className="meta">{when(m.at)}{m.mine && c.type === 'DIRECT' && <span className={m.readByOther ? 'ticks read' : 'ticks'} aria-label={m.readByOther ? 'gelesen' : 'zugestellt'}>{m.readByOther ? ' ✓✓' : ' ✓'}</span>}</span>
                   </div>
-                  {!m.deleted && <Reactions m={m} onToggle={(type) => api(`/chat/messages/${m.id}/reactions`, { method: 'POST', json: { type } }).then(load).catch(() => null)} />}
+                  {!m.deleted && <Reactions reactions={m.reactions} onToggle={(type) => api(`/chat/messages/${m.id}/reactions`, { method: 'POST', json: { type } }).then(load).catch(() => null)} />}
                 </div>
               );
             })}

@@ -201,7 +201,7 @@ async function main() {
     await prisma.contentRecipient.createMany({ data: [...new Set([...o.recipients, o.author])].map((userId) => ({ contentItemId: ci.id, userId })), skipDuplicates: true });
     const day = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()));
     if (o.readBy?.length) await prisma.readReceipt.createMany({ data: o.readBy.map((userId) => ({ contentItemId: ci.id, userId, firstSeenAt: day, openedAt: day })) });
-    if (o.likes?.length) await prisma.reaction.createMany({ data: o.likes.map((userId) => ({ contentItemId: ci.id, userId })) });
+    if (o.likes?.length) await prisma.reaction.createMany({ data: o.likes.map((userId, i) => ({ contentItemId: ci.id, userId, type: (['THUMBS_UP', 'HEART', 'CELEBRATE'] as const)[i % 3] })) });
     return ci;
   }
   const T = (u: string) => team.get(u)!;

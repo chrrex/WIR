@@ -7,6 +7,7 @@ import { PolicyService } from '../policy/policy.service';
 import { can } from '../policy/engine';
 import { NotificationService } from '../notifications/notification.service';
 import { absencesToday } from '../people/people.controller';
+import { REACTIONS, summarizeReactions } from '../content/content.service';
 
 const SendBody = z.object({
   text: z.string().max(4000).default(''),
@@ -17,8 +18,6 @@ const GroupBody = z.object({ title: z.string().trim().min(2).max(80), memberIds:
 const DirectBody = z.object({ userId: z.uuid() });
 const ReadBody = z.object({ messageId: z.uuid() });
 
-/** Reaktionen im Chat (ADR-048) */
-export const REACTIONS = ['THUMBS_UP', 'THUMBS_DOWN', 'HEART', 'CELEBRATE'] as const;
 const RETENTION_DAYS = 365; // ADR-023: Chat 12 Monate
 
 /** Löscht Chatnachrichten nach 12 Monaten (einmal täglich). */
@@ -167,7 +166,7 @@ export class ChatController {
         id: m.id, text: m.deletedAt ? null : m.body, deleted: !!m.deletedAt, at: m.createdAt, mine: m.senderId === me.id,
         sender: m.sender ? { id: m.sender.id, name: m.sender.displayName } : null,
         image: m.attachments[0]?.fileObjectId ?? null,
-        reactions: REACTIONS.map((type) => { const r = m.reactions.filter((x) => x.type === type); return { type, count: r.length, mine: r.some((x) => x.userId === me.id), names: r.map((x) => x.user.displayName) }; }).filter((r) => r.count),
+        reactions: summarizeReactions(m.reactions, me.id),
         // ✓✓ nur im 1:1-Chat (ADR-015)
         readByOther: c.type === 'DIRECT' && m.senderId === me.id && !!otherReadAt && otherReadAt >= m.createdAt,
       })),

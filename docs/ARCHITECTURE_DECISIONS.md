@@ -506,6 +506,7 @@ Für Vorführungen und Tests: Auf der Anmeldeseite eine Personenauswahl, in der 
 
 - Ein Knopf „Neuer Chat“: eine Person gewählt → Einzelchat, mehrere → Gruppe (Name nötig; anlegen weiterhin nur mit `chat.create_group`). Einzel- und Gruppenchats stehen gemeinsam in einer Liste neben dem Verlauf.
 - Reaktionen auf Nachrichten: 👍 👎 ❤️ 🎉 – je Person und Art einmal, per Klick an/aus; wer reagiert hat, sehen nur die Teilnehmenden (wie den Chat selbst). Keine Benachrichtigung für Reaktionen. Migration `20261011010000_chat_reaktionen` (Enum-Werte, `reactions.chat_message_id`).
+- Dieselben vier Reaktionen gibt es bei News und Social (`POST /content/:id/reactions`, gemeinsame Komponente `Reactions`); die Listen zeigen eine Kurzform („👍 3 ❤️ 1“). Ideen behalten „Unterstützen“ (LIKE) – daraus entsteht die Rangliste „Beste Ideen“ (Top 5, ohne abgelehnte) neben der Ideenliste.
 
 ## Nächste Schritte
 

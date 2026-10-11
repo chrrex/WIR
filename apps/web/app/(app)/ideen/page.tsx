@@ -19,6 +19,7 @@ export default function Ideas() {
   const { busy, error: err, run } = useSubmit();
   const counts = useReadCounts((data?.ideas ?? []).map((i) => i.id));
   if (!data) return <State error={error} loading />;
+  const top = [...data.ideas].filter((i) => i.likes > 0 && i.status !== 'REJECTED').sort((a, b) => b.likes - a.likes).slice(0, 5);
   const list = data.ideas.filter((i) => (tab === 'done') === DONE.includes(i.status)).sort((a, b) => b.likes - a.likes);
   return (
     <div className="stack-lg">
@@ -33,6 +34,8 @@ export default function Ideas() {
           <div className="row"><button type="button" className="btn" onClick={() => setF(null)}>Abbrechen</button><button className="btn pri" disabled={busy}>Einreichen</button></div>
         </form>
       )}
+      <div className="split">
+      <div className="stack">
       <div className="tabs" role="tablist"><button role="tab" aria-selected={tab === 'open'} onClick={() => setTab('open')}>Im Gespräch</button><button role="tab" aria-selected={tab === 'done'} onClick={() => setTab('done')}>Abgeschlossen</button></div>
       {list.length === 0 ? <div className="card empty">Hier ist noch nichts.</div> : (
         <div className="list">
@@ -48,6 +51,14 @@ export default function Ideas() {
           ))}
         </div>
       )}
+      </div>
+      {top.length > 0 && (
+        <aside className="aside card stack-s" aria-labelledby="rank">
+          <h2 id="rank" className="h-sub">Beste Ideen</h2>
+          <ol className="rank">{top.map((i) => <li key={i.id}><Link href={`/ideen/${i.id}`} className="row gap-s"><span className="grow">{i.title}</span><span className="muted small" aria-label={`${i.likes} Unterstützer:innen`}>👍 {i.likes}</span></Link></li>)}</ol>
+        </aside>
+      )}
+      </div>
     </div>
   );
 }

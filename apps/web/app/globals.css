@@ -377,3 +377,7 @@ button.folder { text-align: left; width: 100%; font: inherit; color: inherit; cu
 .react.on { border-color: var(--brand); background: var(--brand-tint); }
 .react.add { color: var(--muted); }
 .react-pick { display: inline-flex; gap: 4px; }
+.rank { margin: 0; padding-left: 1.4rem; display: grid; gap: .5rem; }
+.rank a { color: inherit; text-decoration: none; }
+.rank .small { white-space: nowrap; }
+.rank a:hover .grow { text-decoration: underline; }
