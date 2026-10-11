@@ -397,4 +397,60 @@ describe('Neue Funktionen (e2e)', () => {
     groups = (await lena.get('/api/v1/admin/groups').expect(200)).body;
     expect(groups.length).toBeGreaterThan(5);
   });
+
+  test('Checklisten für alle: anlegen, zuweisen, privat, jede:r einzeln, Bedingungen, Pflicht-Text, Folgeaufgabe (ADR-056)', async () => {
+    const jana = await as('jana.m');
+    const ana = await as('ana.f');
+    const rez = (await prisma.db.group.findFirstOrThrow({ where: { name: 'Rezeption' } })).id;
+    const anaId = await uid('ana.f');
+    const tpl = {
+      title: 'Lobby-Check', visibility: 'PRIVATE', completionMode: 'EACH', assignees: [`U:${anaId}`, `U:${await uid('jana.m')}`], startNow: true, dueInHours: 4,
+      items: [
+        { key: 'h', title: 'Eingang', type: 'HEADING' },
+        { key: 'a', title: 'Zustand Teppich', type: 'CHOICE', options: ['Gut', 'Fleck', 'Schaden'], flagged: ['Schaden'], createTask: true },
+        { key: 'b', title: 'Foto vom Schaden', type: 'PHOTO', showIf: { key: 'a', value: 'Schaden' } },
+        { key: 'c', title: 'Blumen frisch', type: 'CHECK', requireNote: true },
+        { key: 'd', title: 'Abzeichnen', type: 'SIGNATURE', required: false },
+      ],
+    };
+    await jana.post('/api/v1/checklists/templates').send({ ...tpl, assignees: ['C:00000000-0000-0000-0000-000000000000'] }).expect((res) => expect([400, 403]).toContain(res.status));
+    const created = (await jana.post('/api/v1/checklists/templates').send(tpl).expect(201)).body;
+    expect(created.runs).toBe(2);
+    // privat: Tobias sieht die Vorlage nicht; Ana sieht ihre eigene Liste
+    expect((await (await as('tobias.k')).get('/api/v1/checklists').expect(200)).body.templates.some((t: { id: string }) => t.id === created.id)).toBe(false);
+    const mine = (await ana.get('/api/v1/checklists').expect(200)).body.runs.find((r: { title: string; mine: boolean }) => r.title.startsWith('Lobby-Check') && r.mine);
+    let r = (await ana.get(`/api/v1/checklists/runs/${mine.id}`).expect(200)).body;
+    expect(r).toMatchObject({ mode: 'EACH', assignee: 'Ana F.', canEdit: true });
+    const it = (t: string) => r.items.find((x: { title: string }) => x.title === t);
+    expect(it('Foto vom Schaden').visible).toBe(false);
+    // Janas Liste darf Ana nicht ausfüllen (sieht sie gar nicht)
+    const other = (await jana.get('/api/v1/checklists').expect(200)).body.runs.find((x: { title: string; assignee: string }) => x.title.startsWith('Lobby-Check') && x.assignee === 'Jana M.');
+    await ana.patch(`/api/v1/checklists/runs/${other.id}/items/${it('Blumen frisch').id}`).send({ done: true }).expect(404);
+    await ana.patch(`/api/v1/checklists/runs/${mine.id}/items/${it('Zustand Teppich').id}`).send({ value: 'Kaputt' }).expect(400);
+    r = (await ana.patch(`/api/v1/checklists/runs/${mine.id}/items/${it('Zustand Teppich').id}`).send({ value: 'Schaden' }).expect(200)).body;
+    expect(it('Zustand Teppich').outOfRange).toBe(true);
+    expect(r.items.find((x: { title: string }) => x.title === 'Foto vom Schaden').visible).toBe(true);
+    r = (await ana.patch(`/api/v1/checklists/runs/${mine.id}/items/${it('Blumen frisch').id}`).send({ done: true }).expect(200)).body;
+    expect((await ana.post(`/api/v1/checklists/runs/${mine.id}/complete`).expect(400)).body.message).toContain('Foto vom Schaden');
+    // Bedingung zurück auf „Gut“: Foto nicht mehr nötig, aber Text bei „Blumen frisch“ fehlt
+    await ana.patch(`/api/v1/checklists/runs/${mine.id}/items/${it('Zustand Teppich').id}`).send({ value: 'Gut' }).expect(200);
+    expect((await ana.post(`/api/v1/checklists/runs/${mine.id}/complete`).expect(400)).body.message).toContain('Text fehlt');
+    await ana.patch(`/api/v1/checklists/runs/${mine.id}/items/${it('Blumen frisch').id}`).send({ note: 'Neue Tulpen' }).expect(200);
+    await ana.patch(`/api/v1/checklists/runs/${mine.id}/items/${it('Zustand Teppich').id}`).send({ value: 'Schaden' }).expect(200);
+    const png = await sharp({ create: { width: 20, height: 20, channels: 3, background: '#ccc' } }).png().toBuffer();
+    const photo = (await ana.post('/api/v1/files').attach('file', png, { filename: 'p.png', contentType: 'image/png' }).expect(201)).body.id;
+    await ana.patch(`/api/v1/checklists/runs/${mine.id}/items/${it('Foto vom Schaden').id}`).send({ photoFileId: photo }).expect(200);
+    await ana.post(`/api/v1/checklists/runs/${mine.id}/complete`).expect(400); // kritische Antwort ohne Notiz
+    await ana.patch(`/api/v1/checklists/runs/${mine.id}/items/${it('Zustand Teppich').id}`).send({ note: 'Riss am Eingang' }).expect(200);
+    expect((await ana.post(`/api/v1/checklists/runs/${mine.id}/complete`).expect(200)).body.deviations).toBe(1);
+    const task = await prisma.db.task.findFirstOrThrow({ where: { title: { startsWith: 'Zustand Teppich: Schaden' } } });
+    expect(task.description).toContain('Riss am Eingang');
+    // bearbeiten = neue Version, löschen nur Ersteller:in
+    const full = (await jana.get(`/api/v1/checklists/templates/${created.id}`).expect(200)).body;
+    expect(full.items[2].showIf).toEqual({ key: full.items[1].key, value: 'Schaden' });
+    await ana.put(`/api/v1/checklists/templates/${created.id}`).send(tpl).expect((res) => expect([403, 404]).toContain(res.status));
+    await jana.put(`/api/v1/checklists/templates/${created.id}`).send({ ...tpl, startNow: false, visibility: 'PUBLIC', assignees: [`G:${rez}`] }).expect(200);
+    expect((await prisma.db.checklist.findUniqueOrThrow({ where: { id: created.id } })).version).toBe(2);
+    await jana.delete(`/api/v1/checklists/templates/${created.id}`).expect(200);
+  });
 });

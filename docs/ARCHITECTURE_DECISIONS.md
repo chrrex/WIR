@@ -560,6 +560,16 @@ Für Vorführungen und Tests: Auf der Anmeldeseite eine Personenauswahl, in der 
 - **Leitplanken:** alles nur im eigenen Bereich (Gesellschaft); sensible Rechte, die man selbst nicht hat, kann man nicht vergeben; eigene Rollen ändert eine zweite Person (Vier-Augen); jede Änderung steht im Protokoll.
 - Demo: `lena.k` hat zusätzlich „Rechteverwaltung“, damit alles ausprobiert werden kann. **Im Echtbetrieb** liegen IT-Administration und Rechteverwaltung bei verschiedenen Personen.
 
+## ADR-056 · Checklisten für alle — ENTSCHIEDEN (11.10.2026)
+
+- **Alle dürfen anlegen:** Jede:r baut eigene Checklisten und weist sie Personen, Gruppen (z. B. Azubis) oder sich selbst zu. Bearbeiten dürfen die Ersteller:in und Personen mit „Vorlagen verwalten“.
+- **Öffentlich oder privat:** Öffentliche Vorlagen sieht das ganze Haus (zum Starten und Kopieren), private nur Ersteller:in und Zugewiesene.
+- **Gemeinsam oder jede:r einzeln:** „Gemeinsam“ = ein Durchlauf, den alle Zugewiesenen zusammen abhaken. „Jede:r einzeln“ = ein eigener Durchlauf pro Person (max. 200), nur sie darf ihn bearbeiten.
+- **Feldtypen:** Häkchen, Ja/Nein/n. a., Auswahl, Text, Zahl mit Grenzen, Temperatur, Foto, Unterschrift, Zwischenüberschrift. Je Punkt: Pflicht, „Text muss eingegeben werden“, „Foto ist Pflicht“, Hinweis.
+- **Clever:** Kritische Antworten (z. B. „Nein“, „Mangel“) werden markiert, verlangen eine Bemerkung und legen auf Wunsch automatisch eine Folgeaufgabe an. Punkte können nur bei einer bestimmten Antwort erscheinen („Foto vom Mangel“). Fälligkeit, Wiederholung, Vier-Augen-Abnahme, Rückfragen, Druck/PDF-Bericht.
+- **Versionen:** Bearbeiten erzeugt eine neue Version; laufende und erledigte Durchläufe behalten ihre Punkte (Nachweis, z. B. HACCP).
+- **Starten:** Wer zugewiesen ist (oder bearbeiten darf), startet für alle Zugewiesenen; sonst startet man nur für sich selbst.
+
 ## Nächste Schritte
 
 1. Anbieterauswahl (ADR-022) bestätigen und Gastromatic-Prüfauftrag (ADR-021) stellen.

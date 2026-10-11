@@ -140,26 +140,41 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
   await task({ author: jana, userId: jana, title: 'Namensschild neu bestellen', status: 'DONE' });
 
   // ---- Checklisten ----------------------------------------------------------
-  const haccp = await prisma.checklist.create({ data: { companyId: sgl, groupId: G('Küche'), title: 'HACCP Kühlräume morgens', kind: 'HACCP', description: 'Jeden Morgen vor Arbeitsbeginn.',
+  const haccp = await prisma.checklist.create({ data: { companyId: sgl, groupId: G('Küche'), assignees: [`G:${G('Küche')}`], ownerId: T('sven.r'), visibility: 'PRIVATE', title: 'HACCP Kühlräume morgens', kind: 'HACCP', description: 'Jeden Morgen vor Arbeitsbeginn.',
     recurrenceRule: 'FREQ=DAILY;BYHOUR=6;BYMINUTE=0', nextRunAt: nextSix(),
     items: { create: [
       { title: 'Kühlraum 1', responseType: 'TEMPERATURE', minValue: 0, maxValue: 4, unit: '°C', sortOrder: 1, knowledgeArticleId: kuehlkette },
       { title: 'Tiefkühlraum', responseType: 'TEMPERATURE', minValue: -25, maxValue: -18, unit: '°C', sortOrder: 2 },
       { title: 'Kühlschrank Patisserie', responseType: 'TEMPERATURE', minValue: 0, maxValue: 7, unit: '°C', sortOrder: 3 },
-      { title: 'Türdichtungen sauber und dicht', responseType: 'YES_NO', sortOrder: 4 },
+      { title: 'Türdichtungen sauber und dicht', responseType: 'YES_NO', flagged: ['Nein'], createTask: true, sortOrder: 4 },
       { title: 'Besonderheiten', responseType: 'TEXT', isRequired: false, sortOrder: 5 },
     ] } }, include: { items: true } });
-  await prisma.checklist.create({ data: { companyId: sgl, groupId: G('Rezeption'), title: 'Rezeption Frühschicht', kind: 'SHIFT',
+  await prisma.checklist.create({ data: { companyId: sgl, groupId: G('Rezeption'), assignees: [`G:${G('Rezeption')}`], title: 'Rezeption Frühschicht', kind: 'SHIFT',
     items: { create: [
       { title: 'Kasse gezählt und Anfangsbestand eingetragen', sortOrder: 1 }, { title: 'Anreiseliste gedruckt', sortOrder: 2 },
       { title: 'Schlüsselkarten-Encoder geprüft', sortOrder: 3 }, { title: 'Übergabe der Nacht gelesen', sortOrder: 4 },
       { title: 'Notiz für die Spätschicht', responseType: 'TEXT', isRequired: false, sortOrder: 5 },
     ] } } });
-  await prisma.checklist.create({ data: { companyId: sgl, groupId: G('Service'), title: 'Bankett Aufbau Schlosssaal', kind: 'EVENT', requiresApproval: true,
+  await prisma.checklist.create({ data: { companyId: sgl, groupId: G('Service'), assignees: [`G:${G('Service')}`], title: 'Bankett Aufbau Schlosssaal', kind: 'EVENT', requiresApproval: true,
     items: { create: [
       { title: 'Tische nach Plan gestellt', sortOrder: 1 }, { title: 'Eindecken geprüft (Besteck, Gläser)', sortOrder: 2 },
-      { title: 'Allergenkarten an den markierten Plätzen', sortOrder: 3 }, { title: 'Notausgänge frei', responseType: 'YES_NO', sortOrder: 4 },
+      { title: 'Allergenkarten an den markierten Plätzen', sortOrder: 3 }, { title: 'Notausgänge frei', responseType: 'YES_NO', flagged: ['Nein'], sortOrder: 4 },
     ] } } });
+  // Beispiel mit allen Feldtypen (ADR-056): Abschnitte, Auswahl mit kritischer Antwort, bedingtes Foto, Pflicht-Text, Unterschrift
+  const zk = await prisma.checklist.create({ data: { companyId: sgl, groupId: G('Housekeeping'), ownerId: T('marta.w'), assignees: [`G:${G('Housekeeping')}`], visibility: 'PUBLIC', completionMode: 'EACH',
+    title: 'Zimmerkontrolle nach Abreise', kind: 'AUDIT', description: 'Vor der Freigabe eines Zimmers – jede:r für die eigenen Zimmer.', dueInHours: 8 } });
+  const zi = async (o: Record<string, unknown>) => prisma.checklistItem.create({ data: { checklistId: zk.id, ...o } as never });
+  await zi({ title: 'Bad', responseType: 'HEADING', isRequired: false, sortOrder: 0 });
+  await zi({ title: 'Dusche und WC gereinigt', sortOrder: 1 });
+  await zi({ title: 'Handtücher und Pflegeprodukte aufgefüllt', sortOrder: 2 });
+  await zi({ title: 'Zimmer', responseType: 'HEADING', isRequired: false, sortOrder: 3 });
+  const zust = await zi({ title: 'Zustand Möbel und Wände', responseType: 'CHOICE', options: ['In Ordnung', 'Verschmutzt', 'Mangel'], flagged: ['Mangel'], createTask: true, sortOrder: 4,
+    description: 'Bei „Mangel“ bitte kurz beschreiben und ein Foto machen – das Team bekommt automatisch eine Aufgabe.' });
+  await zi({ title: 'Foto vom Mangel', responseType: 'PHOTO', sortOrder: 5, showIfItemId: zust.id, showIfValue: 'Mangel' });
+  await zi({ title: 'Minibar geprüft', responseType: 'YES_NO', flagged: ['Nein'], requireNote: false, sortOrder: 6 });
+  await zi({ title: 'Zimmernummer', responseType: 'TEXT', sortOrder: 7 });
+  await zi({ title: 'Abzeichnen', responseType: 'SIGNATURE', sortOrder: 8 });
+
   const runId = await item('CHECKLIST_RUN', T('sven.r'), 26, [{ targetType: 'GROUP', groupId: G('Küche') }], c.membersOf('Küche'), { reactionsEnabled: false });
   const values: Record<string, { n?: number; t?: string; out?: boolean; note?: string }> = {
     'Kühlraum 1': { n: 3 }, Tiefkühlraum: { n: -16, out: true, note: 'Tür stand offen, geschlossen. Nachmessung 08:15: -19 °C.' }, 'Kühlschrank Patisserie': { n: 5 }, 'Türdichtungen sauber und dicht': { t: 'Ja' },
