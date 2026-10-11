@@ -12,6 +12,8 @@ services:
       APP_SECRET: nur-fuer-entwicklung-bitte-aendern
       API_URL: http://localhost:3001
       DEFAULT_COMPANY: SGL
+      # Demo-Modus: Personen per Klick wechseln (nur Testdaten, ADR-047)
+      DEMO_MODE: "true"
 
   db:
     image: postgres:16

@@ -360,3 +360,12 @@ button.folder { text-align: left; width: 100%; font: inherit; color: inherit; cu
 .facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; }
 .facts dt { color: var(--muted); }
 .facts dd { margin: 0; }
+
+/* ---- Demo-Modus (ADR-047) ---------------------------------------------- */
+.demo-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 8px 16px; background: #FFF3C4; color: #4A3B00; border-bottom: 1px solid #E8D27A; }
+.demo-bar select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid #C9B25A; background: #fff; color: #1E2318; max-width: 100%; }
+.demo-box { border: 2px dashed #C9B25A; background: #FFF9E0; color: #4A3B00; border-radius: 14px; padding: 14px; }
+.demo-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.demo-user { text-align: left; font: inherit; color: #1E2318; background: #fff; border: 1px solid #E8D27A; border-radius: 10px; padding: 8px 10px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+.demo-user:hover, .demo-user:focus-visible { border-color: #8A6D00; }
+.demo-user .xs { color: #5B4A00; }

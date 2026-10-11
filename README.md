@@ -31,6 +31,8 @@ Du brauchst nichts zu installieren – nur einen Browser und dein GitHub-Konto.
 
 Passwort für alle oben: **`Wir-Demo-2026`**
 
+**Noch schneller – Demo-Modus:** Im Codespace erscheint auf der Anmeldeseite eine Personenauswahl; in der App wechselst du oben in der gelben Leiste per Klick, ganz ohne Passwort. (Nur mit Testdaten – im Echtbetrieb ist der Demo-Modus aus.)
+
 **Erstzugang ausprobieren:** Auf der Anmeldeseite „Ich habe einen Einmal-Code“ wählen, Benutzername `paula.s`, Code **`482 913`** – danach vergibst du ein eigenes Passwort.
 
 **Freischaltung ausprobieren:** Als `lena.k` anmelden → **Verwaltung** → „Neu aus Gastromatic“ → **Freischalten**. Der angezeigte Code funktioniert sofort für die freigeschaltete Person.

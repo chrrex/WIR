@@ -19,6 +19,7 @@ async function bootstrap() {
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
   await app.listen(config.port, '0.0.0.0');
   console.log(`WIR-API läuft auf Port ${config.port}`);
+  if (config.demoMode) console.warn('⚠ DEMO-MODUS AN: Anmeldung ohne Passwort möglich (nur mit Testdaten). Niemals mit echten Daten betreiben.');
 }
 
 if (require.main === module) {

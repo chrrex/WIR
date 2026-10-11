@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { api } from '@/lib/api';
 import { useMe } from '@/lib/me';
 import { NAV } from '@/lib/nav';
+import { DemoBar } from '@/components/DemoSwitch';
 import { Icon } from './Icon';
 import { Logo, Wordmark } from './Logo';
 import { Bell } from './Bell';
@@ -63,6 +64,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       </nav>
 
       <div className="main">
+        <DemoBar currentId={me.user.id} />
         <header className="topbar">
           <div className="mobile-brand">
             <Logo branding={me.branding} variant="head" />
