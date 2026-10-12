@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Avatar } from '@/components/content/Avatar';
 import { Absent, AbsentChip } from '@/components/Absent';
 import { State, useLoad } from '@/components/work';
+import { SectionTabs } from '@/components/SectionTabs';
 
 interface P { id: string; name: string; job: string | null; groups: string[]; lead: boolean; absent: Absent | null }
 
@@ -19,7 +20,8 @@ export default function Team() {
   const away = data.filter((p) => p.absent).length;
   return (
     <div className="stack-lg">
-      <h1>Team</h1>
+      <h1>Kontakte</h1>
+      <SectionTabs />
       <div className="row wrap">
         <label htmlFor="tq" className="sr">Team durchsuchen</label>
         <input id="tq" type="search" className="input grow" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, Tätigkeit oder Bereich" />

@@ -585,6 +585,12 @@ Für Vorführungen und Tests: Auf der Anmeldeseite eine Personenauswahl, in der 
 - Neu: Abstimmungen können **anonym** sein. Dann liefert der Server keine Namen – für niemanden, auch nicht für die Ersteller:in; sichtbar bleiben nur die Zahlen. Gespeichert wird die Stimme weiterhin je Person, damit man sie ändern kann.
 - Die bisherigen Umfragen (mehrere Fragen, Mindestanzahl für Ergebnisse) bleiben technisch erhalten, sind aber nicht mehr verlinkt; vollständig entfernen, sobald klar ist, dass sie nicht gebraucht werden.
 
+## ADR-059 · Schlankeres Menü: Reiter statt eigener Menüpunkte — ENTSCHIEDEN (12.10.2026)
+
+- **Dokumente** steckt jetzt in **Wissen & SOPs** (Reiter „Artikel & SOPs“ | „Dokumente“), **Team** in **Kontakte** (Reiter „Kolleg:innen“ | „Externe Kontakte“). Adressen bleiben gleich (`/dokumente`, `/team`), Links funktionieren weiter.
+- Ein Menüpunkt erscheint, sobald einer seiner Bereiche freigeschaltet ist, und führt zum ersten davon; Reiter gibt es nur, wenn beide Bereiche freigeschaltet sind.
+- **Gemerkt** ist ein Symbol oben neben Glocke und Profil (auch am Handy).
+
 ## Nächste Schritte
 
 1. Anbieterauswahl (ADR-022) bestätigen und Gastromatic-Prüfauftrag (ADR-021) stellen.

@@ -7,7 +7,7 @@ import { Avatar } from './content/Avatar';
 import { TranslateBar } from './TranslateBar';
 import { api } from '@/lib/api';
 import { useMe } from '@/lib/me';
-import { NAV } from '@/lib/nav';
+import { navFor } from '@/lib/nav';
 import { DemoBar } from '@/components/DemoSwitch';
 import { Icon } from './Icon';
 import { Logo, Wordmark } from './Logo';
@@ -29,12 +29,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
     return <div className="loading" role="status">WIR wird geladen …</div>;
   }
 
-  const items = NAV.filter((n) => (!n.module || me.modules.includes(n.module)) && (!n.anyOf || n.anyOf.some((p) => me.permissions.includes(p))));
+  const items = navFor(me);
   const isAdmin = ['users.read', 'audit.read', 'social.moderate', 'groups.manage', 'roles.manage', 'companies.manage_modules'].some((x) => can(x));
   const badgeOf = (href: string) => (href === '/news' ? badges.news : href === '/uebergaben' ? badges.handovers : href === '/chat' ? badges.chat : 0);
   const active = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
+  const activeItem = (n: (typeof items)[number]) => n.paths.some(active);
   const preferred = me.settings?.mobileNavItems?.length ? me.settings.mobileNavItems : DEFAULT_MOBILE;
-  const mobileItems = preferred.map((h) => items.find((i) => i.href === h)).filter(Boolean).slice(0, 4) as typeof items;
+  const mobileItems = preferred.map((h) => items.find((i) => i.paths.includes(h))).filter(Boolean).slice(0, 4) as typeof items;
 
   async function logout() {
     await api('/auth/logout', { method: 'POST' }).catch(() => null);
@@ -50,10 +51,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </div>
         <div className="nav">
           {items.map((n) => (
-            <Link key={n.href} href={n.href} aria-current={active(n.href) ? 'page' : undefined}>
+            <Link key={n.href} href={n.href} aria-current={activeItem(n) ? 'page' : undefined}>
               <Icon name={n.icon} />
               <span className="grow">{n.label}</span>
-              {badgeOf(n.href) > 0 && !active(n.href) && <span className="nbadge" aria-label={`${badgeOf(n.href)} neu`}>{badgeOf(n.href)}</span>}
+              {badgeOf(n.href) > 0 && !activeItem(n) && <span className="nbadge" aria-label={`${badgeOf(n.href)} neu`}>{badgeOf(n.href)}</span>}
             </Link>
           ))}
           {isAdmin && (
@@ -78,6 +79,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <label htmlFor="q" className="sr">Suchen</label>
             <input id="q" name="q" type="search" placeholder="Suchen oder das WIR fragen …" />
           </form>
+          <Link className="iconbtn" href="/gemerkt" aria-label="Gemerkt" title="Gemerkt" aria-current={active('/gemerkt') ? 'page' : undefined}><Icon name="bookmark" /></Link>
           <Bell />
           <Link className="avatar" href="/einstellungen" aria-label={`Einstellungen von ${me.user.displayName}`}><Avatar name={me.user.displayName} id={me.user.id} v={v} /></Link>
           <button className="iconbtn" onClick={logout} aria-label="Abmelden" title="Abmelden"><Icon name="logout" /></button>
@@ -88,7 +90,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
       <nav className="bnav" aria-label="Hauptnavigation (mobil)" style={{ gridTemplateColumns: `repeat(${mobileItems.length + 1}, minmax(0, 1fr))` }}>
         {mobileItems.map((n) => (
-          <Link key={n.href} href={n.href} aria-current={active(n.href) ? 'page' : undefined}>
+          <Link key={n.href} href={n.href} aria-current={activeItem(n) ? 'page' : undefined}>
             <span className="pill"><Icon name={n.icon} size={22} />{badgeOf(n.href) > 0 && <span className="nbadge mini">{badgeOf(n.href)}</span>}</span>
             {n.label.split(' ')[0]}
           </Link>

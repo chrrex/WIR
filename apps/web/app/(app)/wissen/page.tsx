@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { Icon } from '@/components/Icon';
+import { SectionTabs } from '@/components/SectionTabs';
 import { Cat, Folders, within } from '@/components/Folders';
 import { ReadChip, useReadCounts } from '@/components/content/ReadStatus';
 import { State, useLoad, day } from '@/components/work';
@@ -33,6 +34,7 @@ export default function Knowledge() {
   return (
     <div className="stack-lg">
       <div className="ptitle"><h1>Wissen & SOPs</h1>{data.canCreate && <Link className="btn pri" href="/wissen/neu"><Icon name="plus" size={18} />Neuer Eintrag</Link>}</div>
+      <SectionTabs />
       {open > 0 && <div className="note info">{open} Artikel {open === 1 ? 'wartet' : 'warten'} auf deine Bestätigung „Gelesen und verstanden“.</div>}
       {data.review.length > 0 && (
         <section className="stack-s">

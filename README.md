@@ -60,7 +60,7 @@ Passwort für alle oben: **`Wir-Demo-2026`**
 
 **Wissen mit Freigabe:** Als `jana.m` einen Eintrag schreiben (auch für die ganze Stiftungsgruppe) – als `jonas.w` (Teamleitung Rezeption) unter **Wissen → Zur Prüfung** freigeben, korrigieren oder ablehnen.
 
-**Team & Abwesenheit:** Unter **Team** Kolleg:innen anklicken (Kontaktdaten, Abwesenheiten). Eigene Daten und Abwesenheit unter **Einstellungen → Mein Profil**. Maren ist in den Testdaten im Urlaub – das siehst du im Chat mit ihr und beim Schreiben einer Übergabe an den Service.
+**Team & Abwesenheit:** Unter **Kontakte → Kolleg:innen** jemanden anklicken (Kontaktdaten, Abwesenheiten). Eigene Daten und Abwesenheit unter **Einstellungen → Mein Profil**. Maren ist in den Testdaten im Urlaub – das siehst du im Chat mit ihr und beim Schreiben einer Übergabe an den Service.
 
 **Alles zurücksetzen:** im Terminal des Codespace `npm run reset-demo`.
 
