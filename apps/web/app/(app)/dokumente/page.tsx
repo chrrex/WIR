@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Icon } from '@/components/Icon';
+import { SectionTabs } from '@/components/SectionTabs';
 import { Cat, Folders, within } from '@/components/Folders';
 import { Audience, AudienceOption, ErrorNote, State, day, size, upload, useLoad, useSubmit } from '@/components/work';
 import { ReadChip, useReadCounts } from '@/components/content/ReadStatus';
@@ -50,7 +51,8 @@ export default function Documents() {
   const sensitive = (d: DocRow) => cats.find((c) => c.id === d.categoryId)?.sensitive ?? d.sensitive;
   return (
     <div className="stack-lg">
-      <div className="ptitle"><h1>Dokumente</h1>{data.canCreate && <button className="btn pri" onClick={() => setAdding(!adding)}><Icon name="plus" size={18} />Hochladen</button>}</div>
+      <div className="ptitle"><h1>Wissen & SOPs</h1>{data.canCreate && <button className="btn pri" onClick={() => setAdding(!adding)}><Icon name="plus" size={18} />Hochladen</button>}</div>
+      <SectionTabs />
       {adding && <NewDocument onDone={() => { setAdding(false); reload(); }} />}
       <div className="field"><label htmlFor="dq" className="sr">Dokumente durchsuchen</label><input id="dq" type="search" className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="In allen Dokumenten suchen …" /></div>
       {!term && <Folders cats={cats} folder={folder} setFolder={setFolder} canManage={data.canManage} base="/documents/categories" sensitiveOption onChange={reload}

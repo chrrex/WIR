@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { api } from '@/lib/api';
 import { Icon } from '@/components/Icon';
+import { SectionTabs } from '@/components/SectionTabs';
 import { ErrorNote, State, useLoad, useSubmit } from '@/components/work';
 import { CONTACT_TYPE } from '@/lib/labels';
 
@@ -43,6 +44,7 @@ function Contacts() {
   return (
     <div className="stack-lg">
       <div className="ptitle"><h1>Kontakte</h1>{data.canManage && !edit && <button className="btn pri" onClick={() => setEdit({})}><Icon name="plus" size={18} />Neuer Kontakt</button>}</div>
+      <SectionTabs />
       {edit && <Editor value={edit} categories={data.categories} onDone={done} />}
       <div className="field"><label htmlFor="cq" className="sr">Kontakte durchsuchen</label><input id="cq" type="search" className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Firma, Person, Ort …" /></div>
       {data.contacts.length === 0 ? <div className="card empty">Keine Kontakte gefunden.</div> : (

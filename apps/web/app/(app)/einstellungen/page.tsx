@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { api, ApiError } from '@/lib/api';
 import { useMe } from '@/lib/me';
-import { NAV } from '@/lib/nav';
+import { navFor } from '@/lib/nav';
 import { Icon } from '@/components/Icon';
 import { PushSettings } from '@/components/PushSettings';
 import { ProfileSettings } from '@/components/ProfileSettings';
@@ -29,7 +29,7 @@ export default function SettingsPage() {
     } catch (e) { setError(e instanceof ApiError ? e.message : 'Speichern hat nicht geklappt.'); }
   }
 
-  const navChoices = NAV.filter((n) => (!n.module || me.modules.includes(n.module)) && (!n.anyOf || n.anyOf.some((p) => me.permissions.includes(p))));
+  const navChoices = navFor(me);
   const currentNav = s.mobileNavItems.length ? s.mobileNavItems : ['/', '/news', '/uebergaben', '/chat'].filter((h) => navChoices.some((n) => n.href === h));
 
   async function saveRecovery(e: React.FormEvent<HTMLFormElement>) {
@@ -80,11 +80,11 @@ export default function SettingsPage() {
         <p className="muted small">Wähle bis zu vier Bereiche. „Mehr“ ist immer dabei.</p>
         <div className="chips">
           {navChoices.map((n) => {
-            const on = currentNav.includes(n.href);
+            const on = n.paths.some((h) => currentNav.includes(h));
             return (
               <label key={n.href} className={`fchip ${on ? 'on' : ''}`}>
                 <input type="checkbox" checked={on} disabled={!on && currentNav.length >= 4}
-                  onChange={() => save({ mobileNavItems: on ? currentNav.filter((h) => h !== n.href) : [...currentNav, n.href] }, 'Leiste gespeichert')} />
+                  onChange={() => save({ mobileNavItems: on ? currentNav.filter((h) => !n.paths.includes(h)) : [...currentNav, n.href] }, 'Leiste gespeichert')} />
                 {n.label}
               </label>
             );
