@@ -579,6 +579,12 @@ Für Vorführungen und Tests: Auf der Anmeldeseite eine Personenauswahl, in der 
 - **Datenschutz:** nur Summen, keine Gästenamen. Geburtstage freiwillig, ohne Jahr, nur im eigenen Haus; Dienstjubiläen nur mit Zustimmung. Einstellbar unter Einstellungen → Geburtstag & Jubiläum.
 - **Eigene Auswahl:** Jede:r blendet Kacheln und Bereiche ein und aus und sortiert sie („Anpassen“); gespeichert in `dashboard_preferences`, nur für die eigene Person.
 
+## ADR-058 · Umfragen ohne eigenen Menüpunkt, Abstimmungen auch anonym — ENTSCHIEDEN (12.10.2026)
+
+- „Umfragen“ verschwindet aus dem Menü, der App-Leiste und der Startseite. Abgestimmt wird direkt in **News, Übergaben und Social** (ADR-050).
+- Neu: Abstimmungen können **anonym** sein. Dann liefert der Server keine Namen – für niemanden, auch nicht für die Ersteller:in; sichtbar bleiben nur die Zahlen. Gespeichert wird die Stimme weiterhin je Person, damit man sie ändern kann.
+- Die bisherigen Umfragen (mehrere Fragen, Mindestanzahl für Ergebnisse) bleiben technisch erhalten, sind aber nicht mehr verlinkt; vollständig entfernen, sobald klar ist, dass sie nicht gebraucht werden.
+
 ## Nächste Schritte
 
 1. Anbieterauswahl (ADR-022) bestätigen und Gastromatic-Prüfauftrag (ADR-021) stellen.

@@ -41,12 +41,13 @@ export const PollInput = z.object({
   question: z.string().trim().min(3).max(200),
   options: z.array(z.string().trim().min(1).max(100)).min(2).max(10),
   multiple: z.boolean().default(false),
+  anonymous: z.boolean().default(false),
   closesAt: z.iso.datetime({ offset: true }).nullish(),
 });
 export type PollInput = z.infer<typeof PollInput>;
 export function createPoll(tx: Prisma.TransactionClient, id: string, p: PollInput | null | undefined) {
   if (!p) return;
-  return tx.poll.create({ data: { id, question: p.question, multiple: p.multiple, closesAt: p.closesAt ? new Date(p.closesAt) : null, options: { create: p.options.map((label, sortOrder) => ({ label, sortOrder })) } } });
+  return tx.poll.create({ data: { id, question: p.question, multiple: p.multiple, anonymous: p.anonymous, closesAt: p.closesAt ? new Date(p.closesAt) : null, options: { create: p.options.map((label, sortOrder) => ({ label, sortOrder })) } } });
 }
 
 /** Veröffentlichen planen: Zeitpunkt in der Zukunft, höchstens 90 Tage (ADR-050). */
@@ -140,8 +141,8 @@ export class ContentService {
     if (!p) return null;
     const voters = new Set(p.options.flatMap((o) => o.votes.map((v) => v.userId)));
     return {
-      question: p.question, multiple: p.multiple, closesAt: p.closesAt, closed: !!p.closesAt && p.closesAt < new Date(), voters: voters.size, voted: voters.has(userId),
-      options: p.options.map((o) => ({ id: o.id, label: o.label, count: o.votes.length, mine: o.votes.some((v) => v.userId === userId), names: o.votes.map((v) => v.user.displayName) })),
+      question: p.question, multiple: p.multiple, anonymous: p.anonymous, closesAt: p.closesAt, closed: !!p.closesAt && p.closesAt < new Date(), voters: voters.size, voted: voters.has(userId),
+      options: p.options.map((o) => ({ id: o.id, label: o.label, count: o.votes.length, mine: o.votes.some((v) => v.userId === userId), names: p.anonymous ? [] : o.votes.map((v) => v.user.displayName) })),
     };
   }
 

@@ -7,12 +7,14 @@ import { api, ApiError } from '@/lib/api';
 import { CATEGORIES } from '@/lib/social';
 import { ImagePicker, PickedImage } from '@/components/content/ImagePicker';
 import { Icon } from '@/components/Icon';
+import { PollDraft, PollEditor, pollJson } from '@/components/content/Extras';
 
 export default function NewSocial() {
   const router = useRouter();
   const [vis, setVis] = useState<Array<{ key: string; label: string }>>([]);
   const [f, setF] = useState({ title: '', text: '', category: 'GREETINGS', visibility: 'ALL', intent: 'OFFER', price: '' });
   const [images, setImages] = useState<PickedImage[]>([]);
+  const [poll, setPoll] = useState<PollDraft | null>(null);
   const [agree, setAgree] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -26,7 +28,7 @@ export default function NewSocial() {
     try {
       const r = await api<{ id: string }>('/social', { method: 'POST', json: {
         title: f.title, text: f.text, category: f.category, visibility: f.visibility,
-        intent: market ? f.intent : null, price: market && f.price ? f.price : null, images: images.map((i) => ({ fileId: i.fileId, altText: i.altText || null })),
+        intent: market ? f.intent : null, price: market && f.price ? f.price : null, images: images.map((i) => ({ fileId: i.fileId, altText: i.altText || null })), poll: pollJson(poll),
       } });
       router.replace(`/social/${r.id}`);
     } catch (err) { setError(err instanceof ApiError ? err.message : 'Posten hat nicht geklappt.'); setBusy(false); }
@@ -50,6 +52,7 @@ export default function NewSocial() {
         <div className="field"><label htmlFor="title">Überschrift</label><input id="title" className="input" value={f.title} onChange={set('title')} maxLength={120} required /></div>
         <div className="field"><label htmlFor="text">Text (optional)</label><textarea id="text" className="input area" rows={5} value={f.text} onChange={set('text')} /></div>
         <ImagePicker value={images} onChange={setImages} />
+        <PollEditor value={poll} onChange={setPoll} />
         <div className="field"><label htmlFor="vis">Wer soll es sehen?</label>
           <select id="vis" className="input" value={f.visibility} onChange={set('visibility')}>{vis.map((v) => <option key={v.key} value={v.key}>{v.label}</option>)}</select></div>
         {market && <p className="small muted">Angebote enden automatisch nach 30 Tagen. Interessierte melden sich per Chat bei dir.</p>}

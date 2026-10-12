@@ -10,6 +10,7 @@ import { Comments } from '@/components/content/Comments';
 import { ReportButton } from '@/components/content/ReportButton';
 import { Icon } from '@/components/Icon';
 import { Confetti } from '@/components/content/KudosCard';
+import { PollView } from '@/components/content/Extras';
 
 export default function SocialDetail() {
   const { id } = useParams<{ id: string }>();
@@ -31,6 +32,7 @@ export default function SocialDetail() {
       <Link href="/social" className="lnk back"><Icon name="back" size={16} />Social</Link>
       {fresh && <Confetti />}
       <SocialCard p={p} full onChange={load} autoOpen={fresh} />
+      {p.poll && <PollView contentId={p.id} initial={p.poll} />}
       <div className="row wrap">
         {!p.mine && <ReportButton path={`/content/${p.id}/report`} />}
         {p.canDelete && <button className="btn sm warn" onClick={async () => { await api(`/social/${p.id}`, { method: 'DELETE' }); router.replace('/social'); }}><Icon name="trash" size={16} />Löschen</button>}

@@ -34,7 +34,7 @@ function greeting() {
   return h < 11 ? 'Guten Morgen' : h < 17 ? 'Hallo' : 'Guten Abend';
 }
 
-const WIDGET_HREF: Record<string, string> = { news: '/news', handovers: '/uebergaben', social: '/social', tasks: '/aufgaben', checklists: '/checklisten', surveys: '/umfragen', thanks: '/social' };
+const WIDGET_HREF: Record<string, string> = { news: '/news', handovers: '/uebergaben', social: '/social', tasks: '/aufgaben', checklists: '/checklisten', thanks: '/social' };
 
 export default function StartPage() {
   const { me } = useMe();
