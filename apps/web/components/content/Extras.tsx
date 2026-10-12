@@ -6,16 +6,16 @@ import { Icon } from '../Icon';
 
 // ---- Abstimmung (ADR-050) ----------------------------------------------------
 
-export interface PollDraft { question: string; options: string[]; multiple: boolean; closesAt: string }
-export interface Poll { question: string; multiple: boolean; closesAt: string | null; closed: boolean; voters: number; voted: boolean; options: Array<{ id: string; label: string; count: number; mine: boolean; names: string[] }> }
+export interface PollDraft { question: string; options: string[]; multiple: boolean; anonymous: boolean; closesAt: string }
+export interface Poll { question: string; multiple: boolean; anonymous: boolean; closesAt: string | null; closed: boolean; voters: number; voted: boolean; options: Array<{ id: string; label: string; count: number; mine: boolean; names: string[] }> }
 
 /** datetime-local → ISO mit Zeitzone (oder null) */
 export const iso = (local: string) => (local ? new Date(local).toISOString() : null);
-export const pollJson = (p: PollDraft | null) => (p ? { question: p.question, options: p.options.map((o) => o.trim()).filter(Boolean), multiple: p.multiple, closesAt: iso(p.closesAt) } : null);
+export const pollJson = (p: PollDraft | null) => (p ? { question: p.question, options: p.options.map((o) => o.trim()).filter(Boolean), multiple: p.multiple, anonymous: p.anonymous, closesAt: iso(p.closesAt) } : null);
 
 /** Abstimmung beim Schreiben anhängen: Frage, 2–10 Antworten, optional mehrere Antworten und Ende. */
 export function PollEditor({ value, onChange }: { value: PollDraft | null; onChange: (p: PollDraft | null) => void }) {
-  if (!value) return <button type="button" className="btn sm" onClick={() => onChange({ question: '', options: ['', ''], multiple: false, closesAt: '' })}><Icon name="poll" size={16} />Abstimmung hinzufügen</button>;
+  if (!value) return <button type="button" className="btn sm" onClick={() => onChange({ question: '', options: ['', ''], multiple: false, anonymous: false, closesAt: '' })}><Icon name="poll" size={16} />Abstimmung hinzufügen</button>;
   const set = (p: Partial<PollDraft>) => onChange({ ...value, ...p });
   return (
     <fieldset className="stack-s poll-edit">
@@ -31,9 +31,10 @@ export function PollEditor({ value, onChange }: { value: PollDraft | null; onCha
       <div className="row wrap">
         {value.options.length < 10 && <button type="button" className="btn sm" onClick={() => set({ options: [...value.options, ''] })}><Icon name="plus" size={16} />Antwort</button>}
         <label className="check"><input type="checkbox" checked={value.multiple} onChange={(e) => set({ multiple: e.target.checked })} />Mehrere Antworten erlaubt</label>
+        <label className="check"><input type="checkbox" checked={value.anonymous} onChange={(e) => set({ anonymous: e.target.checked })} />Anonym</label>
       </div>
       <div className="field"><label htmlFor="pc">Endet am (optional)</label><input id="pc" type="datetime-local" className="input" value={value.closesAt} onChange={(e) => set({ closesAt: e.target.value })} /></div>
-      <p className="small muted">Nicht anonym: Alle Empfänger:innen sehen, wer wofür gestimmt hat. Für anonyme Fragen gibt es die Umfragen.</p>
+      <p className="small muted">{value.anonymous ? 'Anonym: Niemand sieht, wer wofür gestimmt hat – auch du nicht. Es erscheinen nur die Zahlen.' : 'Offen: Alle Empfänger:innen sehen, wer wofür gestimmt hat.'}</p>
       <button type="button" className="btn sm" onClick={() => onChange(null)}>Abstimmung entfernen</button>
     </fieldset>
   );
@@ -76,7 +77,7 @@ export function PollView({ contentId, initial }: { contentId: string; initial: P
         </ul>
       )}
       <div className="row wrap small muted">
-        <span>{p.voters} {p.voters === 1 ? 'Stimme' : 'Stimmen'}{p.multiple ? ' · mehrere Antworten möglich' : ''}{p.closesAt ? ` · ${p.closed ? 'beendet' : 'endet'} ${new Date(p.closesAt).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}` : ''}</span>
+        <span>{p.voters} {p.voters === 1 ? 'Stimme' : 'Stimmen'}{p.anonymous ? ' · anonym' : ''}{p.multiple ? ' · mehrere Antworten möglich' : ''}{p.closesAt ? ` · ${p.closed ? 'beendet' : 'endet'} ${new Date(p.closesAt).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}` : ''}</span>
         {!edit && !p.closed && <button className="btn sm" onClick={() => setEdit(true)}>{p.voted ? 'Stimme ändern' : 'Abstimmen'}</button>}
         {!edit && !p.closed && p.voted && <button className="btn sm" onClick={() => send([])}>Stimme zurückziehen</button>}
       </div>

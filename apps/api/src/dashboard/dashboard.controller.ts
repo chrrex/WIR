@@ -33,7 +33,6 @@ const WIDGETS: Array<Omit<Widget, 'state'> & { readyInPhase: number }> = [
   { key: 'checklists', title: 'Checklisten heute', module: 'CHECKLISTS', readyInPhase: 4, text: 'HACCP- und Schichtchecklisten, die heute fällig sind.' },
   { key: 'events', title: 'Veranstaltungen & Räume heute', module: 'EVENTS', readyInPhase: 5, text: 'Aus dem Eventtool – sobald die Anbindung steht.' },
   { key: 'shift', title: 'Mein Dienstplan', module: 'SHIFTS', readyInPhase: 5, text: 'Aus Gastromatic – sobald die Anbindung geprüft ist.' },
-  { key: 'surveys', title: 'Offene Umfrage', module: 'SURVEYS', readyInPhase: 4, text: 'Kurze, auf Wunsch anonyme Umfragen.' },
 ];
 
 @Controller('dashboard')
@@ -87,10 +86,6 @@ export class DashboardController {
       if (w.key === 'checklists') {
         const rows = await db.contentItem.findMany({ where: { type: 'CHECKLIST_RUN', ...visible, checklistRun: { status: { in: ['PLANNED', 'IN_PROGRESS'] } } }, include: { checklistRun: true }, orderBy: { publishedAt: 'desc' }, take: 4 });
         w.items = rows.map((r) => ({ id: r.id, title: r.checklistRun!.title, meta: 'offen', unread: true, href: `/checklisten/${r.id}` }));
-      }
-      if (w.key === 'surveys') {
-        const rows = await db.contentItem.findMany({ where: { type: 'SURVEY', ...visible, authorId: { not: me.id }, survey: { participations: { none: { userId: me.id } }, OR: [{ closesAt: null }, { closesAt: { gt: new Date() } }] } }, include: { survey: true }, orderBy: { publishedAt: 'desc' }, take: 2 });
-        w.items = rows.map((r) => ({ id: r.id, title: r.survey!.title, meta: r.survey!.isAnonymous ? 'anonym' : '', unread: true, href: `/umfragen/${r.id}` }));
       }
     }
 

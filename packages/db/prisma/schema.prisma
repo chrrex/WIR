@@ -2247,6 +2247,7 @@ model Poll {
   id       String    @id @db.Uuid // = content_items.id
   question String
   multiple Boolean   @default(false)
+  anonymous Boolean  @default(false) // niemand sieht, wer wofür gestimmt hat (ADR-058)
   closesAt DateTime? @map("closes_at") @db.Timestamptz(6)
 
   contentItem ContentItem  @relation(fields: [id], references: [id], onDelete: Cascade)

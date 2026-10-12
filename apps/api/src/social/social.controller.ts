@@ -7,7 +7,7 @@ import { CurrentUser, RequirePermission, SessionUser } from '../auth/decorators'
 import { PolicyService } from '../policy/policy.service';
 import { can } from '../policy/engine';
 import { AudienceTarget } from '../content/audience.service';
-import { ContentService, toBody } from '../content/content.service';
+import { ContentService, createPoll, PollInput, toBody } from '../content/content.service';
 import { NotificationService } from '../notifications/notification.service';
 
 const CATEGORIES = ['GREETINGS', 'MARKETPLACE', 'CONGRATULATIONS', 'LEISURE', 'OTHER', 'THANKS'] as const;
@@ -31,6 +31,7 @@ const CreateSocial = z.object({
   intent: z.enum(['OFFER', 'SEARCH']).nullish(),
   price: z.string().trim().max(60).nullish(),
   images: z.array(z.object({ fileId: z.uuid(), altText: z.string().max(200).nullish() })).max(6).default([]),
+  poll: PollInput.nullish(),
 });
 
 const MARKET_DAYS = 30;
@@ -211,12 +212,15 @@ export class SocialController {
       type: 'POST', companyId: profile?.companyId ?? null, authorId: me.id, importance: 'NORMAL',
       expiresAt: market ? new Date(Date.now() + MARKET_DAYS * 864e5) : null, targets: [target],
       attachmentFileIds: body.images.map((i) => ({ fileId: i.fileId, altText: i.altText ?? null })),
-      createSubtype: (tx, id) => tx.post.create({
-        data: {
-          id, title: body.title, body: toBody(body.text), bodyText: body.text, kind: 'SOCIAL', socialCategory: body.category,
-          marketplaceIntent: market ? body.intent ?? 'OFFER' : null, priceLabel: market ? body.price ?? null : null,
-        },
-      }),
+      createSubtype: async (tx, id) => {
+        await tx.post.create({
+          data: {
+            id, title: body.title, body: toBody(body.text), bodyText: body.text, kind: 'SOCIAL', socialCategory: body.category,
+            marketplaceIntent: market ? body.intent ?? 'OFFER' : null, priceLabel: market ? body.price ?? null : null,
+          },
+        });
+        await createPoll(tx, id, body.poll);
+      },
     });
     return { id: item.id };
   }
@@ -228,7 +232,7 @@ export class SocialController {
     if (item.post?.kind !== 'SOCIAL') throw new BadRequestException('Das ist kein Social-Beitrag.');
     const ctx = await this.policy.loadContext(me.id);
     const deco = (await this.content.decorate(me.id, [id]))(id);
-    return { ...this.view(item, me.id, { ...deco, kudos: (await this.kudos([id], me.id)).get(id) ?? null }), canDelete: item.authorId === me.id || can(ctx, 'social.moderate') };
+    return { ...this.view(item, me.id, { ...deco, kudos: (await this.kudos([id], me.id)).get(id) ?? null }), poll: await this.content.poll(me.id, id), canDelete: item.authorId === me.id || can(ctx, 'social.moderate') };
   }
 
   @Post(':id/close')

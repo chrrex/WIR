@@ -20,7 +20,6 @@ export const NAV: NavItem[] = [
   { href: '/dokumente', label: 'Dokumente', icon: 'doc', module: 'DOCUMENTS' },
   { href: '/aufgaben', label: 'Aufgaben', icon: 'task', module: 'TASKS' },
   { href: '/checklisten', label: 'Checklisten', icon: 'list', module: 'CHECKLISTS' },
-  { href: '/umfragen', label: 'Umfragen', icon: 'poll', module: 'SURVEYS' },
   { href: '/ideen', label: 'Ideen', icon: 'idea', module: 'IDEAS' },
   { href: '/kontakte', label: 'Kontakte', icon: 'contact', module: 'CONTACTS' },
   { href: '/team', label: 'Team', icon: 'team', module: 'TEAM' },

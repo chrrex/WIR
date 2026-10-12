@@ -491,4 +491,17 @@ describe('Neue Funktionen (e2e)', () => {
     expect(off.tiles.some((t: { key: string }) => t.key === 'occupancy')).toBe(false);
     expect(off.tiles.some((t: { key: string }) => t.key === 'mine')).toBe(true);
   });
+  test('Abstimmung anonym in Social: nur Zahlen, keine Namen (ADR-058)', async () => {
+    const jana = await as('jana.m');
+    const { id } = (await jana.post('/api/v1/social').send({ title: 'Grillabend?', category: 'GREETINGS', visibility: 'ALL', poll: { question: 'Wer kommt?', options: ['Ja', 'Nein'], anonymous: true } }).expect(201)).body;
+    const ana = await as('ana.f');
+    const p = (await ana.get(`/api/v1/social/${id}`).expect(200)).body.poll;
+    expect(p.anonymous).toBe(true);
+    const r = (await ana.post(`/api/v1/content/${id}/poll`).send({ optionIds: [p.options[0].id] }).expect(200)).body;
+    expect(r.options[0].count).toBe(1);
+    expect(r.options[0].mine).toBe(true);
+    const seen = (await jana.get(`/api/v1/social/${id}`).expect(200)).body.poll;
+    expect(seen.options[0].count).toBe(1);
+    expect(seen.options[0].names).toEqual([]);
+  });
 });

@@ -48,9 +48,9 @@ Passwort für alle oben: **`Wir-Demo-2026`**
 - Als `sven.r` → **Checklisten** → „HACCP Kühlräume morgens“ starten und bei Kühlraum 1 z. B. `7` eintragen: Abweichung, Maßnahme nötig.
 - Als `tobias.k` → **Wissen** → „Kühlkette“: „Gelesen und verstanden“. Als `sven.r` eine neue Version schreiben – die Bestätigung wird zurückgesetzt.
 - Oben im Suchfeld z. B. `Defibrillator` – oder unten auf der Suchseite **„Frag das WIR“**. Als `jana.m` findest du die Küchen-SOP nicht, als `sven.r` schon.
-- Als `jana.m` die anonyme Umfrage beantworten; als `lena.k` die Ergebnisse ansehen.
+- Abstimmungen gibt es direkt in News, Übergaben und Social – auf Wunsch **anonym** (dann sieht niemand, wer wofür gestimmt hat).
 
-**Lesestatus ausprobieren:** Als `lena.k` die Umfrage oder ein Dokument öffnen – unten steht, wer gelesen bzw. teilgenommen hat und wer noch nicht. In der Demo ist der Lesestatus eingeschaltet; im Echtbetrieb erst nach der Betriebsvereinbarung (ADR-042).
+**Lesestatus ausprobieren:** Als `lena.k` eine News oder ein Dokument öffnen – unten steht, wer gelesen bzw. teilgenommen hat und wer noch nicht. In der Demo ist der Lesestatus eingeschaltet; im Echtbetrieb erst nach der Betriebsvereinbarung (ADR-042).
 
 **Neue Funktionen ausprobieren:**
 - **Push:** Einstellungen → „Benachrichtigungen aufs Handy“ einschalten, Ruhezeit festlegen. (Auf dem iPhone erst „Teilen → Zum Home-Bildschirm“.)
