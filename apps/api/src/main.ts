@@ -17,7 +17,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, { logger: ['error', 'warn', 'log'] });
   await configureApp(app);
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
-  await app.listen(config.port, '0.0.0.0');
+  // Ohne feste Adresse: IPv6 und IPv4 (Codespaces leitet über ::1 weiter), sonst nur IPv4
+  await app.listen(config.port);
   console.log(`WIR-API läuft auf Port ${config.port}`);
   if (config.demoMode) console.warn('⚠ DEMO-MODUS AN: Anmeldung ohne Passwort möglich (nur mit Testdaten). Niemals mit echten Daten betreiben.');
 }
