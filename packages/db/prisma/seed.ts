@@ -77,7 +77,7 @@ async function main() {
   });
 
   // ---- Gruppen (SGL) --------------------------------------------------------
-  const groupNames = ['Rezeption', 'Service', 'Küche', 'Housekeeping', 'Verkauf & Veranstaltungen', 'Personal & Verwaltung', 'Haustechnik'];
+  const groupNames = ['Rezeption', 'Service', 'Küche', 'Housekeeping', 'Verkauf & Veranstaltungen', 'Personal & Verwaltung', 'Haustechnik', 'Gutsbetrieb'];
   const groups = new Map<string, string>();
   for (const name of groupNames) {
     const g = await prisma.group.create({ data: { name, companyId: sgl.id, type: 'DEPARTMENT' } });
@@ -149,6 +149,7 @@ async function main() {
     ['ana.f', 'Ana', 'Ferreira', 'Service', 'Service', ['employee']],
     ['marta.w', 'Marta', 'Wójcik', 'Housekeeping', 'Housekeeping', ['employee']],
     ['sven.r', 'Sven', 'Richter', 'Küche', 'Küchenleitung', ['employee', 'department_head']],
+    ['henrik.g', 'Henrik', 'Gerlach', 'Gutsbetrieb', 'Gärtner · Gutsbetrieb', ['employee']],
   ];
   const team = new Map<string, string>();
   for (const [username, first, last, group, job, rs] of extra) {

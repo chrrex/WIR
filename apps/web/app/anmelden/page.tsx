@@ -5,7 +5,7 @@ import { DemoLogin } from '@/components/DemoSwitch';
 import { useRouter } from 'next/navigation';
 import { api, ApiError, Branding } from '@/lib/api';
 import { applyBranding } from '@/lib/brand';
-import { Logo } from '@/components/Logo';
+import { Logo, Wordmark } from '@/components/Logo';
 import { Icon } from '@/components/Icon';
 
 export default function LoginPage() {
@@ -41,7 +41,7 @@ export default function LoginPage() {
       <section className="hero">
         <Logo branding={branding} variant="hero" />
         <div>
-          <div className="hero-wm">WIR · Das Mitarbeiterportal</div>
+          <div className="hero-wm"><Wordmark /></div>
           <h1>Alles fürs Team.<br />An einem Ort.</h1>
           <p>News, Übergaben, Wissen und Chat – auf dem Handy in der Schicht und am Laptop im Büro.</p>
         </div>

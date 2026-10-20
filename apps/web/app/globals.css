@@ -136,9 +136,12 @@ td.actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end
 .logo-img.logo-dkb.logo-head { width: 120px; }
 .logo-text { font-weight: 700; color: #fff; }
 .wordmark { display: flex; flex-direction: column; gap: 2px; }
-.wordmark .wm { font-weight: 700; font-size: 1.45rem; letter-spacing: .42em; line-height: 1.1; }
+.wordmark .wm { font-weight: 800; font-size: 1.45rem; letter-spacing: 0; line-height: 1; margin-bottom: .3em; --wm-bg: #FFFFFF; --wm-fg: var(--nav-bg); }
+/* WIR-Sprechblase (ADR-060): weiß auf der Markenfläche, in Markenfarbe auf weißen Flächen */
+.wm-bubble { position: relative; display: inline-block; background: var(--wm-bg); color: var(--wm-fg); padding: .14em .5em .12em .56em; border-radius: .5em; letter-spacing: .06em; line-height: 1; }
+.wm-bubble::after { content: ""; position: absolute; left: .5em; bottom: -.3em; border-left: .34em solid var(--wm-bg); border-bottom: .34em solid transparent; }
 .wordmark .wm-sub { font-size: .75rem; letter-spacing: .06em; }
-.wordmark.compact .wm { font-size: 1.1rem; letter-spacing: .3em; }
+.wordmark.compact .wm { font-size: 1.1rem; margin-bottom: .2em; }
 
 /* App-Rahmen */
 .app { min-height: 100vh; display: grid; grid-template-columns: 260px minmax(0, 1fr); }
@@ -146,11 +149,11 @@ td.actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end
 /* Markenfläche oben: Farbe der Gesellschaft – bei der DKB STIFTUNG weiß mit viel Luft (ADR-053) */
 .side .brandbox { margin: 12px 12px 14px; padding: 22px 20px 16px; border-radius: 14px; background: var(--nav-bg); color: #fff; display: flex; flex-direction: column; gap: 12px; }
 .side .wordmark { padding-top: 10px; border-top: 1px solid rgba(255,255,255,.35); }
-.side .wordmark .wm { font-size: 1.15rem; font-weight: 600; letter-spacing: .38em; }
+.side .wordmark .wm { font-size: 1.3rem; }
 .side .wordmark .wm-sub { font-weight: 400; }
 [data-logo="white"] .side .brandbox { background: #FFFFFF; color: #1E2318; border: 1px solid var(--line-2); padding: 32px 26px 20px; gap: 22px; }
 [data-logo="white"] .side .wordmark { border-top-color: #E3E6EC; }
-[data-logo="white"] .side .wordmark .wm { color: var(--brand); }
+[data-logo="white"] .wordmark .wm { --wm-bg: var(--brand); --wm-fg: #FFFFFF; }
 [data-logo="white"] .side .wordmark .wm-sub { color: #5B6152; }
 .side .nav { display: flex; flex-direction: column; gap: 1px; padding: 0 10px; }
 .side .nav a { display: flex; align-items: center; gap: 12px; min-height: 40px; padding: 0 12px; border-radius: 8px; color: var(--fg); text-decoration: none; font-weight: 500; font-size: .95rem; }
@@ -182,7 +185,8 @@ td.actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end
 .login .hero { background: var(--nav-bg); color: #fff; padding: 3rem; display: flex; flex-direction: column; justify-content: space-between; gap: 2rem; }
 .login .hero h1 { font-size: 2.6rem; max-width: 14ch; }
 .login .hero p { font-size: 1.15rem; max-width: 40ch; }
-.hero-wm { font-weight: 700; letter-spacing: .4em; text-transform: uppercase; margin-bottom: 1rem; }
+.hero-wm { margin-bottom: 1.25rem; }
+.hero-wm .wordmark { gap: 6px; } .hero-wm .wm { font-size: 2.4rem; } .hero-wm .wm-sub { font-size: .95rem; letter-spacing: .08em; }
 .login .pane { padding: 3rem 2.5rem; display: flex; flex-direction: column; justify-content: center; gap: 1.2rem; max-width: 560px; width: 100%; }
 .login .pane h2 { font-size: 1.7rem; margin-top: 4px; }
 
@@ -198,7 +202,6 @@ td.actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end
   [data-logo="white"] .topbar { background: #FFFFFF; color: #1E2318; border-bottom: 1px solid #E3E6EC; }
   [data-logo="white"] .topbar .iconbtn { color: #1E2318; }
   [data-logo="white"] .topbar .avatar { background: var(--brand-tint); color: var(--brand-ink); }
-  [data-logo="white"] .topbar .wm { color: var(--brand); }
   .content { padding: 18px 16px; }
   h1 { font-size: 1.6rem; }
   .bnav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--line); padding: 6px 4px 14px; z-index: 20; }
@@ -448,7 +451,6 @@ button.folder { text-align: left; width: 100%; font: inherit; color: inherit; cu
 .txbar { display: flex; gap: .75rem; align-items: center; padding: .45rem 1rem; background: var(--info-tint); color: var(--info-ink); font-size: .88rem; }
 .prose[data-plain] p { white-space: pre-line; font-size: 1.08em; }
 [data-logo="white"] .brandband { background: #FFFFFF; color: #1E2318; border-bottom: 1px solid #E3E6EC; }
-[data-logo="white"] .brandband .wm { color: var(--brand); }
 /* Verwaltung (ADR-055) */
 .checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: .25rem .75rem; }
 .perm-list { margin: 0; display: grid; gap: .4rem; }
