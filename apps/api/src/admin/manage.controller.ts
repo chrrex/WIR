@@ -11,7 +11,7 @@ import { AdminService } from './admin.service';
 
 type Req = { policy: PolicyContext };
 const GROUP_TYPES = ['DEPARTMENT', 'TEAM', 'LOCATION', 'PROJECT', 'CUSTOM'] as const;
-const MODULES = ['NEWS', 'SOCIAL', 'CHAT', 'KNOWLEDGE', 'DOCUMENTS', 'TASKS', 'CHECKLISTS', 'HANDOVERS', 'SHIFTS', 'OCCUPANCY', 'EVENTS', 'SURVEYS', 'IDEAS', 'CONTACTS', 'TEAM'] as const;
+const MODULES = ['NEWS', 'SOCIAL', 'CHAT', 'KNOWLEDGE', 'DOCUMENTS', 'TASKS', 'CHECKLISTS', 'HANDOVERS', 'SHIFTS', 'OCCUPANCY', 'EVENTS', 'SURVEYS', 'IDEAS', 'CONTACTS', 'TEAM', 'MEETINGS'] as const;
 const date = z.iso.date().nullish();
 const hex = z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Farbe bitte als #RRGGBB.');
 

@@ -1,6 +1,7 @@
 'use client';
 /* eslint-disable @next/next/no-img-element */
 
+import { ToAgenda } from '@/components/meetings/ToAgenda';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -36,7 +37,7 @@ function SignaturePad({ label, onSave }: { label: string; onSave: (f: File) => v
   );
 }
 
-function Row({ it, locked, save }: { it: Item; locked: boolean; save: (body: object) => Promise<unknown> }) {
+function Row({ it, locked, save, runId }: { it: Item; locked: boolean; save: (body: object) => Promise<unknown>; runId: string }) {
   const [v, setV] = useState(it.value ?? '');
   const [note, setNote] = useState(it.note ?? '');
   const [showNote, setShowNote] = useState(false);
@@ -76,6 +77,7 @@ function Row({ it, locked, save }: { it: Item; locked: boolean; save: (body: obj
       {(needNote || showNote || it.note) ? (
         <div className="stack-s">
           {it.outOfRange && <p className="warn-ink small"><strong>Kritische Antwort.</strong> Was ist los bzw. was hast du unternommen?{it.createTask && ' Daraus wird beim Abschließen automatisch eine Aufgabe.'}</p>}
+          {it.outOfRange && <span className="cl-noprint"><ToAgenda compact path={`/checklisten/${runId}`} title={`Mangel: ${it.title}`} text={it.note ?? ''} /></span>}
           <label className={it.outOfRange ? 'sr' : 'small'} htmlFor={`n${it.id}`}>{it.requireNote ? 'Text (Pflicht)' : 'Notiz'}{it.outOfRange ? ` zu ${it.title}` : ''}</label>
           <input id={`n${it.id}`} className="input" value={note} disabled={locked} onChange={(e) => setNote(e.target.value)} onBlur={() => note !== (it.note ?? '') && save({ note })} />
         </div>
@@ -119,7 +121,7 @@ export default function RunPage() {
       {r.approval === 'PENDING' && <div className="note info">Wartet auf Abnahme durch die Teamleitung.</div>}
       {r.approval === 'APPROVED' && <div className="note ok">Abgenommen von {r.approvedBy}, {dayTime(r.approvedAt)}.</div>}
       {r.canApprove && <Approve id={id} onDone={setData} />}
-      <ol className="plain stack">{r.items.map((it) => <Row key={`${it.id}-${it.done}-${it.value}-${it.photoFileId}-${it.visible}`} it={it} locked={locked} save={save(it.id)} />)}</ol>
+      <ol className="plain stack">{r.items.map((it) => <Row key={`${it.id}-${it.done}-${it.value}-${it.photoFileId}-${it.visible}`} it={it} locked={locked} save={save(it.id)} runId={r.id} />)}</ol>
       <ErrorNote error={err} />
       <div className="row wrap cl-noprint">
         {!locked && <button className="btn pri big" disabled={busy} onClick={() => run(() => api(`/checklists/runs/${id}/complete`, { method: 'POST' })).then((x) => x && api<Run>(`/checklists/runs/${id}`).then(setData))}>Checkliste abschließen</button>}

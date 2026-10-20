@@ -5,6 +5,7 @@ import { NotificationService } from '../notifications/notification.service';
 import { createRuns } from './checklists.controller';
 import { AudienceService } from '../content/audience.service';
 import { nextOccurrence } from './recurrence';
+import { MeetingsService } from './meetings.service';
 
 const H = 3600_000;
 
@@ -15,7 +16,7 @@ const H = 3600_000;
 @Injectable()
 export class JobsService implements OnModuleInit, OnModuleDestroy {
   private timer?: NodeJS.Timeout;
-  constructor(private readonly prisma: PrismaService, private readonly content: ContentService, private readonly notifications: NotificationService, private readonly audiences: AudienceService) {}
+  constructor(private readonly prisma: PrismaService, private readonly content: ContentService, private readonly notifications: NotificationService, private readonly audiences: AudienceService, private readonly meetings: MeetingsService) {}
 
   onModuleInit() {
     if (process.env.JOBS === 'off' || process.env.NODE_ENV === 'test') return;
@@ -27,7 +28,7 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
   onModuleDestroy() { if (this.timer) clearInterval(this.timer); }
 
   async run(now = new Date()) {
-    return { published: await this.content.publishDue(now), thanks: await this.thanksReminders(now), started: await this.recurringChecklists(now), overdue: await this.overdueRuns(now), tasks: await this.tasksDue(now), acks: await this.openAcks(now), surveys: await this.surveysClosing(now) };
+    return { published: await this.content.publishDue(now), thanks: await this.thanksReminders(now), started: await this.recurringChecklists(now), overdue: await this.overdueRuns(now), tasks: await this.tasksDue(now), acks: await this.openAcks(now), surveys: await this.surveysClosing(now), ...(await this.meetings.run(now)) };
   }
 
   /** Danke-Erinnerung: am Morgen nach der Veranstaltung (ab 8 Uhr) an die Leitung (ADR-052). */

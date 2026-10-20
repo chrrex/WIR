@@ -1,5 +1,6 @@
 'use client';
 
+import { MeetingOrigin } from '@/components/meetings/ToAgenda';
 import { Body, Tx } from '@/lib/translate';
 import { BookmarkButton } from '@/components/content/Extras';
 import Link from 'next/link';
@@ -52,6 +53,7 @@ export default function Article() {
         {a.status === 'ARCHIVED' && <div className="note warn">Nicht freigegeben{a.rejectedReason && `: „${a.rejectedReason}“`}. <Link className="lnk" href={`/wissen/neu?id=${a.id}&mode=resubmit`}>Überarbeiten und erneut einreichen</Link></div>}
         <h1><Tx e="CONTENT_ITEM" id={a.id} text={a.title} /></h1>
         <div className="row"><BookmarkButton contentId={a.id} /></div>
+        <MeetingOrigin contentId={a.id} />
         <p className="small muted">{a.author}{a.publishedAt && ` · ${day(a.publishedAt)}`} · für {a.audience.join(', ')}</p>
         {a.plainText && <div className="seg" role="group" aria-label="Sprache"><button aria-pressed={!plain} onClick={() => setPlain(false)}>Fachtext</button><button aria-pressed={plain} onClick={() => setPlain(true)}>Einfache Sprache</button></div>}
         {plain && a.plainText ? <div className="prose"><RichText text={a.plainText} /></div> : <Body id={a.id} text={a.text} />}

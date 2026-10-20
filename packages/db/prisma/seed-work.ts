@@ -40,7 +40,7 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
   const G = (n: string) => groups.get(n)!;
 
   /** Inhalt mit Zielgruppe und materialisierten Empfänger:innen anlegen. */
-  async function item(type: 'KNOWLEDGE_ARTICLE' | 'DOCUMENT' | 'TASK' | 'CHECKLIST_RUN' | 'SURVEY' | 'IDEA', author: string, hoursAgo: number,
+  async function item(type: 'KNOWLEDGE_ARTICLE' | 'DOCUMENT' | 'TASK' | 'CHECKLIST_RUN' | 'SURVEY' | 'IDEA' | 'MEETING', author: string, hoursAgo: number,
     audience: Array<{ targetType: 'ALL_USERS' | 'COMPANY' | 'GROUP' | 'USER'; companyId?: string; groupId?: string; userId?: string }>, recipients: string[], extra: Record<string, unknown> = {}) {
     const ci = await prisma.contentItem.create({ data: { type, companyId: sgl, authorId: author, status: 'PUBLISHED', publishedAt: ago(hoursAgo), createdAt: ago(hoursAgo), audiences: { create: audience }, ...extra } });
     await prisma.contentRecipient.createMany({ data: [...new Set([...recipients, author])].map((userId) => ({ contentItemId: ci.id, userId })), skipDuplicates: true });
@@ -228,8 +228,83 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
     if (o.likes.length) await prisma.reaction.createMany({ data: o.likes.map((userId) => ({ contentItemId: id, userId })) });
   }
   await idea({ author: T('ana.f'), title: 'Kräuterbeet für Küche und Bar', text: 'Hinter der Orangerie ist Platz für ein kleines Kräuterbeet. Küche und Bar könnten Minze, Thymian und Basilikum selbst ernten.', category: iGreen, status: 'IN_PROGRESS', hoursAgo: 300, likes: [jana, T('tobias.k'), T('marta.w'), maren], note: 'Gärtnerei ist informiert, Start im Frühjahr.' });
-  await idea({ author: T('selin.a'), title: 'Leselampe in der Nachtrezeption', text: 'Nachts ist das Licht an der Rezeption sehr grell. Eine warme Leselampe würde für Gäste und uns angenehmer sein.', category: iTeam, status: 'IN_REVIEW', hoursAgo: 120, likes: [jana, T('jonas.w')] });
+  await idea({ author: T('selin.a'), title: 'Leselampe in der Nachtrezeption', text: 'Nachts ist das Licht an der Rezeption sehr grell. Eine warme Leselampe würde für Gäste und uns angenehmer sein.', category: iTeam, status: 'IN_REVIEW', hoursAgo: 120, likes: [jana, T('jonas.w'), T('piotr.n')] });
   await idea({ author: jana, title: 'Kleine Karte mit Spazierwegen für Gäste', text: 'Viele Gäste fragen nach Wegen rund ums Schloss. Eine Karte mit drei Runden (30, 60, 90 Minuten) würde uns an der Rezeption viel erklären ersparen.', category: iGuests, status: 'SUBMITTED', hoursAgo: 30, likes: [T('piotr.n')] });
+
+  // ---- Meetings (ADR-061): Teammeeting Rezeption, dienstags 14 Uhr ------------
+  {
+    const jonas = T('jonas.w'), piotr = T('piotr.n'), selin = T('selin.a');
+    const team = c.membersOf('Rezeption');
+    /** Dienstag 14 Uhr Berliner Zeit: der nächste (0), der letzte (-1), der vorletzte (-2) */
+    const tuesday = (k: number) => {
+      const d = new Date(); d.setUTCHours(12, 0, 0, 0);
+      while (d.getUTCDay() !== 2 || d < new Date(Date.now() - 2 * 3600_000)) d.setUTCDate(d.getUTCDate() + 1);
+      d.setUTCDate(d.getUTCDate() + 7 * k);
+      const off = new Date(d.toLocaleString('en-US', { timeZone: 'Europe/Berlin' })).getTime() - new Date(d.toLocaleString('en-US', { timeZone: 'UTC' })).getTime();
+      return new Date(d.getTime() + 2 * 3600_000 - off);
+    };
+    const std = ['Rückblick Aufgaben', 'Gästefeedback', 'Dienstplan', 'Sonstiges'];
+    const series = await prisma.meetingSeries.create({ data: { companyId: sgl, title: 'Teammeeting Rezeption', groupId: G('Rezeption'), recurrenceRule: 'FREQ=WEEKLY;BYDAY=TU;BYHOUR=14;BYMINUTE=0',
+      durationMin: 45, location: 'Büro Rezeption, 1. OG', onlineUrl: 'https://teams.example/meet/rezeption', standardItems: std, leadId: jonas, minutesId: jana, timekeeperId: piotr, createdById: jonas } });
+    async function meeting(k: number, status: 'PLANNED' | 'LOCKED', attendance: Record<string, 'PRESENT' | 'ONLINE' | 'EXCUSED' | 'ABSENT'> = {}) {
+      const startsAt = tuesday(k);
+      const id = await item('MEETING', jonas, k < 0 ? -k * 168 + 24 : 30, [{ targetType: 'GROUP', groupId: G('Rezeption') }], team, { reactionsEnabled: false });
+      const done = status === 'LOCKED';
+      await prisma.meeting.create({ data: { id, seriesId: series.id, title: series.title, startsAt, durationMin: 45, location: series.location, onlineUrl: series.onlineUrl, status, agendaDeadline: new Date(startsAt.getTime() - 26 * 3600_000),
+        ...(done ? { agendaSetAt: new Date(startsAt.getTime() - 24 * 3600_000), startedAt: startsAt, endedAt: new Date(startsAt.getTime() + 47 * 60_000), submittedAt: new Date(startsAt.getTime() + 60 * 60_000), submittedById: jana,
+          lockedAt: new Date(startsAt.getTime() + 3 * 3600_000), lockedById: jonas, retainUntil: new Date(startsAt.getTime() + 3 * 365 * 864e5) } : {}) } });
+      await prisma.meetingAttendee.createMany({ data: team.map((userId) => ({ meetingId: id, userId, role: userId === jonas ? 'LEAD' as const : userId === jana ? 'MINUTES' as const : userId === piotr ? 'TIMEKEEPER' as const : null, status: attendance[userId] ?? (done ? 'PRESENT' as const : 'INVITED' as const) })) });
+      return id;
+    }
+    let n = 0;
+    async function point(meetingId: string, o: { title: string; by?: string; min?: number; text?: string; status?: 'PROPOSED' | 'SET' | 'DONE' | 'POSTPONED'; notes?: string; spent?: number; origin?: string; confidential?: string[]; source?: string; carriedFrom?: string; decisions?: string[] }) {
+      const by = o.by ?? jonas;
+      const i = await prisma.agendaItem.create({ data: { meetingId, title: o.title, description: o.text ?? null, authorId: by, ownerId: by, durationMin: o.min ?? 5, sortOrder: n++, status: o.status ?? 'DONE', notes: o.notes ?? null, spentSec: o.spent ?? 0,
+        origin: o.origin ?? null, confidential: !!o.confidential, viewerIds: o.confidential ?? [], sourcePath: o.source ?? null, carriedFromId: o.carriedFrom ?? null } });
+      const d = [];
+      for (const t of o.decisions ?? []) d.push((await prisma.meetingDecision.create({ data: { itemId: i.id, text: t, createdById: jana } })).id);
+      return { id: i.id, d };
+    }
+    async function meetingTask(itemId: string, decisionId: string | null, userId: string, title: string, dueInH: number, status: 'OPEN' | 'DONE' = 'OPEN') {
+      const id = await item('TASK', jana, 20, [{ targetType: 'USER', userId }], [userId], { reactionsEnabled: false });
+      await prisma.task.create({ data: { id, title, status, dueAt: new Date(Date.now() + dueInH * 3600_000), completedAt: status === 'DONE' ? ago(5) : null, assignees: { create: { userId, isResponsible: true } } } });
+      await prisma.meetingLink.create({ data: { itemId, decisionId, contentItemId: id, kind: 'TASK' } });
+    }
+
+    // vorletzte Woche: festgeschrieben, eine Entscheidung fürs Register
+    const m2 = await meeting(-2, 'LOCKED');
+    const a = await point(m2, { title: 'Schlüsselkarten: Umstellung aufs neue System', min: 15, spent: 980, notes: 'Die Firma stellt die Leser in KW 44 um. Bis dahin funktionieren alte und neue Karten.', decisions: ['Ab 1. November geben wir nur noch die neuen Schlüsselkarten aus.'] });
+    await meetingTask(a.id, a.d[0], piotr, 'Restliche alte Schlüsselkarten einsammeln und zählen', 70);
+    await point(m2, { title: 'Sonstiges', origin: 'STANDARD', notes: 'Nichts.' });
+
+    // letzte Woche: festgeschrieben, mit Gast, vertraulichem Punkt, Vertagtem und Nachtrag
+    const m1 = await meeting(-1, 'LOCKED', { [selin]: 'EXCUSED', [piotr]: 'ONLINE' });
+    await prisma.meetingAttendee.create({ data: { meetingId: m1, guestName: 'Paul Lindner', guestOrg: 'Weinhandel Beispiel GmbH', status: 'PRESENT' } });
+    n = 0;
+    const r = await point(m1, { title: 'Rückblick Aufgaben', origin: 'STANDARD', spent: 240, notes: 'Schlüsselkarten: Piotr sammelt noch ein, rund 40 fehlen.' });
+    await point(m1, { title: 'Gästefeedback', origin: 'STANDARD', min: 10, spent: 610, notes: 'Mehrfach gelobt: schneller Check-in. Kritik: Wartezeit am Telefon zwischen 7 und 8 Uhr.',
+      decisions: ['Zwischen 7 und 8 Uhr nimmt die Frühschicht zuerst das Telefon an, die zweite Person den Check-out.'] });
+    const wine = await point(m1, { title: 'Weinprobe für Hausgäste im November', by: jana, min: 15, spent: 1020, text: 'Herr Lindner stellt das Angebot vor.',
+      notes: 'Termin 14. November, 18 Uhr, Orangerie. Höchstens 24 Gäste. Anmeldung über die Rezeption.', decisions: ['Wir bieten die Weinprobe an und nehmen ab sofort Anmeldungen an.'] });
+    await meetingTask(wine.id, wine.d[0], jana, 'Anmeldeliste Weinprobe anlegen und am Empfang auslegen', 30, 'DONE');
+    await meetingTask(wine.id, wine.d[0], selin, 'Gäste beim Check-in auf die Weinprobe hinweisen', 120);
+    const fund = await point(m1, { title: 'Fundsachen-Regal neu ordnen', by: selin, min: 10, status: 'POSTPONED', text: 'Das Regal ist voll – was nach 3 Monaten niemand abholt, sollte raus.' });
+    await point(m1, { title: 'Nachtdienst im Dezember besetzen', min: 10, spent: 540, confidential: [jana], notes: 'Zwei Nächte sind noch offen. Jonas spricht mit der Personalabteilung.' });
+    await point(m1, { title: 'Dienstplan', origin: 'STANDARD', spent: 180, notes: 'Plan für November hängt ab Freitag aus.' });
+    await point(m1, { title: 'Sonstiges', origin: 'STANDARD', notes: 'Kaffeemaschine im Backoffice wird am Donnerstag entkalkt.' });
+    await prisma.meetingAddendum.create({ data: { meetingId: m1, text: 'Korrektur: Die Weinprobe beginnt um 18:30 Uhr, nicht um 18 Uhr.', authorId: jana, createdAt: new Date(tuesday(-1).getTime() + 20 * 3600_000) } });
+    await prisma.readReceipt.createMany({ data: [jana, piotr].map((userId) => ({ contentItemId: m1, userId, firstSeenAt: day(), openedAt: day() })) });
+    void r;
+
+    // nächste Woche: Punkte werden gesammelt
+    const m0 = await meeting(0, 'PLANNED');
+    n = 0;
+    for (const t of std.slice(0, 3)) await point(m0, { title: t, origin: 'STANDARD', status: 'PROPOSED' });
+    await point(m0, { title: 'Fundsachen-Regal neu ordnen', by: selin, min: 10, status: 'PROPOSED', origin: 'CARRIED', carriedFrom: fund.id, text: 'Das Regal ist voll – was nach 3 Monaten niemand abholt, sollte raus.' });
+    await prisma.agendaItem.update({ where: { id: fund.id }, data: { carriedAt: new Date() } }).catch(() => null);
+    await point(m0, { title: 'Frühstückszeiten am Wochenende', by: piotr, min: 10, status: 'PROPOSED', text: 'Viele Gäste fragen, ob das Frühstück sonntags bis 11 Uhr gehen kann.' });
+    await point(m0, { title: 'Sonstiges', origin: 'STANDARD', status: 'PROPOSED' });
+  }
 
   // ---- Kontakte (Beispielfirmen) -------------------------------------------
   const ccat = async (name: string, sortOrder: number) => (await prisma.contactCategory.create({ data: { name, sortOrder } })).id;

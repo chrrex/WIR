@@ -13,7 +13,8 @@ export function describeRule(rule: string | null) {
   if (!rule) return null;
   const p = Object.fromEntries(rule.split(';').map((x) => x.split('=')));
   const time = `${String(p.BYHOUR ?? 0).padStart(2, '0')}:${String(p.BYMINUTE ?? 0).padStart(2, '0')}`;
-  return `${p.BYDAY === 'MO,TU,WE,TH,FR' ? 'Mo–Fr' : p.BYDAY ? p.BYDAY : 'täglich'} ${time}`;
+  const DE: Record<string, string> = { MO: 'montags', TU: 'dienstags', WE: 'mittwochs', TH: 'donnerstags', FR: 'freitags', SA: 'samstags', SU: 'sonntags' };
+  return `${p.BYDAY === 'MO,TU,WE,TH,FR' ? 'Mo–Fr' : p.BYDAY ? p.BYDAY.split(',').map((d: string) => DE[d] ?? d).join(', ') : 'täglich'} ${time}`;
 }
 
 /** Abstand der Zeitzone zu UTC in Minuten zu einem Zeitpunkt. */

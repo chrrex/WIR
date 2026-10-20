@@ -11,7 +11,7 @@ import type { AppModule } from '@wir/db';
 /** Rechte-Präfix → Modul: ausgeschaltete Module sperrt auch die API, nicht nur das Menü. */
 const MODULE_OF: Record<string, AppModule> = {
   knowledge: 'KNOWLEDGE', documents: 'DOCUMENTS', tasks: 'TASKS', checklists: 'CHECKLISTS', surveys: 'SURVEYS',
-  ideas: 'IDEAS', contacts: 'CONTACTS', handovers: 'HANDOVERS', employees: 'TEAM',
+  ideas: 'IDEAS', meetings: 'MEETINGS', contacts: 'CONTACTS', handovers: 'HANDOVERS', employees: 'TEAM',
 };
 import { ALLOW_PENDING_PASSWORD, IS_PUBLIC, REQUIRED_PERMISSION, SessionUser } from './decorators';
 

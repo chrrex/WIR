@@ -1,5 +1,6 @@
 'use client';
 
+import { MeetingOrigin, ToAgenda } from '@/components/meetings/ToAgenda';
 import { Body, Tx } from '@/lib/translate';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -39,7 +40,8 @@ export default function HandoverDetail() {
         <Body id={h.id} text={h.text} mentions={h.mentions} />
         <Images images={h.images} />
         {h.poll && <PollView contentId={h.id} initial={h.poll} />}
-        <div className="actions-bar"><BookmarkButton contentId={h.id} /></div>
+        <MeetingOrigin contentId={h.id} />
+        <div className="actions-bar"><BookmarkButton contentId={h.id} /><ToAgenda path={`/uebergaben/${h.id}`} title={h.subject} /></div>
         <h2 className="h-sub">Rückfragen & Erledigt</h2>
         <Comments contentId={h.id} />
       </article>

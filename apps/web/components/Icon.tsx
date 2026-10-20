@@ -36,6 +36,8 @@ const P: Record<IconName, string> = {
   back: 'M15 6l-6 6 6 6',
   users: 'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 20a6 6 0 0 1 12 0M16 5a3 3 0 0 1 0 6M21 20a6 6 0 0 0-4-5.6',
   bookmark: 'M6 3h12v18l-6-4-6 4z',
+  calendar: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4M8 14h3M13 14h3M8 17h3',
+  timer: 'M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM12 9v4l2.5 2M10 2h4',
   bellring: 'M6 16v-5a6 6 0 1 1 12 0v5l2 2H4zM10 21a2 2 0 0 0 4 0M3 7a9 9 0 0 1 3-4M21 7a9 9 0 0 0-3-4',
 };
 

@@ -7,7 +7,7 @@ import { ContentService } from '../content/content.service';
 export const LANGUAGES: Record<string, string> = {
   de: 'Deutsch', en: 'English', pl: 'Polski', uk: 'Українська', ro: 'Română', bg: 'Български', hu: 'Magyar', tr: 'Türkçe', es: 'Español', id: 'Bahasa Indonesia',
 };
-export type Entity = 'CONTENT_ITEM' | 'COMMENT' | 'CHAT_MESSAGE';
+export type Entity = 'CONTENT_ITEM' | 'COMMENT' | 'CHAT_MESSAGE' | 'AGENDA_ITEM' | 'MEETING_DECISION';
 export interface Item { entity: Entity; id: string; field: 'title' | 'body' }
 
 export const sourceHash = (text: string) => createHash('sha256').update(text).digest('hex');
@@ -67,6 +67,17 @@ export class TranslateService {
         const body = i.post?.bodyText ?? i.handover?.bodyText ?? kv?.bodyText ?? null;
         const text = it.field === 'title' ? title : body;
         return text ? { text, locale: i.sourceLocale, plainText: it.field === 'body' ? kv?.plainLanguageText : null } : null;
+      }
+      if (it.entity === 'AGENDA_ITEM' || it.entity === 'MEETING_DECISION') {
+        // Meeting-Protokoll: Punkt (Titel, Notizen) oder Entscheidung – vertrauliche Punkte nur für Berechtigte
+        const d = it.entity === 'MEETING_DECISION' ? await db.meetingDecision.findUnique({ where: { id: it.id } }) : null;
+        const a = await db.agendaItem.findUnique({ where: { id: d?.itemId ?? it.id }, include: { meeting: { include: { attendees: { where: { userId } } } } } });
+        if (!a) return null;
+        const i = await this.content.getVisible(userId, a.meetingId);
+        const role = a.meeting.attendees[0]?.role;
+        if (a.confidential && ![a.authorId, a.ownerId, i.authorId, ...a.viewerIds].includes(userId) && role !== 'LEAD' && role !== 'MINUTES') return null;
+        const text = d ? d.text : it.field === 'title' ? a.title : a.notes ?? a.description;
+        return text ? { text, locale: i.sourceLocale } : null;
       }
       if (it.entity === 'COMMENT') {
         const c = await db.comment.findFirst({ where: { id: it.id, deletedAt: null } });

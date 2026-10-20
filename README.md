@@ -40,6 +40,8 @@ Passwort für alle oben: **`Wir-Demo-2026`**
 
 **Startseite ausprobieren:** Als `ana.f` siehst du oben „Heute im Haus“ mit Demo-Zahlen (ab 18 Uhr für morgen) und einen Geburtstagsgruß. Über **Anpassen** blendest du Kacheln und Bereiche ein oder aus und änderst die Reihenfolge. Den eigenen Geburtstag trägst du unter **Einstellungen** ein. Echte Hauszahlen kommen, sobald die Mews-Zugangsdaten gesetzt sind (siehe `.env.example`).
 
+**Meetings ausprobieren:** Als `jonas.w` (Leitung) unter **Meetings** das kommende „Teammeeting Rezeption“ öffnen, Punkte sortieren und „Agenda festlegen und verteilen“. Als `jana.m` (Protokoll) „Meeting starten“, Anwesenheit, Notizen und Entscheidungen festhalten und über „Daraus machen …“ eine Aufgabe, News oder SOP anlegen; danach „Protokoll einreichen“ – `jonas.w` schreibt fest. Im Archiv liegt das Protokoll der Vorwoche mit Gast, vertraulichem Punkt und Nachtrag; „Entscheidungen“ durchsucht alle festgeschriebenen Beschlüsse.
+
 **Checklisten ausprobieren:** Als `marta.w` unter **Checklisten → Vorlagen** die „Zimmerkontrolle nach Abreise“ starten – bei „Mangel“ erscheint ein Foto-Feld, beim Abschließen entsteht automatisch eine Folgeaufgabe. Als `henrik.g` (Gärtner im Gutsbetrieb) den „Morgenrundgang Park & Gärten“ abarbeiten – bei „Sturmschäden: Ja“ bekommt die Haustechnik automatisch eine Aufgabe. Als `jana.m` mit **Neue Checkliste** eine eigene bauen (öffentlich/privat, gemeinsam/jede:r einzeln, Pflicht-Text, Bedingungen) und dir selbst oder einer Gruppe zuweisen.
 
 **Freischaltung ausprobieren:** Als `lena.k` anmelden → **Verwaltung** → „Neu aus Gastromatic“ → **Freischalten**. Der angezeigte Code funktioniert sofort für die freigeschaltete Person.

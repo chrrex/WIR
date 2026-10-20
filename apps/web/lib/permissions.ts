@@ -1,7 +1,7 @@
 /** Verständliche Namen für Module und Rechte (Verwaltung › Rollen & Rechte). */
 export const MODULE_LABEL: Record<string, string> = {
   NEWS: 'News', SOCIAL: 'Social', CHAT: 'Chat', KNOWLEDGE: 'Wissen & SOPs', DOCUMENTS: 'Dokumente', TASKS: 'Aufgaben', CHECKLISTS: 'Checklisten',
-  HANDOVERS: 'Übergaben', SHIFTS: 'Dienstplan', OCCUPANCY: 'Belegung', EVENTS: 'Veranstaltungen', SURVEYS: 'Umfragen', IDEAS: 'Ideen', CONTACTS: 'Kontakte', TEAM: 'Team',
+  HANDOVERS: 'Übergaben', SHIFTS: 'Dienstplan', OCCUPANCY: 'Belegung', EVENTS: 'Veranstaltungen', SURVEYS: 'Umfragen', IDEAS: 'Ideen', CONTACTS: 'Kontakte', TEAM: 'Team', MEETINGS: 'Meetings',
 };
 export const GROUP_TYPE_LABEL: Record<string, string> = { DEPARTMENT: 'Abteilung', TEAM: 'Team', LOCATION: 'Standort', PROJECT: 'Projekt', CUSTOM: 'Gruppe' };
 
@@ -33,6 +33,7 @@ export const PERM_LABEL: Record<string, string> = {
   'lifecycle.start': 'Einarbeitung starten', 'lifecycle.view_progress': 'Einarbeitung verfolgen', 'lifecycle.manage_templates': 'Einarbeitungs-Vorlagen pflegen',
   'surveys.respond': 'An Umfragen teilnehmen', 'surveys.create': 'Umfragen erstellen', 'surveys.view_results': 'Umfrage-Ergebnisse sehen',
   'ideas.read': 'Ideen sehen', 'ideas.create': 'Ideen einreichen', 'ideas.manage': 'Ideen bewerten',
+  'meetings.read': 'Meetings sehen', 'meetings.create': 'Meetings anlegen', 'meetings.manage_any': 'Alle Meetings verwalten',
   'contacts.read': 'Kontakte sehen', 'contacts.manage': 'Kontakte pflegen', 'contacts.view_emergency': 'Notfallkontakte sehen',
   'employees.directory': 'Mitarbeiterverzeichnis', 'absences.view_team': 'Abwesenheiten im Team sehen', 'absences.manage': 'Abwesenheiten verwalten',
   'users.read': 'Personen sehen (Verwaltung)', 'users.manage': 'Personen anlegen & freischalten', 'users.deactivate': 'Personen deaktivieren', 'users.delete': 'Personen löschen',

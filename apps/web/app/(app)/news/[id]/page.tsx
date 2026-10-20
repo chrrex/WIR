@@ -1,5 +1,6 @@
 'use client';
 
+import { MeetingOrigin, ToAgenda } from '@/components/meetings/ToAgenda';
 import { Body, Tx } from '@/lib/translate';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -43,12 +44,14 @@ export default function NewsDetail() {
           <h1><Tx e="CONTENT_ITEM" id={n.id} text={n.title} /></h1>
           <div className="row"><Avatar name={n.author.name} id={n.author.id} size="s" /><span className="small muted"><strong className="fg">{n.author.name}</strong>{n.author.job ? ` · ${n.author.job}` : ''} · {n.scheduledFor ? scheduledText(n.scheduledFor) : when(n.publishedAt)}</span></div>
           {n.scheduledFor && <div className="note info small">Noch nicht veröffentlicht – nur du siehst diese Mitteilung bis {scheduledText(n.scheduledFor).replace('geplant für ', '')}.</div>}
+          <MeetingOrigin contentId={n.id} />
           <Body id={n.id} text={n.text} />
           <Images images={n.images} />
           {n.poll && <PollView contentId={n.id} initial={n.poll} />}
           <div className="row wrap actions-bar">
             <ContentReactions contentId={n.id} initial={n.reactions} />
             <BookmarkButton contentId={n.id} />
+            <ToAgenda path={`/news/${n.id}`} title={n.title} />
             {!n.mine && <ReportButton path={`/content/${n.id}/report`} />}
             {n.canDelete && <button className="btn sm warn" onClick={async () => { await api(`/news/${n.id}`, { method: 'DELETE' }); router.replace('/news'); }}><Icon name="trash" size={16} />Löschen</button>}
           </div>

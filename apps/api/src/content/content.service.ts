@@ -31,7 +31,7 @@ export function summarizeReactions(rows: Array<{ type: string; userId: string; u
 
 /** Was Detailseiten und Listen (Lesezeichen) zu einem Inhalt brauchen. */
 export const ITEM_INCLUDE = {
-  post: true, handover: { include: { group: true } }, idea: true, task: true, survey: true, document: true, checklistRun: true,
+  post: true, handover: { include: { group: true } }, idea: true, task: true, survey: true, document: true, checklistRun: true, meeting: { select: { title: true } },
   knowledgeArticle: { include: { versions: { where: { status: 'PUBLISHED' as const }, take: 1, select: { title: true } } } },
   author: { select: { id: true, displayName: true, employeeProfile: { select: { jobTitle: true } } } },
 } satisfies Prisma.ContentItemInclude;
@@ -241,7 +241,7 @@ export class ContentService {
   /** Anzeigetitel eines Inhalts – egal welcher Typ. */
   titleOf(item: Awaited<ReturnType<ContentService['getVisible']>>) {
     return item.post?.title ?? item.handover?.subject ?? item.idea?.title ?? item.task?.title ?? item.survey?.title ?? item.document?.title
-      ?? item.checklistRun?.title ?? item.knowledgeArticle?.versions[0]?.title ?? 'Beitrag';
+      ?? item.checklistRun?.title ?? item.meeting?.title ?? item.knowledgeArticle?.versions[0]?.title ?? 'Beitrag';
   }
 
   /** Neue Kolleg:innen bekommen laufende Inhalte ihrer Zielgruppen (include_late_joiners). */
