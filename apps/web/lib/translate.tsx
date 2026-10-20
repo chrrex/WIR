@@ -6,7 +6,7 @@ import { api } from './api';
 import { useMe } from './me';
 
 /** Automatische Übersetzung bzw. Leichte Sprache (ADR-054): gebündelte Anfragen, Ergebnis je Sitzung zwischengespeichert. */
-type Entity = 'CONTENT_ITEM' | 'COMMENT' | 'CHAT_MESSAGE';
+type Entity = 'CONTENT_ITEM' | 'COMMENT' | 'CHAT_MESSAGE' | 'AGENDA_ITEM' | 'MEETING_DECISION';
 type Field = 'title' | 'body';
 interface Res { text: string | null; from: string | null }
 

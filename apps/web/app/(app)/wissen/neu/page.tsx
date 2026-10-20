@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
+import { useFromMeeting } from '@/lib/meetings';
 import { api } from '@/lib/api';
 import { useMe } from '@/lib/me';
 import { Audience, AudienceOption, Back, ErrorNote, useSubmit } from '@/components/work';
@@ -14,9 +15,10 @@ function Editor() {
   const params = useSearchParams();
   const editId = params.get('id');
   const mode = params.get('mode'); // review | resubmit | null (neue Version)
+  const meeting = useFromMeeting();
   const { can } = useMe();
   const [o, setO] = useState<Opts | null>(null);
-  const [f, setF] = useState({ title: '', text: '', plainText: '', changeSummary: '', categoryId: '', articleType: 'SOP', requiresAck: false, notify: true });
+  const [f, setF] = useState({ title: meeting.title, text: meeting.text, plainText: '', changeSummary: '', categoryId: '', articleType: 'SOP', requiresAck: false, notify: true });
   const [audience, setAudience] = useState<string[]>([]);
   const { busy, error, run } = useSubmit();
   useEffect(() => {
@@ -32,6 +34,7 @@ function Editor() {
       : mode === 'resubmit' ? api(`/knowledge/${editId}/resubmit`, { method: 'POST', json: body })
       : editId ? api(`/knowledge/${editId}`, { method: 'PUT', json: { ...body, changeSummary: f.changeSummary || null, notify: f.notify } })
       : api<{ id: string }>('/knowledge', { method: 'POST', json: { ...f, plainText: f.plainText || null, changeSummary: null, audience } })));
+    if (r && !editId) await meeting.link({ contentItemId: (r as { id: string }).id });
     if (r) router.replace(`/wissen/${editId ?? (r as { id: string }).id}`);
   }
 

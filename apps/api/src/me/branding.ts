@@ -18,7 +18,7 @@ export interface Branding {
 
 export const ALL_MODULES: AppModule[] = [
   'NEWS', 'SOCIAL', 'CHAT', 'KNOWLEDGE', 'DOCUMENTS', 'TASKS', 'CHECKLISTS', 'HANDOVERS',
-  'SHIFTS', 'OCCUPANCY', 'EVENTS', 'SURVEYS', 'IDEAS', 'CONTACTS', 'TEAM',
+  'SHIFTS', 'OCCUPANCY', 'EVENTS', 'SURVEYS', 'IDEAS', 'CONTACTS', 'TEAM', 'MEETINGS',
 ];
 
 /** Welches Funktionsrecht ein Modul mindestens braucht, um im Menü zu erscheinen. */
@@ -26,7 +26,7 @@ export const MODULE_PERMISSION: Record<AppModule, string> = {
   NEWS: 'news.read', SOCIAL: 'social.read', CHAT: 'chat.use', KNOWLEDGE: 'knowledge.read', DOCUMENTS: 'documents.read',
   TASKS: 'tasks.read', CHECKLISTS: 'checklists.execute', HANDOVERS: 'handovers.read', SHIFTS: 'dashboard.view',
   OCCUPANCY: 'dashboard.view', EVENTS: 'dashboard.view', SURVEYS: 'surveys.respond', IDEAS: 'ideas.read',
-  CONTACTS: 'contacts.read', TEAM: 'employees.directory',
+  CONTACTS: 'contacts.read', TEAM: 'employees.directory', MEETINGS: 'meetings.read',
 };
 
 type CompanyWithBranding = Awaited<ReturnType<PrismaClient['company']['findMany']>>[number] & {

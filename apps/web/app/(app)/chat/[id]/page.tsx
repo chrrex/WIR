@@ -1,6 +1,7 @@
 'use client';
 /* eslint-disable @next/next/no-img-element */
 
+import { ToAgenda } from '@/components/meetings/ToAgenda';
 import { useTx } from '@/lib/translate';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -86,7 +87,7 @@ export default function ChatThread() {
             {c?.messages.map((m, i) => {
               const showName = c.type === 'GROUP' && !m.mine && m.sender?.id !== c.messages[i - 1]?.sender?.id;
               return (
-                <div key={m.id} className={`msg ${m.mine ? 'me' : ''}`}>
+                <div key={m.id} id={`m-${m.id}`} className={`msg ${m.mine ? 'me' : ''}`}>
                   {showName && <span className="xs muted sender">{m.sender?.name}</span>}
                   <div className="bubble">
                     {m.deleted ? <em className="muted">Nachricht gelöscht</em> : (
@@ -97,6 +98,7 @@ export default function ChatThread() {
                     )}
                     <span className="meta">{when(m.at)}{m.mine && c.type === 'DIRECT' && <span className={m.readByOther ? 'ticks read' : 'ticks'} aria-label={m.readByOther ? 'gelesen' : 'zugestellt'}>{m.readByOther ? ' ✓✓' : ' ✓'}</span>}</span>
                   </div>
+                  {!m.deleted && m.text && <span className="msg-agenda"><ToAgenda compact path={`/chat/${id}#m-${m.id}`} title={m.text.split('\n')[0].slice(0, 120)} text={m.text} /></span>}
                   {!m.deleted && <Reactions reactions={m.reactions} onToggle={(type) => api(`/chat/messages/${m.id}/reactions`, { method: 'POST', json: { type } }).then(load).catch(() => null)} />}
                 </div>
               );

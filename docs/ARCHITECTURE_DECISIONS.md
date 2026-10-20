@@ -597,6 +597,19 @@ Für Vorführungen und Tests: Auf der Anmeldeseite eine Personenauswahl, in der 
 - Die Wortmarke ist reines HTML/CSS, damit sie sich automatisch an die Farben jeder Gesellschaft anpasst.
 - Demo: Team „Gutsbetrieb“ mit dem Gärtner Henrik G. und der Checkliste „Morgenrundgang Park & Gärten“ (täglich 7 Uhr, Sturmschaden erzeugt eine Aufgabe).
 
+## ADR-061 · Meetings: Agenda, Live-Protokoll, Festschreiben, „Daraus machen …“, Outlook — ENTSCHIEDEN (21.10.2026)
+
+- Neues Modul **Meetings** (abschaltbar je Gesellschaft). Rechte: `meetings.read`/`meetings.create` für alle Mitarbeitenden („alle dürfen anlegen“), `meetings.manage_any` für Abteilungsleitungen.
+- **Serien** (z. B. „Teammeeting Rezeption“, dienstags 14 Uhr): Der Job legt den nächsten Termin spätestens 8 Tage vorher an – mit festen Punkten (Vorlage, „Sonstiges“ immer zuletzt), Vertagtem und fälligen Wiedervorlagen.
+- Ein Meeting ist ein Inhalt (`content_items`, Typ MEETING): Sichtbarkeit nur für Eingeladene, Lesestatus (erst für die Agenda, nach dem Festschreiben neu für das Protokoll), Benachrichtigungen. **Gäste ohne Zugang** stehen nur als Name, Firma/Funktion, optional E-Mail in der Teilnehmerliste.
+- **Rollen:** Leitung, Protokoll, optional Zeitwächter:in. Leitung sortiert, legt zusammen, vertagt, parkt, verteilt die Agenda, sagt ab (offene Punkte wandern weiter). Protokoll führt Anwesenheit, Notizen, Entscheidungen, Aufgaben, Fotos (Flipchart).
+- **Vertrauliche Punkte** sehen nur Ausgewählte, Leitung, Protokoll und wer den Punkt eingebracht hat – auch in Übersetzung, Fotos und Gäste-PDF.
+- **Erinnerungen:** 24 Stunden vor Frist ans Team („Punkte bis Montag 12 Uhr“), zur Frist an die Leitung („Agenda festlegen“ bzw. „Keine Punkte – ausfallen lassen?“), 15 Minuten vor Beginn an alle.
+- **Festschreiben im Vier-Augen-Prinzip:** Protokoll reicht ein (nicht Besprochenes wird vertagt), Leitung schreibt fest (in kleinen Runden dieselbe Person). Danach sperrt auch die Datenbank Änderungen (Trigger); möglich sind nur datierte **Nachträge** und neue Verknüpfungen. Aufbewahrung je Serie (Standard 3 Jahre), danach endgültig gelöscht.
+- **„Daraus machen …“** aus Punkt oder Entscheidung: Aufgabe direkt im Meeting (an Teilnehmende), Wissen/SOP (Entwurf mit Freigabe), News, Übergabe, Checkliste über die vorhandenen Formulare – vorbefüllt und mit Rückverweis („Entstanden im … am …“). Das festgeschriebene Protokoll zeigt den aktuellen Stand der Aufgaben.
+- **„Auf die Agenda setzen“** aus News, Übergaben, Ideen, Aufgaben, Checklisten-Mängeln und Chat; Ideen mit mindestens 3 Unterstützungen schlagen sich der Leitung selbst vor; Parkplatz je Serie; Entscheidungsregister durchsuchbar.
+- **Outlook:** Beim Anlegen optional „Outlook-Termin erstellen und an alle schicken“: Outlook (Web) öffnet einen neuen Termin mit allen Teilnehmenden mit E-Mail-Adresse – die Leitung klickt „Senden“. Zusätzlich Kalenderdatei (.ics) für jede:n, bei Serien mit Wiederholung in Berliner Zeit. Bewusst **ohne** Microsoft-Graph-Anbindung: kein Zugriff auf Postfächer nötig, keine Freigabe durch die IT. Vollautomatischer Versand und Abgleich (Graph, Kalender-Modul) bleiben Ausbaustufe 2.
+
 ## Nächste Schritte
 
 1. Anbieterauswahl (ADR-022) bestätigen und Gastromatic-Prüfauftrag (ADR-021) stellen.

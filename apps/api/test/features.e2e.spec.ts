@@ -18,6 +18,7 @@ import { TranslateService } from '../src/translate/translate.service';
 import { nextOccurrence } from '../src/work/recurrence';
 import { config } from '../src/common/config';
 import { berlinMidnight } from '../src/dashboard/house';
+import { MeetingsService } from '../src/work/meetings.service';
 
 jest.setTimeout(90_000);
 const PW = 'Wir-Demo-2026';
@@ -503,5 +504,71 @@ describe('Neue Funktionen (e2e)', () => {
     const seen = (await jana.get(`/api/v1/social/${id}`).expect(200)).body.poll;
     expect(seen.options[0].count).toBe(1);
     expect(seen.options[0].names).toEqual([]);
+  });
+  test('Meetings: Punkte sammeln, vertraulich, live protokollieren, Daraus machen, festschreiben, Übertrag (ADR-061)', async () => {
+    const [jonas, jana, selin, piotr, maren] = await Promise.all(['jonas.w', 'jana.m', 'selin.a', 'piotr.n', 'maren.h'].map(as));
+    const next = (await selin.get('/api/v1/meetings').expect(200)).body.meetings.find((m: { status: string }) => m.status === 'PLANNED');
+    expect(next.title).toBe('Teammeeting Rezeption');
+    const id = next.id as string;
+    await maren.get(`/api/v1/meetings/${id}`).expect(404); // nicht eingeladen
+    // Erinnerung ans Team vor der Frist, an die Leitung zur Frist
+    const svc = app.get(MeetingsService);
+    const m0 = await prisma.db.meeting.findUniqueOrThrow({ where: { id } });
+    await svc.run(new Date(m0.agendaDeadline!.getTime() - 3600_000));
+    expect(await prisma.db.notification.count({ where: { recipientId: await uid('selin.a'), dedupeKey: `meeting-items:${id}` } })).toBe(1);
+    // Punkte einbringen – einer vertraulich nur für Jana
+    await selin.post(`/api/v1/meetings/${id}/items`).send({ title: 'Wunschfrei an Silvester', confidential: true, viewerIds: [await uid('jana.m')] }).expect(201);
+    const { id: newsId } = (await jana.post('/api/v1/news').send({ title: 'Neue Telefonzeiten Rezeption', text: 'Ab Montag gilt …', targets: [`G:${(await prisma.db.group.findFirstOrThrow({ where: { name: 'Rezeption' } })).id}`] }).expect(201)).body;
+    const { id: own } = (await piotr.post(`/api/v1/meetings/${id}/items`).send({ title: 'Telefonzeiten besprechen', sourcePath: `/news/${newsId}` }).expect(201)).body;
+    expect((await piotr.get(`/api/v1/meetings/${id}`).expect(200)).body.hidden).toBe(1);
+    expect((await jana.get(`/api/v1/meetings/${id}`).expect(200)).body.items.some((i: { title: string }) => i.title === 'Wunschfrei an Silvester')).toBe(true);
+    // Agenda: nur die Leitung verteilt
+    await piotr.post(`/api/v1/meetings/${id}/state`).send({ action: 'set-agenda' }).expect(403);
+    await jonas.post(`/api/v1/meetings/${id}/state`).send({ action: 'set-agenda' }).expect(201);
+    expect(await prisma.db.notification.count({ where: { recipientId: await uid('piotr.n'), title: { startsWith: 'Agenda steht' } } })).toBe(1);
+    // Live: Gast, Anwesenheit, Entscheidung, Aufgabe, News verknüpfen
+    await jana.post(`/api/v1/meetings/${id}/state`).send({ action: 'start' }).expect(201);
+    await jana.post(`/api/v1/meetings/${id}/attendees`).send({ name: 'Eva Gast', org: 'Telefonanlagen Beispiel GmbH' }).expect(201);
+    const live = (await jana.get(`/api/v1/meetings/${id}`).expect(200)).body;
+    const sel = live.attendees.find((a: { name: string }) => a.name.startsWith('Selin'));
+    await jana.patch(`/api/v1/meetings/${id}/attendees/${sel.id}`).send({ status: 'EXCUSED' }).expect(200);
+    await piotr.post(`/api/v1/meetings/items/${own}/timer`).send({ run: true }).expect(201); // Zeitwächter
+    const { id: dec } = (await jana.post(`/api/v1/meetings/items/${own}/decisions`).send({ text: 'Telefon ab 7 Uhr besetzt' }).expect(201)).body;
+    const { id: taskId } = (await jana.post(`/api/v1/meetings/items/${own}/tasks`).send({ title: 'Ansage am Telefon ändern', userId: await uid('piotr.n'), decisionId: dec }).expect(201)).body;
+    await jana.post(`/api/v1/meetings/items/${own}/links`).send({ contentItemId: newsId, decisionId: dec }).expect(201);
+    await jana.post(`/api/v1/meetings/items/${own}/tasks`).send({ title: 'Geht nicht', userId: await uid('maren.h') }).expect(400); // nicht dabei
+    expect((await piotr.get(`/api/v1/meetings/origin/${taskId}`).expect(200)).body.origin).toMatchObject({ meeting: 'Teammeeting Rezeption', decision: 'Telefon ab 7 Uhr besetzt' });
+    await jana.patch(`/api/v1/meetings/items/${own}`).send({ status: 'DONE', notes: 'Kurz besprochen.' }).expect(200);
+    // Einreichen (Rest wird vertagt) → nur die Leitung schreibt fest
+    await jana.post(`/api/v1/meetings/${id}/state`).send({ action: 'submit' }).expect(201);
+    await jana.post(`/api/v1/meetings/${id}/state`).send({ action: 'lock' }).expect(403);
+    await jonas.post(`/api/v1/meetings/${id}/state`).send({ action: 'lock' }).expect(201);
+    const done = (await piotr.get(`/api/v1/meetings/${id}`).expect(200)).body;
+    expect(done.status).toBe('LOCKED');
+    expect(done.items.find((i: { id: string }) => i.id === own).links.map((l: { kind: string }) => l.kind).sort()).toEqual(['NEWS', 'TASK']);
+    await jana.patch(`/api/v1/meetings/items/${own}`).send({ notes: 'geändert' }).expect(400);
+    await expect(prisma.db.agendaItem.update({ where: { id: own }, data: { title: 'heimlich' } })).rejects.toThrow(); // auch die Datenbank sperrt
+    await jana.post(`/api/v1/meetings/${id}/addenda`).send({ text: 'Nachtrag: gilt auch samstags.' }).expect(201);
+    expect((await piotr.get('/api/v1/meetings/decisions?q=Telefon').expect(200)).body[0].text).toBe('Telefon ab 7 Uhr besetzt');
+    // Live-Stand im festgeschriebenen Protokoll
+    await piotr.patch(`/api/v1/tasks/${taskId}`).send({ status: 'DONE' }).expect(200);
+    expect((await jonas.get(`/api/v1/meetings/${id}`).expect(200)).body.items.find((i: { id: string }) => i.id === own).links.find((l: { kind: string }) => l.kind === 'TASK').status).toBe('DONE');
+    // Nächster Termin der Serie entsteht mit Vertagtem
+    await svc.run(new Date(m0.startsAt.getTime() + 3600_000));
+    const after = await prisma.db.meeting.findFirstOrThrow({ where: { seriesId: m0.seriesId, startsAt: { gt: m0.startsAt } }, include: { items: true } });
+    expect(after.items.map((i) => i.title)).toEqual(expect.arrayContaining(['Fundsachen-Regal neu ordnen', 'Frühstückszeiten am Wochenende', 'Rückblick Aufgaben']));
+    expect(after.items.at(-1)!.title).toBe('Sonstiges');
+    // Startseite: Kachel „Nächstes Meeting“
+    const dash = (await piotr.get('/api/v1/dashboard').expect(200)).body.widgets.find((w: { key: string }) => w.key === 'meetings');
+    expect(dash.items[0].title).toBe('Teammeeting Rezeption');
+    // Outlook: Kalenderdatei mit Serie in Berliner Zeit, Einladung nur durch die Leitung
+    const ics = (await piotr.get(`/api/v1/meetings/${after.id}/ics`).expect(200)).text;
+    expect(ics).toContain('RRULE:FREQ=WEEKLY;BYDAY=TU');
+    expect(ics).toMatch(/DTSTART;TZID=Europe\/Berlin:\d{8}T140000/);
+    await piotr.get(`/api/v1/meetings/${after.id}/outlook`).expect(403);
+    const inv = (await jonas.get(`/api/v1/meetings/${after.id}/outlook`).expect(200)).body;
+    expect(inv.url).toContain('outlook.office.com/calendar/deeplink/compose');
+    expect(decodeURIComponent(inv.url)).toContain('rezeption@sgl.example');
+    expect(inv.missing).toEqual(expect.arrayContaining(['Selin A.']));
   });
 });

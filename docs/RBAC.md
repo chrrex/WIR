@@ -50,6 +50,7 @@ Schema: `<modul>.<aktion>`. *Sensibel* = `is_sensitive`, nur an wenige Rollen, V
 | lifecycle | `lifecycle.start`, `lifecycle.view_progress`, `lifecycle.manage_templates` |
 | surveys | `surveys.respond`, `surveys.create`, `surveys.view_results` |
 | ideas | `ideas.read`, `ideas.create`, `ideas.manage` (Status, Verantwortliche) |
+| meetings | `meetings.read`, `meetings.create` (alle Mitarbeitenden), `meetings.manage_any` (Abteilungsleitung; ADR-061) |
 | contacts | `contacts.read`, `contacts.manage`, `contacts.view_emergency` |
 | employees | `employees.directory`, `absences.view_team`, `absences.manage` |
 | users *(sensibel)* | `users.read`, `users.manage`, `users.deactivate`, `users.delete` (endgültig löschen/anonymisieren), `users.reset_password` |
@@ -67,7 +68,7 @@ Die Spec-Begriffe *read/create/update/delete/deactivate/download* bilden sich 1:
 | `employee` | Global | dashboard.view, news.read, news.create/publish (ADR-037), social.read, social.post, handovers.read/create, comments.create, reactions.create, chat.use, knowledge.read, documents.read/download, search.use, ai.use, tasks.read, checklists.execute, surveys.respond, ideas.read/create, contacts.read, contacts.view_emergency (ADR-041), employees.directory |
 | `external` | Gesellschaft/Gruppe | news.read, knowledge.read (nur freigegebene Kategorien), chat.use, checklists.execute – **kein** employees.directory, kein ai.use (ADR-006) |
 | `team_lead` | Gruppe | + chat.create_group, news.mark_important, handovers.update_any, read_status.view_summary/details, reminders.send_manual, tasks.create/assign, checklists.approve, absences.view_team, lifecycle.view_progress, surveys.create/view_results |
-| `department_head` | Gesellschaft | wie team_lead für die Gesellschaft + news.publish_wide, knowledge.publish, documents.*, checklists.manage_templates, lifecycle.start, ideas.manage, knowledge.require_acknowledgement, contacts.manage (ADR-041) |
+| `department_head` | Gesellschaft | wie team_lead für die Gesellschaft + news.publish_wide, knowledge.publish, documents.*, checklists.manage_templates, lifecycle.start, ideas.manage, meetings.manage_any, knowledge.require_acknowledgement, contacts.manage (ADR-041) |
 | `editor_knowledge` | Global | knowledge.*, documents.create/update, knowledge.require_acknowledgement |
 | `hr` | Gesellschaft | users.read, lifecycle.*, absences.manage, Zugriff auf sensible HR-Kategorien nur per ACL |
 | `management` | Global | dashboard.view_cross_company, read_status.view_summary, surveys.view_results, audit.read (lesend) |
@@ -87,6 +88,7 @@ Die Spec-Begriffe *read/create/update/delete/deactivate/download* bilden sich 1:
 | Aufgaben | Ersteller:in, Zugewiesene (User oder Gruppe), Teamleitung im Scope | Zugewiesene (Status), Ersteller:in |
 | Checklisten-Läufe | zugewiesene Gruppe; `checklists.view_reports` im Scope | ausführende Gruppe |
 | Ideen | `ideas.read` (alle Mitarbeitenden), sofern nicht anders gescopt | Autor:in (bis IN_REVIEW), `ideas.manage` |
+| Meetings | Eingeladene (Empfänger:innen); vertrauliche Punkte nur Ausgewählte, Leitung, Protokoll, Einbringende | Leitung (Agenda, Festschreiben), Protokoll (Inhalte), `meetings.manage_any` |
 | Chat | ausschließlich aktuelle Teilnehmende; **keine** Admin-Leserechte auf Inhalte (ADR-015) | Absender:in (eigene Nachricht) |
 | Kontakte | `contacts.read` + Kategorie-ACL; Notfallnummern `contacts.view_emergency` | `contacts.manage` |
 | Entwürfe | nur Autor:in und Personen mit UPDATE | – |

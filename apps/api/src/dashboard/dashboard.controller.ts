@@ -8,6 +8,7 @@ import { CurrentUser, RequirePermission, SessionUser } from '../auth/decorators'
 import { can, PolicyContext } from '../policy/engine';
 import { MODULE_PERMISSION, enabledModules } from '../me/branding';
 import { ContentService } from '../content/content.service';
+import { MeetingsService, when } from '../work/meetings.service';
 
 const Prefs = z.object({ items: z.array(z.object({ key: z.string().regex(/^(kpi|w):[a-z]{2,20}$/), visible: z.boolean() })).max(40) });
 
@@ -30,6 +31,7 @@ const WIDGETS: Array<Omit<Widget, 'state'> & { readyInPhase: number }> = [
   { key: 'social', title: 'Neu bei Social', module: 'SOCIAL', readyInPhase: 2, text: 'Grüße, Glückwünsche, Biete & Suche.' },
   { key: 'thanks', title: 'Danke-Karten', module: 'SOCIAL', readyInPhase: 2, text: 'Wer sich bei wem bedankt hat.' },
   { key: 'tasks', title: 'Meine Aufgaben', module: 'TASKS', readyInPhase: 4, text: 'Deine offenen Aufgaben mit Fälligkeit.' },
+  { key: 'meetings', title: 'Nächstes Meeting', module: 'MEETINGS', readyInPhase: 4, text: 'Gerade ist kein Meeting für dich geplant.' },
   { key: 'checklists', title: 'Checklisten heute', module: 'CHECKLISTS', readyInPhase: 4, text: 'HACCP- und Schichtchecklisten, die heute fällig sind.' },
   { key: 'events', title: 'Veranstaltungen & Räume heute', module: 'EVENTS', readyInPhase: 5, text: 'Aus dem Eventtool – sobald die Anbindung steht.' },
   { key: 'shift', title: 'Mein Dienstplan', module: 'SHIFTS', readyInPhase: 5, text: 'Aus Gastromatic – sobald die Anbindung geprüft ist.' },
@@ -37,7 +39,7 @@ const WIDGETS: Array<Omit<Widget, 'state'> & { readyInPhase: number }> = [
 
 @Controller('dashboard')
 export class DashboardController {
-  constructor(private readonly prisma: PrismaService, private readonly content: ContentService) {}
+  constructor(private readonly prisma: PrismaService, private readonly content: ContentService, private readonly meetings: MeetingsService) {}
 
   @RequirePermission('dashboard.view')
   @Get()
@@ -82,6 +84,15 @@ export class DashboardController {
         const rows = await db.contentItem.findMany({ where, include: { task: true }, orderBy: { task: { dueAt: { sort: 'asc', nulls: 'last' } } }, take: 4 });
         w.items = rows.map((r) => ({ id: r.id, title: r.task!.title, meta: r.task!.dueAt ? `fällig ${fmt(r.task!.dueAt)}` : 'ohne Termin', unread: false, important: r.task!.priority === 'URGENT', href: `/aufgaben/${r.id}` }));
         w.count = await db.contentItem.count({ where });
+      }
+      if (w.key === 'meetings') {
+        const { m, tasks } = await this.meetings.nextFor(me.id);
+        const open = m?.status === 'PLANNED' && m.agendaDeadline && m.agendaDeadline > new Date();
+        w.items = [
+          ...(m ? [{ id: m.id, title: m.title, meta: [m.status === 'LIVE' ? 'läuft gerade' : when(m.startsAt), m.location, open && `Punkte bis ${when(m.agendaDeadline!)}`].filter(Boolean).join(' · '), unread: m.status === 'LIVE', href: `/meetings/${m.id}` }] : []),
+          ...(m?.items ?? []).map((i, k) => ({ id: `${m!.id}-${k}`, title: `Dein Punkt: ${i.title}`, meta: 'auf der Agenda', unread: false, href: `/meetings/${m!.id}` })),
+          ...tasks.map((t) => ({ id: t.id, title: `Aufgabe: ${t.task!.title}`, meta: t.task!.dueAt ? `aus einem Meeting · fällig ${fmt(t.task!.dueAt)}` : 'aus einem Meeting', unread: false, href: `/aufgaben/${t.id}` })),
+        ];
       }
       if (w.key === 'checklists') {
         const rows = await db.contentItem.findMany({ where: { type: 'CHECKLIST_RUN', ...visible, checklistRun: { status: { in: ['PLANNED', 'IN_PROGRESS'] } } }, include: { checklistRun: true }, orderBy: { publishedAt: 'desc' }, take: 4 });

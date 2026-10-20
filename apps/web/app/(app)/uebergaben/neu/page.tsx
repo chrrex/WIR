@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
+import { useFromMeeting } from '@/lib/meetings';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api, ApiError } from '@/lib/api';
@@ -16,15 +17,18 @@ function defaultShift() {
   return h >= 5 && h < 13 ? 'Früh' : h >= 13 && h < 21 ? 'Spät' : 'Nacht';
 }
 
-export default function NewHandover() {
+export default function Page() { return <Suspense><NewHandover /></Suspense>; }
+
+function NewHandover() {
   const router = useRouter();
+  const meeting = useFromMeeting();
   const [opts, setOpts] = useState<{ audiences: AudienceOption[]; defaults: string[]; shifts: string[] } | null>(null);
   const [targets, setTargets] = useState<string[]>([]);
   const [away, setAway] = useState<Array<Absent & { id: string; name: string }>>([]);
   useEffect(() => { if (!targets.length) { setAway([]); return; } api<typeof away>('/people/absent', { method: 'POST', json: { targets } }).then(setAway).catch(() => setAway([])); }, [targets]);
   const [shift, setShift] = useState(defaultShift());
-  const [subject, setSubject] = useState('');
-  const [text, setText] = useState('');
+  const [subject, setSubject] = useState(meeting.title.slice(0, 140));
+  const [text, setText] = useState(meeting.text);
   const [mentions, setMentions] = useState<Person[]>([]);
   const [images, setImages] = useState<PickedImage[]>([]);
   const [poll, setPoll] = useState<PollDraft | null>(null);
@@ -39,6 +43,7 @@ export default function NewHandover() {
     setBusy(true); setError(null);
     try {
       const r = await api<{ id: string }>('/handovers', { method: 'POST', json: { targets, shiftLabel: shift, subject, text, mentionIds: mentions.map((m) => m.id), images: images.map((i) => ({ fileId: i.fileId, altText: i.altText || null })), poll: pollJson(poll), publishAt: iso(at) } });
+      await meeting.link({ contentItemId: r.id });
       router.replace(`/uebergaben/${r.id}`);
     } catch (err) { setError(err instanceof ApiError ? err.message : 'Speichern hat nicht geklappt.'); setBusy(false); }
   }

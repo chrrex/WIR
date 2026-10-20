@@ -125,9 +125,9 @@ export class FilesController {
       }
     }
     if (!allowed) {
-      // Dokumentversionen und Checklisten-Fotos: sichtbar, wenn der zugehörige Inhalt sichtbar ist
+      // Dokumentversionen, Checklisten- und Flipchart-Fotos: sichtbar, wenn der zugehörige Inhalt sichtbar ist
       const visible = this.content.visibleWhere(me.id);
-      allowed = (await db.contentItem.count({ where: { AND: [visible, { OR: [{ document: { versions: { some: { fileObjectId: id } } } }, { checklistRun: { items: { some: { photoFileId: id } } } }] }] } })) > 0;
+      allowed = (await db.contentItem.count({ where: { AND: [visible, { OR: [{ document: { versions: { some: { fileObjectId: id } } } }, { checklistRun: { items: { some: { photoFileId: id } } } }, { meeting: { items: { some: { photoFileIds: { has: id }, confidential: false } } } }] }] } })) > 0;
     }
     if (!allowed) throw new NotFoundException();
     // Dokument geöffnet = gelesen (Lesestatus, nur Datum)

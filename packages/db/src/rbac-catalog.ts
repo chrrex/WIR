@@ -22,6 +22,7 @@ export const PERMISSIONS = {
   lifecycle: ['lifecycle.start', 'lifecycle.view_progress', 'lifecycle.manage_templates'],
   surveys: ['surveys.respond', 'surveys.create', 'surveys.view_results'],
   ideas: ['ideas.read', 'ideas.create', 'ideas.manage'],
+  meetings: ['meetings.read', 'meetings.create', 'meetings.manage_any'],
   contacts: ['contacts.read', 'contacts.manage', 'contacts.view_emergency'],
   employees: ['employees.directory', 'absences.view_team', 'absences.manage'],
   users: ['users.read', 'users.manage', 'users.deactivate', 'users.delete', 'users.reset_password'],
@@ -44,7 +45,7 @@ const EMPLOYEE: PermissionKey[] = [
   'dashboard.view', 'news.read', 'news.create', 'news.publish', 'social.read', 'social.post',
   'handovers.read', 'handovers.create', 'comments.create', 'reactions.create', 'chat.use',
   'knowledge.read', 'knowledge.create', 'documents.read', 'documents.download', 'search.use', 'ai.use', 'tasks.read',
-  'checklists.execute', 'surveys.respond', 'ideas.read', 'ideas.create', 'contacts.read', 'contacts.view_emergency', 'employees.directory',
+  'checklists.execute', 'surveys.respond', 'ideas.read', 'ideas.create', 'meetings.read', 'meetings.create', 'contacts.read', 'contacts.view_emergency', 'employees.directory',
 ];
 
 const TEAM_LEAD: PermissionKey[] = [
@@ -71,7 +72,7 @@ export const ROLES: RoleDefinition[] = [
   {
     key: 'department_head', name: 'Abteilungsleitung', description: 'Wie Teamleitung für die Gesellschaft, zusätzlich Wissen und Vorlagen.',
     permissions: [...TEAM_LEAD, 'knowledge.update', 'knowledge.manage_categories', 'knowledge.require_acknowledgement', 'documents.create', 'documents.update',
-      'documents.deactivate', 'checklists.manage_templates', 'checklists.view_reports', 'lifecycle.start', 'ideas.manage', 'news.pin', 'contacts.manage', 'documents.manage_categories'],
+      'documents.deactivate', 'checklists.manage_templates', 'checklists.view_reports', 'lifecycle.start', 'ideas.manage', 'meetings.manage_any', 'news.pin', 'contacts.manage', 'documents.manage_categories'],
   },
   {
     key: 'editor_knowledge', name: 'Redaktion Wissen', description: 'Pflegt Wissen & SOPs.',

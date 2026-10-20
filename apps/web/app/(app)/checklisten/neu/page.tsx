@@ -1,5 +1,6 @@
 'use client';
 
+import { useFromMeeting } from '@/lib/meetings';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -24,8 +25,9 @@ function Builder() {
   const q = useSearchParams();
   const editId = q.get('id');
   const copyId = q.get('copy');
+  const meeting = useFromMeeting();
   const { data: o } = useLoad<{ kinds: string[]; audiences: AudienceOption[] }>('/checklists/options');
-  const [f, setF] = useState<Form>({ title: '', description: '', kind: 'GENERAL', visibility: 'PUBLIC', completionMode: 'SHARED', assignees: [], dueInHours: '', repeat: 'NONE', time: '06:00', requiresApproval: false, items: [newItem()] });
+  const [f, setF] = useState<Form>({ title: meeting.title.slice(0, 140), description: meeting.text.slice(0, 1000), kind: 'GENERAL', visibility: 'PUBLIC', completionMode: 'SHARED', assignees: [], dueInHours: '', repeat: 'NONE', time: '06:00', requiresApproval: false, items: [newItem()] });
   const [startNow, setStartNow] = useState(true);
   const { busy, error, run } = useSubmit();
   useEffect(() => {
@@ -46,6 +48,7 @@ function Builder() {
       items: f.items.map((i) => ({ ...i, min: i.min === '' ? null : Number(i.min.replace(',', '.')), max: i.max === '' ? null : Number(i.max.replace(',', '.')), unit: i.unit || null, description: i.description || null,
         showIf: i.showIf && f.items.some((x) => x.key === i.showIf!.key) ? i.showIf : null })) };
     const r = await run(() => api<{ id: string; runId: string | null }>(editId ? `/checklists/templates/${editId}` : '/checklists/templates', { method: editId ? 'PUT' : 'POST', json: body }));
+    if (r && !editId) await meeting.link({ checklistId: r.id });
     if (r) router.replace(r.runId ? `/checklisten/${r.runId}` : '/checklisten');
   }
   return (

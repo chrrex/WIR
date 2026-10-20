@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import { useFromMeeting } from '@/lib/meetings';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api, ApiError } from '@/lib/api';
@@ -11,12 +12,15 @@ import { iso, PollDraft, PollEditor, pollJson, ScheduleField } from '@/component
 
 interface Options { audiences: Array<{ key: string; label: string; wide: boolean }>; canImportant: boolean; canPin: boolean }
 
-export default function NewNews() {
+export default function Page() { return <Suspense><NewNews /></Suspense>; }
+
+function NewNews() {
   const router = useRouter();
+  const meeting = useFromMeeting();
   const [o, setO] = useState<Options | null>(null);
   const [targets, setTargets] = useState<string[]>([]);
-  const [title, setTitle] = useState('');
-  const [text, setText] = useState('');
+  const [title, setTitle] = useState(meeting.title);
+  const [text, setText] = useState(meeting.text);
   const [important, setImportant] = useState(false);
   const [pinned, setPinned] = useState(false);
   const [images, setImages] = useState<PickedImage[]>([]);
@@ -31,6 +35,7 @@ export default function NewNews() {
     setBusy(true); setError(null);
     try {
       const r = await api<{ id: string }>('/news', { method: 'POST', json: { title, text, targets, important, pinned, images: images.map((i) => ({ fileId: i.fileId, altText: i.altText || null })), poll: pollJson(poll), publishAt: iso(at) } });
+      await meeting.link({ contentItemId: r.id });
       router.replace(`/news/${r.id}`);
     } catch (err) { setError(err instanceof ApiError ? err.message : 'Veröffentlichen hat nicht geklappt.'); setBusy(false); }
   }

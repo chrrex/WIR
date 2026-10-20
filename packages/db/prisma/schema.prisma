@@ -65,6 +65,7 @@ enum AppModule {
   IDEAS
   CONTACTS
   TEAM
+  MEETINGS
 }
 
 enum UserStatus {
@@ -129,6 +130,7 @@ enum ContentType {
   TASK
   CHECKLIST_RUN
   IDEA
+  MEETING
 }
 
 enum ContentStatus {
@@ -260,6 +262,8 @@ enum TranslatableEntity {
   CHECKLIST_RUN_ITEM
   SURVEY_QUESTION
   SURVEY_OPTION
+  AGENDA_ITEM
+  MEETING_DECISION
 }
 
 enum ChatType {
@@ -883,6 +887,8 @@ model ContentItem {
   survey           Survey?
   task             Task?
   checklistRun     ChecklistRun?
+  meeting          Meeting?
+  meetingOrigin    MeetingLink?
   idea             Idea?
   poll             Poll?
   bookmarks        Bookmark[]
@@ -2310,4 +2316,198 @@ model ThanksReminder {
 
   @@index([dueOn, sentAt])
   @@map("thanks_reminders")
+}
+
+// ---------------------------------------------------------------- Meetings (ADR-061)
+// Personen-Bezüge als einfache UUID-Spalten (Fremdschlüssel per SQL, ON DELETE SET NULL) – Namen lädt die API dazu.
+
+enum MeetingStatus {
+  PLANNED // Punkte sammeln
+  AGENDA_SET // Agenda verteilt
+  LIVE
+  REVIEW // Protokoll eingereicht, Leitung bestätigt
+  LOCKED // festgeschrieben – nur noch Nachträge
+  CANCELLED
+}
+
+enum MeetingAttendance {
+  INVITED
+  PRESENT
+  ONLINE
+  EXCUSED
+  ABSENT
+}
+
+enum MeetingRole {
+  LEAD
+  MINUTES
+  TIMEKEEPER
+}
+
+enum AgendaItemStatus {
+  PROPOSED // eingebracht
+  SET // auf der Agenda
+  DONE // besprochen
+  POSTPONED // vertagt → nächstes Meeting
+  PARKED // Parkplatz der Serie
+  MERGED // mit anderem Punkt zusammengelegt
+}
+
+enum MeetingLinkKind {
+  TASK
+  KNOWLEDGE
+  NEWS
+  HANDOVER
+  CHECKLIST
+}
+
+/// Wiederkehrendes Meeting, z. B. „Teammeeting Rezeption“ dienstags 14 Uhr.
+model MeetingSeries {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId       String   @map("company_id") @db.Uuid
+  title           String
+  groupId         String?  @map("group_id") @db.Uuid
+  memberIds       String[] @default([]) @map("member_ids") @db.Uuid // einzelne Personen zusätzlich zum Team
+  recurrenceRule  String?  @map("recurrence_rule") // FREQ=WEEKLY;BYDAY=TU;BYHOUR=14;BYMINUTE=0
+  durationMin     Int      @default(60) @map("duration_min")
+  location        String?
+  onlineUrl       String?  @map("online_url")
+  agendaLeadHours Int      @default(26) @map("agenda_lead_hours") // Punkte bis … Stunden vorher (Di 14 Uhr → Mo 12 Uhr)
+  retentionYears  Int      @default(3) @map("retention_years")
+  standardItems   String[] @default([]) @map("standard_items") // Vorlage
+  leadId          String   @map("lead_id") @db.Uuid
+  minutesId       String?  @map("minutes_id") @db.Uuid
+  timekeeperId    String?  @map("timekeeper_id") @db.Uuid
+  createdById     String?  @map("created_by_id") @db.Uuid
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  meetings Meeting[]
+
+  @@map("meeting_series")
+}
+
+/// Ein Termin. Inhalt (content_items) für Sichtbarkeit, Lesestatus und Benachrichtigungen.
+model Meeting {
+  id             String        @id @db.Uuid // = content_items.id
+  seriesId       String?       @map("series_id") @db.Uuid
+  title          String
+  startsAt       DateTime      @map("starts_at") @db.Timestamptz(6)
+  durationMin    Int           @default(60) @map("duration_min")
+  location       String?
+  onlineUrl      String?       @map("online_url")
+  status         MeetingStatus @default(PLANNED)
+  agendaDeadline DateTime?     @map("agenda_deadline") @db.Timestamptz(6)
+  agendaSetAt    DateTime?     @map("agenda_set_at") @db.Timestamptz(6)
+  startedAt      DateTime?     @map("started_at") @db.Timestamptz(6)
+  endedAt        DateTime?     @map("ended_at") @db.Timestamptz(6)
+  submittedAt    DateTime?     @map("submitted_at") @db.Timestamptz(6)
+  submittedById  String?       @map("submitted_by_id") @db.Uuid
+  lockedAt       DateTime?     @map("locked_at") @db.Timestamptz(6)
+  lockedById     String?       @map("locked_by_id") @db.Uuid
+  retainUntil    DateTime?     @map("retain_until") @db.Timestamptz(6)
+  cancelNote     String?       @map("cancel_note")
+
+  contentItem ContentItem       @relation(fields: [id], references: [id], onDelete: Cascade)
+  series      MeetingSeries?    @relation(fields: [seriesId], references: [id], onDelete: SetNull)
+  attendees   MeetingAttendee[]
+  items       AgendaItem[]
+  addenda     MeetingAddendum[]
+
+  @@index([seriesId, startsAt])
+  @@index([status, startsAt])
+  @@map("meetings")
+}
+
+/// Teilnehmende: Personen mit Zugang oder Gäste ohne Zugang (Name, Firma/Funktion, optional E-Mail).
+model MeetingAttendee {
+  id         String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  meetingId  String            @map("meeting_id") @db.Uuid
+  userId     String?           @map("user_id") @db.Uuid
+  guestName  String?           @map("guest_name")
+  guestOrg   String?           @map("guest_org")
+  guestEmail String?           @map("guest_email")
+  role       MeetingRole?
+  status     MeetingAttendance @default(INVITED)
+
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@unique([meetingId, userId])
+  @@map("meeting_attendees")
+}
+
+model AgendaItem {
+  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  meetingId     String           @map("meeting_id") @db.Uuid
+  title         String
+  description   String?
+  authorId      String?          @map("author_id") @db.Uuid
+  ownerId       String?          @map("owner_id") @db.Uuid // bringt den Punkt ein / stellt ihn vor
+  durationMin   Int              @default(10) @map("duration_min")
+  sortOrder     Int              @default(0) @map("sort_order")
+  status        AgendaItemStatus @default(PROPOSED)
+  confidential  Boolean          @default(false) // nur für viewerIds (+ Leitung, Protokoll, Einbringende)
+  viewerIds     String[]         @default([]) @map("viewer_ids") @db.Uuid
+  notes         String?
+  photoFileIds  String[]         @default([]) @map("photo_file_ids") @db.Uuid // Flipchart-Fotos
+  spentSec      Int              @default(0) @map("spent_sec")
+  timerAt       DateTime?        @map("timer_at") @db.Timestamptz(6) // läuft seit
+  sourcePath    String?          @map("source_path") // „Auf die Agenda setzen“ aus News, Idee, Chat …
+  origin        String? // STANDARD | CARRIED | PARKED | FOLLOW_UP | IDEA
+  carriedFromId String?          @map("carried_from_id") @db.Uuid
+  carriedAt     DateTime?        @map("carried_at") @db.Timestamptz(6) // in ein späteres Meeting übernommen
+  mergedIntoId  String?          @map("merged_into_id") @db.Uuid
+  followUpOn    DateTime?        @map("follow_up_on") @db.Date // Wiedervorlage
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  meeting   Meeting           @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  decisions MeetingDecision[]
+  links     MeetingLink[]
+
+  @@index([meetingId, sortOrder])
+  @@index([status])
+  @@map("agenda_items")
+}
+
+model MeetingDecision {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  itemId      String   @map("item_id") @db.Uuid
+  text        String
+  createdById String?  @map("created_by_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  item  AgendaItem    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  links MeetingLink[]
+
+  @@map("meeting_decisions")
+}
+
+/// „Daraus machen …“: Aufgabe, Wissen, News, Übergabe, Checkliste – mit Rückverweis aufs Protokoll.
+model MeetingLink {
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  itemId        String          @map("item_id") @db.Uuid
+  decisionId    String?         @map("decision_id") @db.Uuid
+  contentItemId String?         @unique @map("content_item_id") @db.Uuid
+  checklistId   String?         @map("checklist_id") @db.Uuid // Checklisten-Vorlage (kein Inhalt)
+  kind          MeetingLinkKind
+  createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  item        AgendaItem       @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  decision    MeetingDecision? @relation(fields: [decisionId], references: [id], onDelete: SetNull)
+  contentItem ContentItem?     @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+
+  @@map("meeting_links")
+}
+
+/// Nach dem Festschreiben: nur noch datierte Nachträge.
+model MeetingAddendum {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  meetingId String   @map("meeting_id") @db.Uuid
+  text      String
+  authorId  String?  @map("author_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@map("meeting_addenda")
 }

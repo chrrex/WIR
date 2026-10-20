@@ -6,7 +6,7 @@ import { CurrentUser, SessionUser } from '../auth/decorators';
 import { Item, LANGUAGES, TranslateService } from './translate.service';
 
 const Body_ = z.object({
-  items: z.array(z.object({ entity: z.enum(['CONTENT_ITEM', 'COMMENT', 'CHAT_MESSAGE']), id: z.uuid(), field: z.enum(['title', 'body']) })).min(1).max(50),
+  items: z.array(z.object({ entity: z.enum(['CONTENT_ITEM', 'COMMENT', 'CHAT_MESSAGE', 'AGENDA_ITEM', 'MEETING_DECISION']), id: z.uuid(), field: z.enum(['title', 'body']) })).min(1).max(50),
   /** Leichte Sprache statt (nur) Übersetzung */
   plain: z.boolean().optional(),
 });
