@@ -175,6 +175,22 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
   await zi({ title: 'Zimmernummer', responseType: 'TEXT', sortOrder: 7 });
   await zi({ title: 'Abzeichnen', responseType: 'SIGNATURE', sortOrder: 8 });
 
+  // Gutsbetrieb: Morgenrundgang des Gärtners – täglich, mit Sturmschaden-Meldung an die Haustechnik
+  const gut = await prisma.checklist.create({ data: { companyId: sgl, groupId: G('Gutsbetrieb'), ownerId: T('henrik.g'), assignees: [`G:${G('Gutsbetrieb')}`], visibility: 'PUBLIC', completionMode: 'SHARED',
+    title: 'Morgenrundgang Park & Gärten', kind: 'SHIFT', description: 'Jeden Morgen vor den ersten Gästen.', recurrenceRule: 'FREQ=DAILY;BYHOUR=7;BYMINUTE=0', nextRunAt: nextSix(), dueInHours: 3 } });
+  const gi = async (o: Record<string, unknown>) => prisma.checklistItem.create({ data: { checklistId: gut.id, ...o } as never });
+  await gi({ title: 'Park', responseType: 'HEADING', isRequired: false, sortOrder: 0 });
+  await gi({ title: 'Wege und Treppen frei von Laub und Ästen', sortOrder: 1 });
+  const sturm = await gi({ title: 'Sturmschäden an Bäumen?', responseType: 'YES_NO', flagged: ['Ja'], createTask: true, sortOrder: 2,
+    description: 'Bei „Ja“ bitte Foto und kurze Beschreibung – die Haustechnik bekommt automatisch eine Aufgabe.' });
+  await gi({ title: 'Foto vom Schaden', responseType: 'PHOTO', sortOrder: 3, showIfItemId: sturm.id, showIfValue: 'Ja' });
+  await gi({ title: 'Bänke und Mülleimer kontrolliert', sortOrder: 4 });
+  await gi({ title: 'Gärten & Hof', responseType: 'HEADING', isRequired: false, sortOrder: 5 });
+  await gi({ title: 'Kräuter- und Gemüsegarten', responseType: 'CHOICE', options: ['Gegossen', 'Nicht nötig (Regen)', 'Schädlinge entdeckt'], flagged: ['Schädlinge entdeckt'], sortOrder: 6 });
+  await gi({ title: 'Hühner gefüttert, Wasser aufgefüllt', sortOrder: 7 });
+  await gi({ title: 'Eier eingesammelt', responseType: 'NUMBER', unit: 'Stück', minValue: 0, maxValue: 200, sortOrder: 8 });
+  await gi({ title: 'Was ist dir sonst aufgefallen?', responseType: 'TEXT', isRequired: false, sortOrder: 9 });
+
   const runId = await item('CHECKLIST_RUN', T('sven.r'), 26, [{ targetType: 'GROUP', groupId: G('Küche') }], c.membersOf('Küche'), { reactionsEnabled: false });
   const values: Record<string, { n?: number; t?: string; out?: boolean; note?: string }> = {
     'Kühlraum 1': { n: 3 }, Tiefkühlraum: { n: -16, out: true, note: 'Tür stand offen, geschlossen. Nachmessung 08:15: -19 °C.' }, 'Kühlschrank Patisserie': { n: 5 }, 'Türdichtungen sauber und dicht': { t: 'Ja' },

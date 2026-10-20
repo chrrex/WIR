@@ -30,7 +30,8 @@ export function Logo({ branding, variant = 'side' }: { branding: Branding | null
 export function Wordmark({ compact = false }: { compact?: boolean }) {
   return (
     <span className={compact ? 'wordmark compact' : 'wordmark'}>
-      <span className="wm">WIR</span>
+      {/* Wortmarke als Sprechblase (ADR-060) */}
+      <span className="wm"><span className="wm-bubble">WIR</span></span>
       {!compact && <span className="wm-sub">Das Mitarbeiterportal</span>}
     </span>
   );

@@ -591,6 +591,12 @@ Für Vorführungen und Tests: Auf der Anmeldeseite eine Personenauswahl, in der 
 - Ein Menüpunkt erscheint, sobald einer seiner Bereiche freigeschaltet ist, und führt zum ersten davon; Reiter gibt es nur, wenn beide Bereiche freigeschaltet sind.
 - **Gemerkt** ist ein Symbol oben neben Glocke und Profil (auch am Handy).
 
+## ADR-060 · WIR-Logo als Sprechblase, Gutsbetrieb in der Demo — ENTSCHIEDEN (20.10.2026)
+
+- Die Wortmarke „WIR“ steht in einer Sprechblase – sie steht für Kommunikation. Auf der Markenfläche weiß mit Schrift in Markenfarbe, auf weißen Flächen (DKB STIFTUNG) in Markenfarbe mit weißer Schrift. Gilt für Anmeldeseite, Menü, mobile Kopfzeile und App-Symbol.
+- Die Wortmarke ist reines HTML/CSS, damit sie sich automatisch an die Farben jeder Gesellschaft anpasst.
+- Demo: Team „Gutsbetrieb“ mit dem Gärtner Henrik G. und der Checkliste „Morgenrundgang Park & Gärten“ (täglich 7 Uhr, Sturmschaden erzeugt eine Aufgabe).
+
 ## Nächste Schritte
 
 1. Anbieterauswahl (ADR-022) bestätigen und Gastromatic-Prüfauftrag (ADR-021) stellen.
