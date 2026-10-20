@@ -105,7 +105,8 @@ export class DashboardController {
       ? companies.filter((c) => c.kind !== 'FOUNDATION').map((c) => ({ id: c.id, name: c.name, active: c.isActive }))
       : null;
 
-    return { widgets, companyOverview, isFoundation, important, prefs: await this.prefs(me.id) };
+    // „Nächstes Meeting“ nur, wenn eins ansteht
+    return { widgets: widgets.filter((w) => w.key !== 'meetings' || w.items?.length), companyOverview, isFoundation, important, prefs: await this.prefs(me.id) };
   }
 
   private prefs(userId: string) {
