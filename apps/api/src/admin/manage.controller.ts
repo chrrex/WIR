@@ -141,7 +141,7 @@ export class ManageController {
     if (!role) throw new NotFoundException('Rolle nicht gefunden.');
     await this.assertGrantable(req.policy, role.permissions.map((p) => p.permission.key));
     if (!b.companyId && !b.groupId && companiesWith(req.policy, 'roles.manage', []) !== 'all' && role.key !== 'employee')
-      throw new BadRequestException('Bitte wähle, wofür die Rolle gilt (Haus oder Team).');
+      throw new BadRequestException('Bitte wähle, wofür die Rolle gilt (Gesellschaft oder Team).');
     const r = await this.prisma.db.userRole.create({ data: { userId: id, roleId: role.id, companyId: b.companyId ?? null, groupId: b.groupId ?? null, grantedById: me.id, validUntil: b.validUntil ? new Date(`${b.validUntil}T23:59:59Z`) : null } });
     await this.audit.log({ actorId: me.id, companyId: b.companyId ?? companyId, action: 'role.granted', entityType: 'user', entityId: id, metadata: { role: role.key, groupId: b.groupId ?? null, userRoleId: r.id } });
     return this.getPerson(req, id);

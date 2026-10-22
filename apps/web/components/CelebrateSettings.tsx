@@ -14,7 +14,7 @@ export function CelebrateSettings({ save }: { save: (patch: Record<string, unkno
   return (
     <section className="card stack">
       <h2>Geburtstag & Jubiläum</h2>
-      <p className="small muted">Freiwillig: Wenn du magst, erscheinst du an deinem Tag in der Leiste „Heute im Haus“ – ohne Jahr, nur im eigenen Haus.</p>
+      <p className="small muted">Freiwillig: Wenn du magst, erscheinst du an deinem Tag in der Leiste „Heute bei uns“ – ohne Jahr, nur in deiner eigenen Gesellschaft.</p>
       <div className="row wrap">
         <div className="field"><label htmlFor="bd-d">Tag</label>
           <select id="bd-d" className="input" value={d ?? ''} onChange={(e) => set(m, e.target.value)}>

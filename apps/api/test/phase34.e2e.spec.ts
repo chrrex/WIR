@@ -91,7 +91,7 @@ describe('Phase 3+4 (e2e)', () => {
     expect(rez.some((r: { title: string }) => r.title.startsWith('Check-in'))).toBe(true);
     const kitchen = (await jana.get('/api/v1/search?q=Tiefkühl').expect(200)).body.results;
     expect(kitchen.some((r: { title: string }) => r.title.startsWith('Kühlkette'))).toBe(false); // nur Küche/Service
-    expect(kitchen.some((r: { title: string }) => r.title.startsWith('HACCP'))).toBe(true); // News ans ganze Haus
+    expect(kitchen.some((r: { title: string }) => r.title.startsWith('Neue Regel zur Kühlkette'))).toBe(true); // News an die ganze Gesellschaft
     const lena = await as('lena.k');
     expect((await lena.get('/api/v1/search?q=Personalakte').expect(200)).body.results).toHaveLength(0);
     const ai = (await jana.post('/api/v1/ai/ask').send({ question: 'Wo hängt der Defibrillator?' }).expect(200)).body;
@@ -129,7 +129,7 @@ describe('Phase 3+4 (e2e)', () => {
   test('Checklisten: Grenzwert, Pflichtnotiz bei Abweichung, Meldung an die Teamleitung; Stiftung ohne Modul', async () => {
     const jana = await as('jana.m');
     const sven = await as('sven.r');
-    const tpl = await prisma.db.checklist.findFirstOrThrow({ where: { title: 'HACCP Kühlräume morgens' } });
+    const tpl = await prisma.db.checklist.findFirstOrThrow({ where: { title: 'Kühlräume morgens' } });
     await jana.post(`/api/v1/checklists/${tpl.id}/start`).expect(404); // nicht ihr Team
     const run = (await sven.post(`/api/v1/checklists/${tpl.id}/start`).expect(201)).body.id;
     let r = (await sven.get(`/api/v1/checklists/runs/${run}`).expect(200)).body;

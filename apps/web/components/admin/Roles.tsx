@@ -24,7 +24,7 @@ export function Roles() {
   }
   return (
     <section className="stack">
-      <div className="row wrap"><p className="muted small grow">Was eine Rolle darf, siehst du hier. Vergeben wird sie bei der Person – für ein Haus oder ein Team. Standardrollen sind fest; für Abweichungen legst du eine eigene Rolle an. Rechte, die du selbst nicht hast, kannst du nicht weitergeben.</p>
+      <div className="row wrap"><p className="muted small grow">Was eine Rolle darf, siehst du hier. Vergeben wird sie bei der Person – für eine Gesellschaft oder ein Team. Standardrollen sind fest; für Abweichungen legst du eine eigene Rolle an. Rechte, die du selbst nicht hast, kannst du nicht weitergeben.</p>
         {!edit && <button className="btn pri" onClick={() => setEdit({ id: null, name: '', description: '', permissions: [] })}>Eigene Rolle anlegen</button>}</div>
       <ErrorNote error={err} />
       {edit && (

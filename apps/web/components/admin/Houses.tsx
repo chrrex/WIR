@@ -35,7 +35,7 @@ function House({ c, modules, onSaved }: { c: C; modules: string[]; onSaved: () =
     <form className="card stack" onSubmit={(e) => { e.preventDefault(); void save(); }}>
       <h2>{c.name}</h2>
       <fieldset className="stack-s"><legend className="label">Module</legend>
-        <p className="small muted">Abgeschaltete Module verschwinden aus dem Menü – für alle, die nur in diesem Haus arbeiten. Inhalte bleiben erhalten.</p>
+        <p className="small muted">Abgeschaltete Module verschwinden aus dem Menü – für alle, die nur in dieser Gesellschaft arbeiten. Inhalte bleiben erhalten.</p>
         <div className="checks">{modules.map((m) => (
           <label key={m} className="check"><input type="checkbox" checked={!off.includes(m)} onChange={(e) => setOff(e.target.checked ? off.filter((x) => x !== m) : [...off, m])} />{MODULE_LABEL[m] ?? m}</label>
         ))}</div>

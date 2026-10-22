@@ -69,10 +69,12 @@ async function main() {
       },
     },
   });
-  await prisma.company.create({
+  // Jugenddörfer: Farbe und Name sind Platzhalter, bis das Logo vorliegt
+  const jd = await prisma.company.create({
     data: {
-      name: '[Gesellschaft B]', shortName: 'BEISPIEL-B', kind: 'LOCATION', parentId: stiftung.id, isActive: false,
-      branding: { create: { displayName: '[Gesellschaft B]', primaryColor: '#00706E', footerText: 'Beispiel für Ausbaustufe 2' } },
+      name: 'Jugenddörfer', shortName: 'JD', kind: 'LOCATION', parentId: stiftung.id,
+      disabledModules: ['OCCUPANCY', 'EVENTS', 'SHIFTS'], // Hotel-Kennzahlen gibt es hier nicht
+      branding: { create: { displayName: 'Jugenddörfer', primaryColor: '#00706E', footerText: 'Ein Wirkungsort der DKB STIFTUNG' } },
     },
   });
 
@@ -84,6 +86,9 @@ async function main() {
     groups.set(name, g.id);
   }
   const kommunikation = await prisma.group.create({ data: { name: 'Kommunikation', companyId: stiftung.id, type: 'DEPARTMENT' } });
+  const betreuung = await prisma.group.create({ data: { name: 'Gruppenbetreuung', companyId: jd.id, type: 'DEPARTMENT' } });
+  // Matrix: Fachgruppe quer über die Gesellschaften
+  const fachPersonal = await prisma.group.create({ data: { name: 'Fachgruppe Personal', companyId: stiftung.id, type: 'TEAM', description: 'Personal-Kolleg:innen aller Gesellschaften der Stiftungsgruppe' } });
 
   // ---- Personen -------------------------------------------------------------
   const passwordHash = await hash(DEMO_PASSWORD);
@@ -139,6 +144,11 @@ async function main() {
     roles: [{ key: 'employee' }, { key: 'foundation_editor', company: stiftung.id }] });
   const tom = await person({ username: 'tom.b.extern', first: 'Tom', last: 'Becker', job: 'Haustechnik (extern)', company: sgl.id, group: 'Haustechnik',
     external: true, validUntil: new Date('2027-03-31T23:59:59Z'), roles: [{ key: 'external', company: sgl.id }] });
+
+  // Jugenddörfer: Betreuung und Personal (erfunden)
+  const mia = await person({ username: 'mia.l', first: 'Mia', last: 'Lorenz', job: 'Pädagogin · Jugenddörfer', company: jd.id, group: betreuung.id, roles: [{ key: 'employee' }] });
+  const kai = await person({ username: 'kai.b', first: 'Kai', last: 'Brandes', job: 'Personal · Jugenddörfer', company: jd.id, group: fachPersonal.id, roles: [{ key: 'employee' }] });
+  await prisma.groupMembership.create({ data: { userId: lena.id, groupId: fachPersonal.id, isLead: true } });
 
   // Weitere Kolleg:innen (aktiv), damit Team, Chat und Lesestatus lebendig wirken
   const extra: Array<[string, string, string, string, string, string[]]> = [
@@ -208,7 +218,7 @@ async function main() {
   }
   const T = (u: string) => team.get(u)!;
 
-  await post({ author: T('sven.r'), kind: 'NEWS', important: true, hoursAgo: 3, title: 'HACCP: Neue Regel zur Kühlkette bei Anlieferungen',
+  await post({ author: T('sven.r'), kind: 'NEWS', hoursAgo: 3, title: 'Neue Regel zur Kühlkette bei Anlieferungen',
     text: 'Ab sofort messen wir bei jeder Tiefkühl-Lieferung die Kerntemperatur – nicht mehr nur stichprobenartig.\n\nDie Arbeitsanweisung „Kühlkette bei der Warenannahme“ wird gerade überarbeitet. Bitte sprecht mich bei Fragen direkt an.',
     recipients: sglPeople, audience: [{ targetType: 'COMPANY', companyId: sgl.id }], readBy: [T('tobias.k'), T('ana.f')], likes: [T('tobias.k')] });
   const dienst = await post({ author: maren.id, kind: 'NEWS', hoursAgo: 5, title: 'Neue Dienstkleidung für Service und Rezeption ab November',
@@ -217,13 +227,22 @@ async function main() {
     readBy: [T('selin.a'), T('jonas.w'), T('tobias.k')], likes: [T('selin.a'), T('ana.f'), T('jonas.w')] });
   await prisma.comment.create({ data: { contentItemId: dienst.id, authorId: T('piotr.n'), body: body('Gibt es die Hose auch in kurzer Länge?'), bodyText: 'Gibt es die Hose auch in kurzer Länge?', createdAt: ago(4.5) } });
   await prisma.comment.create({ data: { contentItemId: dienst.id, authorId: maren.id, body: body('Ja, in drei Längen – steht in der Tabelle.'), bodyText: 'Ja, in drei Längen – steht in der Tabelle.', createdAt: ago(4.2) } });
-  await post({ author: nora.id, kind: 'NEWS', hoursAgo: 8, company: stiftung.id, title: 'Gruppenweit: Das WIR kommt Schritt für Schritt in alle Gesellschaften',
-    text: 'Liebenberg macht den Anfang. Danach folgen nach und nach die weiteren Gesellschaften der Stiftungsgruppe – jede in ihren eigenen Farben und mit eigenem Logo, auf einer gemeinsamen Basis.\n\nGruppenweite Mitteilungen wie diese erreichen alle Kolleg:innen der Gruppe. Was nur ein Haus betrifft, bleibt in diesem Haus.',
+  await post({ author: nora.id, kind: 'NEWS', important: true, hoursAgo: 1, company: stiftung.id, title: 'Gesundheitstag für die ganze Stiftungsgruppe',
+    text: 'Am Mittwoch, 12. November, laden wir alle Kolleg:innen aus Stiftung, Hotel, Gutsbetrieb und Jugenddörfern zum Gesundheitstag ein: Rückenfit, Augen-Check und ein gesundes Mittagessen.\n\nMelde dich bis Ende Oktober bei deiner Personalabteilung an. Wir freuen uns auf dich!',
+    recipients: employees, audience: [{ targetType: 'ALL_USERS' }], likes: [T('henrik.g'), mia.id] });
+  await post({ author: nora.id, kind: 'NEWS', hoursAgo: 8, company: stiftung.id, title: 'Gruppenweit: Das WIR für alle Gesellschaften',
+    text: 'Wir starten mit Pilotteams aus Hotel, Gutsbetrieb, Jugenddörfern und Stiftung. Jede Gesellschaft erscheint in ihren eigenen Farben, alle arbeiten auf einer gemeinsamen Basis.\n\nGruppenweite Mitteilungen wie diese erreichen alle Kolleg:innen. Was nur eine Gesellschaft betrifft, bleibt dort.',
     recipients: employees, audience: [{ targetType: 'ALL_USERS' }], likes: [jana.id, maren.id] });
   await post({ author: lena.id, kind: 'NEWS', hoursAgo: 50, title: 'Willkommen im Team: drei neue Azubis in Küche und Service',
     text: 'Wir freuen uns über drei neue Auszubildende: zwei in der Küche, eine im Service. Sie haben in dieser Woche ihre erste Station begonnen.\n\nSprecht sie gern an und zeigt ihnen, wo es den besten Kaffee gibt.',
     recipients: sglPeople, audience: [{ targetType: 'COMPANY', companyId: sgl.id }], readBy: sglPeople.filter((u) => u !== jana.id), likes: [maren.id, T('selin.a'), T('sven.r')] });
 
+  await post({ author: lena.id, kind: 'NEWS', hoursAgo: 26, company: stiftung.id, title: 'Fachgruppe Personal: eine Vorlage für Einarbeitungspläne',
+    text: 'Bisher hat jede Gesellschaft ihre eigene Vorlage für die ersten Wochen. Wir legen sie zusammen: Kai aus den Jugenddörfern und ich stellen bis Ende November einen gemeinsamen Entwurf ins WIR.\n\nWas sich bei euch bewährt hat, schreibt gern in die Kommentare.',
+    recipients: [lena.id, kai.id], audience: [{ targetType: 'GROUP', groupId: fachPersonal.id }], readBy: [kai.id] });
+  await post({ author: mia.id, kind: 'SOCIAL', category: 'GREETINGS', hoursAgo: 14, company: jd.id, title: 'Grüße aus dem Jugenddorf: die Klassenfahrt-Saison läuft',
+    text: 'Diese Woche haben wir drei Schulklassen zu Gast – Kanutour, Lagerfeuer und Wald-Rallye inklusive. Danke an alle, die mit anpacken!',
+    recipients: employees, audience: [{ targetType: 'ALL_USERS' }], likes: [jana.id, T('henrik.g'), nora.id] });
   await post({ author: T('marta.w'), kind: 'SOCIAL', category: 'GREETINGS', hoursAgo: 20, title: 'Grüße von der Ostsee', text: 'Sonne, Wind und Fischbrötchen – ich denk an euch! Bis nächste Woche.',
     recipients: employees, audience: [{ targetType: 'ALL_USERS' }], likes: [jana.id, maren.id, T('ana.f')] });
   await post({ author: T('tobias.k'), kind: 'SOCIAL', category: 'MARKETPLACE', intent: 'OFFER', price: '80 €', hoursAgo: 30, title: 'Trekkingrad abzugeben',
@@ -250,9 +269,9 @@ async function main() {
   await thanks(T('sven.r'), 'TEAM', [T('ana.f')], null, 'Ana, du bist gestern beim Bankett spontan eingesprungen und hast den Abend gerettet. Danke!', 40, [T('tobias.k')]);
   await thanks(maren.id, 'GUEST', [], 'Service', 'Wir haben uns vom ersten Moment an willkommen gefühlt. Das Frühstücksteam war herzlich wie nie – danke für dieses wunderbare Wochenende!', 52, [], 'Gästebuch');
 
-  // Übersetzungen für den Demo-Modus (ADR-054): Marta liest auf Polnisch; Leichte Sprache für die HACCP-News
+  // Übersetzungen für den Demo-Modus (ADR-054): Marta liest auf Polnisch; Leichte Sprache für die Kühlketten-News
   const TX: Array<[string, string, string]> = [
-    ['HACCP: Neue Regel zur Kühlkette bei Anlieferungen', 'HACCP: Nowa zasada dotycząca łańcucha chłodniczego przy dostawach',
+    ['Neue Regel zur Kühlkette bei Anlieferungen', 'Nowa zasada dotycząca łańcucha chłodniczego przy dostawach',
       'Od teraz przy każdej dostawie mrożonek mierzymy temperaturę wewnątrz produktu – już nie tylko wyrywkowo.\n\nInstrukcja pracy „Łańcuch chłodniczy przy przyjęciu towaru“ jest właśnie aktualizowana. W razie pytań proszę zwracać się bezpośrednio do mnie.'],
     ['Gruppenweit: Das WIR kommt Schritt für Schritt in alle Gesellschaften', 'Cała grupa: WIR krok po kroku we wszystkich spółkach',
       'Liebenberg jest pierwszy. Potem stopniowo dołączą kolejne spółki grupy fundacji – każda we własnych kolorach i z własnym logo, na wspólnej podstawie.\n\nKomunikaty dla całej grupy, takie jak ten, docierają do wszystkich koleżanek i kolegów w grupie. To, co dotyczy tylko jednego obiektu, zostaje w tym obiekcie.'],
@@ -268,10 +287,10 @@ async function main() {
     const p = await prisma.post.findFirst({ where: { title } });
     if (p) await prisma.contentTranslation.createMany({ data: [tx(p.id, 'title', p.title, 'pl', t), tx(p.id, 'body', p.bodyText, 'pl', b)] });
   }
-  const haccp = await prisma.post.findFirstOrThrow({ where: { title: TX[0][0] } });
+  const kuehl = await prisma.post.findFirstOrThrow({ where: { title: TX[0][0] } });
   await prisma.contentTranslation.createMany({ data: [
-    tx(haccp.id, 'title', haccp.title, 'de', 'HACCP: Neue Regel für gefrorene Lieferungen', true),
-    tx(haccp.id, 'body', haccp.bodyText, 'de', 'Es gibt eine neue Regel.\nSie gilt ab heute.\n\nWir bekommen gefrorene Ware.\nDann messen wir jedes Mal die Temperatur.\nWir messen innen in der Ware.\nDas heißt: Kern-Temperatur.\n\nHast du Fragen?\nDann frag Sven.', true),
+    tx(kuehl.id, 'title', kuehl.title, 'de', 'Neue Regel für gefrorene Lieferungen', true),
+    tx(kuehl.id, 'body', kuehl.bodyText, 'de', 'Es gibt eine neue Regel.\nSie gilt ab heute.\n\nWir bekommen gefrorene Ware.\nDann messen wir jedes Mal die Temperatur.\nWir messen innen in der Ware.\nDas heißt: Kern-Temperatur.\n\nHast du Fragen?\nDann frag Sven.', true),
   ] });
   await prisma.userSettings.updateMany({ where: { user: { username: 'marta.w' } }, data: { locale: 'pl', autoTranslate: true } });
   // Heute im Haus (ADR-057): erfundene Geburtstage (freiwillig, ohne Jahr), Neue und ein Dienstjubiläum – relativ zum Seed-Tag

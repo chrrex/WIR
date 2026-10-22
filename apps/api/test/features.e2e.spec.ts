@@ -91,9 +91,9 @@ describe('Neue Funktionen (e2e)', () => {
     await jana.delete('/api/v1/notifications/push/subscriptions').send({ endpoint: 'https://push.example/jana' }).expect(200);
   });
 
-  test('Job: wiederkehrende HACCP-Checkliste startet einmal, wird überfällig und meldet sich', async () => {
+  test('Job: wiederkehrende Kühlraum-Checkliste startet einmal, wird überfällig und meldet sich', async () => {
     const jobs = app.get(JobsService);
-    const t = await prisma.db.checklist.findFirstOrThrow({ where: { title: 'HACCP Kühlräume morgens' } });
+    const t = await prisma.db.checklist.findFirstOrThrow({ where: { title: 'Kühlräume morgens' } });
     await prisma.db.checklist.update({ where: { id: t.id }, data: { nextRunAt: new Date(Date.now() - 60_000) } });
     const before = await prisma.db.checklistRun.count({ where: { checklistId: t.id } });
     await jobs.run();

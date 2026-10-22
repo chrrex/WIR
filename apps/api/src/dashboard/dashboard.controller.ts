@@ -25,14 +25,14 @@ interface Widget {
 }
 
 const WIDGETS: Array<Omit<Widget, 'state'> & { readyInPhase: number }> = [
-  { key: 'news', title: 'News', module: 'NEWS', readyInPhase: 2, text: 'Neuigkeiten aus deinem Team und dem ganzen Haus.' },
+  { key: 'news', title: 'News', module: 'NEWS', readyInPhase: 2, text: 'Neuigkeiten aus deinem Team, deiner Gesellschaft und der Stiftungsgruppe.' },
   { key: 'handovers', title: 'Übergaben', module: 'HANDOVERS', readyInPhase: 2, text: 'Was die vorige Schicht dir mitgibt.' },
   { key: 'weather', title: 'Wetter in Liebenberg', module: null, readyInPhase: 1, text: 'Das Wetter lässt sich gerade nicht abrufen.' },
   { key: 'social', title: 'Neu bei Social', module: 'SOCIAL', readyInPhase: 2, text: 'Grüße, Glückwünsche, Biete & Suche.' },
   { key: 'thanks', title: 'Danke-Karten', module: 'SOCIAL', readyInPhase: 2, text: 'Wer sich bei wem bedankt hat.' },
   { key: 'tasks', title: 'Meine Aufgaben', module: 'TASKS', readyInPhase: 4, text: 'Deine offenen Aufgaben mit Fälligkeit.' },
   { key: 'meetings', title: 'Nächstes Meeting', module: 'MEETINGS', readyInPhase: 4, text: 'Gerade ist kein Meeting für dich geplant.' },
-  { key: 'checklists', title: 'Checklisten heute', module: 'CHECKLISTS', readyInPhase: 4, text: 'HACCP- und Schichtchecklisten, die heute fällig sind.' },
+  { key: 'checklists', title: 'Checklisten heute', module: 'CHECKLISTS', readyInPhase: 4, text: 'Checklisten, die heute für dich fällig sind.' },
   { key: 'events', title: 'Veranstaltungen & Räume heute', module: 'EVENTS', readyInPhase: 5, text: 'Aus dem Eventtool – sobald die Anbindung steht.' },
   { key: 'shift', title: 'Mein Dienstplan', module: 'SHIFTS', readyInPhase: 5, text: 'Aus Gastromatic – sobald die Anbindung geprüft ist.' },
 ];
@@ -105,7 +105,8 @@ export class DashboardController {
       ? companies.filter((c) => c.kind !== 'FOUNDATION').map((c) => ({ id: c.id, name: c.name, active: c.isActive }))
       : null;
 
-    return { widgets, companyOverview, isFoundation, important, prefs: await this.prefs(me.id) };
+    // „Nächstes Meeting“ nur, wenn eins ansteht
+    return { widgets: widgets.filter((w) => w.key !== 'meetings' || w.items?.length), companyOverview, isFoundation, important, prefs: await this.prefs(me.id) };
   }
 
   private prefs(userId: string) {

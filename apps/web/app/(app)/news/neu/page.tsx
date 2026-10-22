@@ -53,7 +53,7 @@ function NewNews() {
       </section>
       <section className="card stack">
         {!o ? <p className="muted">Lade …</p> : <Audience options={o.audiences} value={targets} onChange={setTargets} />}
-        {o && !o.audiences.some((a) => a.wide) && <p className="small muted">Mitteilungen an das ganze Haus schreiben Abteilungsleitungen und Direktion.</p>}
+        {o && !o.audiences.some((a) => a.wide) && <p className="small muted">Mitteilungen an die ganze Gesellschaft schreiben Abteilungs- und Geschäftsleitungen.</p>}
       </section>
       {o && (
         <section className="card stack">

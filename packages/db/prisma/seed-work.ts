@@ -50,7 +50,7 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
 
   // ---- Wissen & SOPs --------------------------------------------------------
   const cat = async (name: string, slug: string, sortOrder: number) => (await prisma.knowledgeCategory.create({ data: { name, slug, sortOrder } })).id;
-  const kKitchen = await cat('Küche & HACCP', 'kueche-haccp', 1);
+  const kKitchen = await cat('Küche & Hygiene', 'kueche-hygiene', 1);
   const kFront = await cat('Rezeption & Gäste', 'rezeption', 2);
   const kRules = await cat('Richtlinien & Arbeitsschutz', 'richtlinien', 3);
   const kGeneral = await cat('Allgemein', 'allgemein', 4);
@@ -73,7 +73,7 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
     return id;
   }
 
-  const kuehlkette = await article({ author: T('sven.r'), category: kKitchen, type: 'HACCP', hoursAgo: 72, ack: true, audience: house, recipients: c.membersOf('Küche', 'Service'), ackBy: [T('tobias.k')],
+  const kuehlkette = await article({ author: T('sven.r'), category: kKitchen, type: 'SOP', hoursAgo: 72, ack: true, audience: house, recipients: c.membersOf('Küche', 'Service'), ackBy: [T('tobias.k')],
     versions: [
       { title: 'Kühlkette bei der Warenannahme', text: 'Kühlware wird sofort nach der Anlieferung geprüft und eingeräumt.\n\nStichprobenartig wird die Temperatur gemessen und im Wareneingangsbuch notiert.' },
       { title: 'Kühlkette bei der Warenannahme', change: 'Kerntemperatur jetzt bei jeder TK-Lieferung',
@@ -88,7 +88,10 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
     versions: [{ title: 'Erste Hilfe und Notfälle', text: 'Notruf: 112. Danach immer die Rezeption informieren, sie ist rund um die Uhr besetzt und weist den Rettungsdienst ein.\n\nVerbandkästen hängen in Küche, Rezeption, Wäscherei und Haustechnik. Der Defibrillator (AED) hängt neben der Rezeption.\n\nErsthelfer:innen im Haus findest du am schwarzen Brett im Personalraum.',
       plain: 'Im Notfall: 112 anrufen. Dann der Rezeption Bescheid sagen. Der Defibrillator hängt neben der Rezeption.' }] });
   await article({ author: nora, category: kGroup, type: 'WIKI', hoursAgo: 600, audience: [{ targetType: 'ALL_USERS' }], recipients: c.employees,
-    versions: [{ title: 'Willkommen in der Stiftungsgruppe (Beispieltext)', text: 'Dieser Artikel ist ein Platzhalter für die Inhalte der DKB STIFTUNG. Er zeigt, wie Wissen gruppenweit für alle Gesellschaften geteilt werden kann.' }] });
+    versions: [{ title: 'Willkommen in der Stiftungsgruppe', text: 'Zur DKB STIFTUNG gehören das Hotel und der Gutsbetrieb in Liebenberg, die Jugenddörfer und die Stiftung selbst. Hier findest du, was für alle gilt: Richtlinien, Vorlagen und Ansprechpersonen.\n\nWas nur eine Gesellschaft betrifft, steht in ihrem eigenen Bereich. (Beispieltext)' }] });
+  await article({ author: nora, category: kGroup, type: 'POLICY', hoursAgo: 30, audience: [{ targetType: 'ALL_USERS' }], recipients: c.employees,
+    versions: [{ title: 'Reisekosten in der Stiftungsgruppe', change: 'Gilt jetzt für alle Gesellschaften',
+      text: 'Diese Richtlinie gilt für alle Gesellschaften der Stiftungsgruppe.\n\nFahrten mit der Bahn erstattet dir die Gesellschaft in der 2. Klasse, bei mehr als vier Stunden Fahrzeit in der 1. Klasse. Mit dem eigenen Auto gibt es 0,30 € je Kilometer.\n\nÜbernachtungen buchst du bitte über das Reisebüro der Gruppe. Belege reichst du innerhalb von vier Wochen bei deiner Personalabteilung ein.' }] });
 
   // Eintrag von Jana, wartet auf Freigabe durch die Teamleitung Rezeption (ADR-045)
   const draft = await item('KNOWLEDGE_ARTICLE', jana, 10, [{ targetType: 'GROUP', groupId: G('Rezeption') }], c.membersOf('Rezeption'), { status: 'DRAFT', publishedAt: null });
@@ -109,7 +112,7 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
     return id;
   }
   const dForms = (await prisma.documentCategory.create({ data: { name: 'Vorlagen & Formulare', sortOrder: 1 } })).id;
-  const dKitchen = (await prisma.documentCategory.create({ data: { name: 'Küche & HACCP', sortOrder: 2 } })).id;
+  const dKitchen = (await prisma.documentCategory.create({ data: { name: 'Küche & Hygiene', sortOrder: 2 } })).id;
   const dHr = (await prisma.documentCategory.create({ data: { name: 'Personal (vertraulich)', sortOrder: 3, isSensitive: true } })).id;
   const dLeave = (await prisma.documentCategory.create({ data: { name: 'Urlaub & Abwesenheit', parentId: dForms, sortOrder: 1 } })).id;
   await prisma.documentCategory.create({ data: { name: 'Reinigungspläne', parentId: dKitchen, sortOrder: 1 } });
@@ -140,7 +143,7 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
   await task({ author: jana, userId: jana, title: 'Namensschild neu bestellen', status: 'DONE' });
 
   // ---- Checklisten ----------------------------------------------------------
-  const haccp = await prisma.checklist.create({ data: { companyId: sgl, groupId: G('Küche'), assignees: [`G:${G('Küche')}`], ownerId: T('sven.r'), visibility: 'PRIVATE', title: 'HACCP Kühlräume morgens', kind: 'HACCP', description: 'Jeden Morgen vor Arbeitsbeginn.',
+  const kuehlraum = await prisma.checklist.create({ data: { companyId: sgl, groupId: G('Küche'), assignees: [`G:${G('Küche')}`], ownerId: T('sven.r'), visibility: 'PRIVATE', title: 'Kühlräume morgens', kind: 'AUDIT', description: 'Jeden Morgen vor Arbeitsbeginn.',
     recurrenceRule: 'FREQ=DAILY;BYHOUR=6;BYMINUTE=0', nextRunAt: nextSix(),
     items: { create: [
       { title: 'Kühlraum 1', responseType: 'TEMPERATURE', minValue: 0, maxValue: 4, unit: '°C', sortOrder: 1, knowledgeArticleId: kuehlkette },
@@ -195,8 +198,8 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
   const values: Record<string, { n?: number; t?: string; out?: boolean; note?: string }> = {
     'Kühlraum 1': { n: 3 }, Tiefkühlraum: { n: -16, out: true, note: 'Tür stand offen, geschlossen. Nachmessung 08:15: -19 °C.' }, 'Kühlschrank Patisserie': { n: 5 }, 'Türdichtungen sauber und dicht': { t: 'Ja' },
   };
-  await prisma.checklistRun.create({ data: { id: runId, checklistId: haccp.id, checklistVersion: 1, assignedGroupId: G('Küche'), title: 'HACCP Kühlräume morgens · gestern', status: 'COMPLETED', startedAt: ago(26), completedAt: ago(25.5), completedById: T('sven.r'),
-    items: { create: haccp.items.sort((a, b) => a.sortOrder - b.sortOrder).map((i) => { const v = values[i.title]; return { checklistItemId: i.id, titleSnapshot: i.title, sortOrder: i.sortOrder,
+  await prisma.checklistRun.create({ data: { id: runId, checklistId: kuehlraum.id, checklistVersion: 1, assignedGroupId: G('Küche'), title: 'Kühlräume morgens · gestern', status: 'COMPLETED', startedAt: ago(26), completedAt: ago(25.5), completedById: T('sven.r'),
+    items: { create: kuehlraum.items.sort((a, b) => a.sortOrder - b.sortOrder).map((i) => { const v = values[i.title]; return { checklistItemId: i.id, titleSnapshot: i.title, sortOrder: i.sortOrder,
       isDone: !!v, valueNumber: v?.n ?? null, valueText: v?.t ?? null, isOutOfRange: v ? !!v.out : null, note: v?.note ?? null, completedById: v ? T('sven.r') : null, completedAt: v ? ago(25.6) : null }; }) } } });
 
   // ---- Umfragen -------------------------------------------------------------
@@ -321,7 +324,7 @@ export async function seedWork(prisma: PrismaClient, c: Ctx) {
   // ---- Ein- und Austritt (Vorlagen) ------------------------------------------
   await prisma.lifecycleTemplate.create({ data: { companyId: sgl, kind: 'ONBOARDING', name: 'Einarbeitung Service & Rezeption', steps: { create: [
     { sortOrder: 1, offsetDays: -3, title: 'Arbeitsplatz, Spind und Zugang vorbereiten', responsibleType: 'LINE_MANAGER' },
-    { sortOrder: 2, offsetDays: 0, title: 'Begrüßung und Rundgang durchs Haus', responsibleType: 'LINE_MANAGER' },
+    { sortOrder: 2, offsetDays: 0, title: 'Begrüßung und Rundgang über das Gelände', responsibleType: 'LINE_MANAGER' },
     { sortOrder: 3, offsetDays: 0, title: 'Dienstkleidung abholen', responsibleType: 'SUBJECT_EMPLOYEE', linkedContentId: kleidung, requiresAcknowledgement: true },
     { sortOrder: 4, offsetDays: 1, title: 'Erste Hilfe und Notfälle lesen', responsibleType: 'SUBJECT_EMPLOYEE', linkedContentId: ersteHilfe, requiresAcknowledgement: true },
     { sortOrder: 5, offsetDays: 2, title: 'Patenschaft: zwei Schichten gemeinsam', responsibleType: 'LINE_MANAGER' },

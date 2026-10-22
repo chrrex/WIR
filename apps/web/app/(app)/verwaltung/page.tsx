@@ -68,7 +68,7 @@ export default function AdminPage() {
 
   const tabs: Array<[typeof tab, string, boolean]> = [
     ['neu', 'Freischalten', can('users.read')], ['alle', 'Personen', can('users.read')], ['teams', 'Teams & Gruppen', can('groups.manage')],
-    ['haeuser', 'Häuser', can('companies.manage_modules')], ['rollen', 'Rollen & Rechte', can('roles.manage')], ['protokoll', 'Protokoll', can('audit.read')], ['meldungen', 'Meldungen', can('social.moderate')],
+    ['haeuser', 'Gesellschaften', can('companies.manage_modules')], ['rollen', 'Rollen & Rechte', can('roles.manage')], ['protokoll', 'Protokoll', can('audit.read')], ['meldungen', 'Meldungen', can('social.moderate')],
   ];
 
   return (
