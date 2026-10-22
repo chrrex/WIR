@@ -48,7 +48,7 @@ describe('Phase 2 (e2e)', () => {
       await (await as('jana.m')).get(`/api/v1/news/${id}`).expect(200);
       await (await as('sven.r')).get(`/api/v1/news/${id}`).expect(404);
       const tomList = await (await as('tom.b.extern')).get('/api/v1/news').expect(200);
-      expect(tomList.body.find((n: { title: string }) => n.title.startsWith('HACCP'))).toBeUndefined();
+      expect(tomList.body.find((n: { title: string }) => n.title.startsWith('Neue Regel zur Kühlkette'))).toBeUndefined();
     });
 
     test('Leitplanken: Mitarbeitende schreiben ans eigene Team, nicht an alle und nicht „wichtig“', async () => {
@@ -101,7 +101,7 @@ describe('Phase 2 (e2e)', () => {
     test('Lesestatus ist aus, solange der Schalter aus ist (ADR-012)', async () => {
       await prisma.db.systemSetting.update({ where: { key: 'feature.read_tracking' }, data: { value: false } });
       app.get(FeatureService).clear();
-      const id = await newsId('HACCP');
+      const id = await newsId('Neue Regel zur Kühlkette');
       const r = await (await as('sven.r')).get(`/api/v1/content/${id}/read-status`).expect(200);
       expect(r.body.enabled).toBe(false);
       await (await as('sven.r')).post(`/api/v1/content/${id}/remind`).expect(400);
@@ -215,7 +215,7 @@ describe('Phase 2 (e2e)', () => {
     await s.post('/api/v1/auth/code').send({ username: 'dewi.p', code: res.body.code }).expect(200);
     await s.post('/api/v1/auth/password').send({ newPassword: 'Erster Tag in der Küche' }).expect(200);
     const list = await s.get('/api/v1/news').expect(200);
-    expect(list.body.some((n: { title: string }) => n.title.startsWith('HACCP'))).toBe(true);
+    expect(list.body.some((n: { title: string }) => n.title.startsWith('Neue Regel zur Kühlkette'))).toBe(true);
     expect(list.body.some((n: { title: string }) => n.title.startsWith('Neue Dienstkleidung'))).toBe(false);
   });
 });

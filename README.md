@@ -25,9 +25,11 @@ Du brauchst nichts zu installieren – nur einen Browser und dein GitHub-Konto.
 | `jana.m` | Mitarbeiterin Rezeption | Sicht der Mitarbeitenden |
 | `maren.h` | Teamleitung Service | wie Mitarbeitende, plus Teamleitungsrechte |
 | `lena.k` | Personal & IT (SGL) | **Verwaltung:** Freischalten aus Gastromatic, Einmal-Codes, Protokoll |
-| `nora.s` | Kommunikation · DKB STIFTUNG | Auftritt der DKB STIFTUNG, gruppenweite Sicht ohne Hausmodule |
+| `nora.s` | Kommunikation · DKB STIFTUNG | Auftritt der DKB STIFTUNG, gruppenweite Sicht ohne Module der einzelnen Gesellschaften |
+| `henrik.g` | Gärtner · Gutsbetrieb | Morgenrundgang mit Sturmschaden-Meldung |
+| `mia.l`, `kai.b` | Jugenddörfer (Pädagogik, Personal) | Auftritt der Jugenddörfer; Kai ist mit Lena in der **Fachgruppe Personal** über die Gesellschaften hinweg |
 | `tom.b.extern` | Externer Dienstleister | befristeter Zugang, ohne KI und Mitarbeiterverzeichnis |
-| `sven.r` | Küchenleitung | darf ans ganze Haus schreiben, SOPs pflegen, Checklisten-Vorlagen und Kontakte anlegen, Ideen bewerten |
+| `sven.r` | Küchenleitung | darf an die ganze Gesellschaft schreiben, SOPs pflegen, Checklisten-Vorlagen und Kontakte anlegen, Ideen bewerten |
 | `tobias.k`, `selin.a`, `piotr.n` … | Kolleg:innen aus Service und Rezeption | zum Ausprobieren von Chat, Erwähnungen und Übergaben |
 
 Passwort für alle oben: **`Wir-Demo-2026`**
@@ -36,9 +38,11 @@ Passwort für alle oben: **`Wir-Demo-2026`**
 
 **Erstzugang ausprobieren:** Auf der Anmeldeseite „Ich habe einen Einmal-Code“ wählen, Benutzername `paula.s`, Code **`482 913`** – danach vergibst du ein eigenes Passwort.
 
-**Verwaltung ausprobieren:** Als `lena.k` → **Verwaltung**: unter „Teams & Gruppen“ z. B. eine Gruppe **Azubis** anlegen und Kolleg:innen hinzufügen, unter „Personen“ jemanden anklicken und eine Rolle vergeben, unter „Häuser“ Module und Farben ändern, unter „Rollen & Rechte“ eine eigene Rolle zusammenstellen.
+**Verwaltung ausprobieren:** Als `lena.k` → **Verwaltung**: unter „Teams & Gruppen“ z. B. eine Gruppe **Azubis** anlegen und Kolleg:innen hinzufügen, unter „Personen“ jemanden anklicken und eine Rolle vergeben, unter „Gesellschaften“ Module und Farben ändern, unter „Rollen & Rechte“ eine eigene Rolle zusammenstellen.
 
-**Startseite ausprobieren:** Als `ana.f` siehst du oben „Heute im Haus“ mit Demo-Zahlen (ab 18 Uhr für morgen) und einen Geburtstagsgruß. Über **Anpassen** blendest du Kacheln und Bereiche ein oder aus und änderst die Reihenfolge. Den eigenen Geburtstag trägst du unter **Einstellungen** ein. Echte Hauszahlen kommen, sobald die Mews-Zugangsdaten gesetzt sind (siehe `.env.example`).
+**Startseite ausprobieren:** Als `ana.f` siehst du oben „Heute bei uns“ mit Demo-Zahlen des Hotels (ab 18 Uhr für morgen) und einen Geburtstagsgruß. Über **Anpassen** blendest du Kacheln und Bereiche ein oder aus und änderst die Reihenfolge. Den eigenen Geburtstag trägst du unter **Einstellungen** ein. Echte Hotelzahlen kommen, sobald die Mews-Zugangsdaten gesetzt sind (siehe `.env.example`).
+
+**Stiftungsgruppe ausprobieren:** Die Demo zeigt vier Bereiche: Hotel und Gutsbetrieb (Schloss & Gut Liebenberg), Jugenddörfer und Stiftung. Als `nora.s` liegt die gruppenweite Richtlinie „Reisekosten in der Stiftungsgruppe“ unter **Wissen** für alle; der „Gesundheitstag für die ganze Stiftungsgruppe“ erscheint bei allen als Wichtig-Banner. Als `mia.l` siehst du das WIR im Auftritt der Jugenddörfer (Farbe und Name sind Platzhalter). Als `kai.b` liest du die News der Fachgruppe Personal, die Lena aus Liebenberg geschrieben hat.
 
 **Meetings ausprobieren:** Als `jonas.w` (Leitung) unter **Meetings** das kommende „Teammeeting Rezeption“ öffnen, Punkte sortieren und „Agenda festlegen und verteilen“. Als `jana.m` (Protokoll) „Meeting starten“, Anwesenheit, Notizen und Entscheidungen festhalten und über „Daraus machen …“ eine Aufgabe, News oder SOP anlegen; danach „Protokoll einreichen“ – `jonas.w` schreibt fest. Im Archiv liegt das Protokoll der Vorwoche mit Gast, vertraulichem Punkt und Nachtrag; „Entscheidungen“ durchsucht alle festgeschriebenen Beschlüsse.
 
@@ -47,7 +51,7 @@ Passwort für alle oben: **`Wir-Demo-2026`**
 **Freischaltung ausprobieren:** Als `lena.k` anmelden → **Verwaltung** → „Neu aus Gastromatic“ → **Freischalten**. Der angezeigte Code funktioniert sofort für die freigeschaltete Person.
 
 **Phase 3+4 ausprobieren:**
-- Als `sven.r` → **Checklisten** → „HACCP Kühlräume morgens“ starten und bei Kühlraum 1 z. B. `7` eintragen: Abweichung, Maßnahme nötig.
+- Als `sven.r` → **Checklisten** → „Kühlräume morgens“ starten und bei Kühlraum 1 z. B. `7` eintragen: Abweichung, Maßnahme nötig.
 - Als `tobias.k` → **Wissen** → „Kühlkette“: „Gelesen und verstanden“. Als `sven.r` eine neue Version schreiben – die Bestätigung wird zurückgesetzt.
 - Oben im Suchfeld z. B. `Defibrillator` – oder unten auf der Suchseite **„Frag das WIR“**. Als `jana.m` findest du die Küchen-SOP nicht, als `sven.r` schon.
 - Abstimmungen gibt es direkt in News, Übergaben und Social – auf Wunsch **anonym** (dann sieht niemand, wer wofür gestimmt hat).
@@ -58,7 +62,7 @@ Passwort für alle oben: **`Wir-Demo-2026`**
 - **Push:** Einstellungen → „Benachrichtigungen aufs Handy“ einschalten, Ruhezeit festlegen. (Auf dem iPhone erst „Teilen → Zum Home-Bildschirm“.)
 - **Einarbeitung:** Als `lena.k` → Verwaltung → jemanden freischalten → „Einarbeitung starten“ – oder Menü **Einarbeitung** → „Plan starten“.
 - **Freigabe:** Als `tobias.k` die Checkliste „Bankett Aufbau Schlosssaal“ abschließen, als `maren.h` freigeben oder zurückweisen.
-- **Automatisch:** „HACCP Kühlräume morgens“ startet täglich um 6:00 von selbst; nach 4 Stunden ohne Abschluss erfährt es die Küchenleitung.
+- **Automatisch:** „Kühlräume morgens“ startet täglich um 6:00 von selbst; nach 4 Stunden ohne Abschluss erfährt es die Küchenleitung.
 
 **Wissen mit Freigabe:** Als `jana.m` einen Eintrag schreiben (auch für die ganze Stiftungsgruppe) – als `jonas.w` (Teamleitung Rezeption) unter **Wissen → Zur Prüfung** freigeben, korrigieren oder ablehnen.
 
