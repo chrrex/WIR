@@ -28,7 +28,7 @@ export default function PersonAdmin() {
   if (!p || !o) return <State error={error} loading back={['/verwaltung', 'Zur Verwaltung']} />;
   const form = f ?? { displayName: p.displayName, jobTitle: p.jobTitle ?? '', validUntil: p.validUntil?.slice(0, 10) ?? '' };
   const reload = async () => setData(await api<P>(`/admin/users/${id}`));
-  const scopes = [...o.companies.map((c) => ({ key: `C:${c.id}`, label: `Haus: ${c.name}` })), ...o.groups.map((x) => ({ key: `G:${x.id}`, label: `${GROUP_TYPE_LABEL[x.type] ?? 'Gruppe'}: ${x.name}` }))];
+  const scopes = [...o.companies.map((c) => ({ key: `C:${c.id}`, label: `Gesellschaft: ${c.name}` })), ...o.groups.map((x) => ({ key: `G:${x.id}`, label: `${GROUP_TYPE_LABEL[x.type] ?? 'Gruppe'}: ${x.name}` }))];
   return (
     <div className="stack-lg narrow-col">
       <Back href="/verwaltung?tab=alle" label="Alle Personen" />

@@ -85,7 +85,7 @@ export default function StartPage() {
         <section id="dash-edit" className="card stack dash-edit" aria-label="Startseite anpassen">
           <div className="chead"><h2>Startseite anpassen</h2>{prefs.length > 0 && <button className="lnk small" onClick={() => savePrefs([])}>Zurücksetzen</button>}</div>
           <p className="small muted">Wähle, was du sehen möchtest, und bring es mit den Pfeilen in deine Reihenfolge. Das gilt nur für dich.</p>
-          {[{ title: 'Kacheln „Heute im Haus“', list: tiles.map((t) => ({ k: t.k, visible: t.visible, label: t.item.label })) },
+          {[{ title: 'Kacheln „Heute bei uns“', list: tiles.map((t) => ({ k: t.k, visible: t.visible, label: t.item.label })) },
             { title: 'Bereiche', list: widgets.map((w) => ({ k: w.k, visible: w.visible, label: w.item.title })) }].map((g) => (
             <fieldset key={g.title} className="stack dash-group"><legend className="strong">{g.title}</legend>
               <ul className="plain dash-edit-list">
@@ -106,7 +106,7 @@ export default function StartPage() {
       {shown.length > 0 && (
         <section className="today" aria-labelledby="today-h">
           <div className="today-head">
-            <h2 id="today-h" className="eyebrow">{today?.evening ? 'Morgen im Haus' : 'Heute im Haus'}</h2>
+            <h2 id="today-h" className="eyebrow">{today?.evening ? 'Morgen bei uns' : 'Heute bei uns'}</h2>
             <span className="xs muted">Stand {asOf}{shown.some((t) => t.item.demo) && <> · <span className="chip xs" title="Erfundene Beispielzahlen, bis die Anbindung steht">Demo-Zahlen</span></>}</span>
           </div>
           <ul className="plain today-strip">
@@ -129,7 +129,7 @@ export default function StartPage() {
       {data?.isFoundation && (
         <section className="note info" aria-label="Gruppenweite Sicht">
           <Icon name="globe" size={20} />
-          <span><strong>Gruppenweite Sicht:</strong> Du arbeitest für die ganze Stiftungsgruppe. Deshalb erscheint das WIR bei dir im Auftritt der DKB STIFTUNG. Interne Themen eines Hauses wie Übergaben oder Checklisten bleiben dort.</span>
+          <span><strong>Gruppenweite Sicht:</strong> Du arbeitest für die ganze Stiftungsgruppe. Deshalb erscheint das WIR bei dir im Auftritt der DKB STIFTUNG. Interne Themen einer Gesellschaft wie Übergaben oder Checklisten bleiben dort.</span>
         </section>
       )}
 
@@ -138,8 +138,7 @@ export default function StartPage() {
           {data.companyOverview.map((c) => (
             <div className="kpi" key={c.id}>
               <div className="small muted">{c.name}</div>
-              <div className="v">{c.active ? 'im WIR' : 'geplant'}</div>
-              <div className="s">{c.active ? 'Pilot ab Phase 1' : 'Ausbaustufe 2'}</div>
+              <div className="v">{c.active ? 'im WIR' : 'kommt dazu'}</div>
             </div>
           ))}
         </section>
